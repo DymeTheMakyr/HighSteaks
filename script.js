@@ -201,7 +201,13 @@ function selectionScene(){
 		sock.onmessage = (message) => {if (message.data.toString() == -1){alert("Room Not Available");return 0;} 
 		else {
 			game=JSON.parse(message.data);
+			id = 0;
+			roomNo = rId;
 			console.log("room made");
+			sock.onmessage = (message) => {
+				console.log("update");
+				game = JSON.parse(message.data);
+			}
 			changeScene("game");
 		}};
 	}
@@ -219,7 +225,10 @@ function selectionScene(){
 			game = JSON.parse(message.data);
 			id = game.players.find(x => x.pName == nam);
 			roomNo = rId;
-			sock.onmessage = (message) => {game = JSON.parse(message.data);}
+			sock.onmessage = (message) => {
+				console.log("update");
+				game = JSON.parse(message.data);
+			}
 			changeScene("game");
 		};}
 	}	

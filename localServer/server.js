@@ -52,7 +52,6 @@ server.on ('connection', (socket) => {
 	
 	socket.on('message', (message) => {
 		message = message.toString();
-		console.log(message);
 		if (message[0] == 'h'){
 			let args = message.split("|");
 			if (games.find(x => x.id == args[2]) == null){
@@ -72,6 +71,7 @@ server.on ('connection', (socket) => {
 				socket.send(JSON.stringify(game));
 			} else {socket.send(-1);}
 		} else if (message[0] == "m") {
+			console.log("move");
 			let args = message.split("|");
 			let game = games.find(x => x.id==args[1]);
 			if (game != null){
