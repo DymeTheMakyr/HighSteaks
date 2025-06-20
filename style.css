@@ -14,7 +14,6 @@ input[type="text"]{
 	font:arial;
 }
 #ip {
-	display:none;
 	padding:0px;
 	margin:0px;
 }
@@ -35,4 +34,11 @@ button {
 	height:0;
 	padding:0;
 	margin:0;
+}
+img {
+	background:#F9E4BC;
+	width:160px;
+	height:160px;
+	image-rendering: pixelated; 
+	border: blue 3px solid;
 }

@@ -2,6 +2,7 @@
 let sw = window.innerWidth - 1;
 let sh = window.innerHeight - 1;
 let factor = [16, 9];
+let charScaleFact = 4;
 console.log([sw, sh]);
 sw = sw / factor[0] < sh / factor[1] ? sw : (sh / factor[1]) * factor[0];
 sh = sw / factor[0] > sh / factor[1] ? sh : (sw / factor[0]) * factor[1];
@@ -14,7 +15,15 @@ let game = 0;
 
 let sock;
 let roomNo;
-let playerId;
+let playerName;
+let skin;
+let flip;
+
+function loadImg(path){
+		let temp = new Image();
+		temp.src = path;
+		return temp;
+}
 
 function changeScene(targetScene, ...args){
 	if (targetScene in scene){
@@ -25,6 +34,40 @@ function changeScene(targetScene, ...args){
 		unbind = scene[targetScene](...args);
 	} else {
 		throw new Error("targetScene not found, is it in scene object?");
+	}
+}
+
+
+class cards {
+	static rNo = [];
+	static bNo = [];
+	static suits = [];
+	static bg;
+
+	static {
+		for (let i = 0; i < 13; i++){
+			cards.rNo.push(loadImg("cards\\" + ("000" + i).substr(-3) + ".png"));
+		}
+		for (let i = 0; i < 13; i++){
+			cards.bNo.push(loadImg("cards\\" + ("000" + (i+13)).substr(-3) + ".png"));
+		}
+		for (let i = 0; i < 4; i++){
+			cards.suits.push(loadImg("cards\\" + ("000" + (i+26)).substr(-3) + ".png"));
+		}
+		cards.bg = loadImg("cards\\030.png");
+	}
+}
+class cows {
+	static strings = [];
+	static imgs = [];
+	
+	static {
+		for (let i = 0; i < 8; i++){
+			cows.strings.push("cows\\" + ("000" + (i)).substr(-3)+".png")
+			cows.imgs.push(loadImg(cows.strings[i]));
+		}
+		cows.strings.push("cows\\0-1.png")
+		cows.imgs.push(loadImg("cows\\0-1.png"));
 	}
 }
 
@@ -57,53 +100,25 @@ function gameScene(id, roomId, skin) {
 
 	resize();
 
-	function loadImg(path){
-		let temp = new Image();
-		temp.src = path;
-		return temp;
-	}
-
 	let canDisplay = false;
 
-	class cards {
-		static rNo = [];
-		static bNo = [];
-		static suits = [];
-		static bg;
-
-		static {
-			for (let i = 0; i < 13; i++){
-				cards.rNo.push(loadImg("cards\\" + ("000" + i).substr(-3) + ".png"));
-			}
-			for (let i = 0; i < 13; i++){
-				cards.bNo.push(loadImg("cards\\" + ("000" + (i+13)).substr(-3) + ".png"));
-			}
-			for (let i = 0; i < 4; i++){
-				cards.suits.push(loadImg("cards\\" + ("000" + (i+26)).substr(-3) + ".png"));
-			}
-			cards.bg = loadImg("cards\\030.png");
-		}
-	}
-
 	//key variables
-	class vel {
-		static x = 0;
-		static y = 0;
+	let vel = {
+		"x" : 0,
+		"y" : 0
 	}
 	class player {
 		pos = [0,0];
 		item = "gun";
 		skin = "hereford";
 		health = 100;
-		id = 0;
 		money = 0;
 		cards = [[0,0],[3,12]];
-		constructor(po, it, sk, he, id, mo, ca){
+		constructor(po, it, sk, he, mo, ca){
 			this.pos = po;
 			this.item = it;
 			this.skin = sk;
 			this.health = he;
-			this.id = id;
 			this.money = mo;
 			this.cards = ca;
 		}
@@ -122,35 +137,38 @@ function gameScene(id, roomId, skin) {
 			this.owner = o;
 		}
 	}
-	class keys {
-		static w = 0;
-		static a = 0;
-		static s = 0;
-		static d = 0;
-		static shift = 0;
+	//Key Manager;
+	let keys = {
+		"w" : 0,
+		"a" : 0,
+		"s" : 0,
+		"d" : 0,
+		"shift" : 0
 	}
 	//ed flood
-
+	//Movement variables
 	const baseSpeed = 1
 	const sprintFact = 1
 	let x = 0;
 	let y = 0;
 
 	function mainloop() {
-		//Clear And Draw
-		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-		for (let i = 0; i < game.players.length; i++){
-			ctx.fillRect(game.players[i].pos[0], game.players[i].pos[1], 20, 40);
-		}
 		
 		//Update Velocity
 		vel.x = baseSpeed * (keys.a ^ keys.d) * (keys.a ? -1 : 1) * (keys.shift * sprintFact + 1);
 		vel.y = baseSpeed * (keys.w ^ keys.s) * (keys.w ? -1 : 1) * (keys.shift * sprintFact + 1);
 		//Update Position
-		if (((0 < x) & keys.a) | ((x < ctx.canvas.width - 20) & keys.d)) x += vel.x;
-		if (((0 < y) & keys.w) | ((y < ctx.canvas.height - 40) & keys.s)) y += vel.y;
+		if (((0 < x) & keys.a) | ((x < ctx.canvas.width - 16) & keys.d)) x += vel.x;
+		if (((0 < y) & keys.w) | ((y < ctx.canvas.height - 30) & keys.s)) y += vel.y;
 		
-		sock.send(`m|${roomNo}|${playerId}|${x}|${y}`);
+		//Clear And Draw
+		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+		for (let i = 0; i < game.players.length; i++){
+			ctx.drawImage(cows.imgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].pos[0] - 4*charScaleFact, game.players[i].pos[1] - charScaleFact, 16*charScaleFact, 16*charScaleFact)
+		}
+		
+		//Send To Serve
+		sock.send(`m|${roomNo}|${playerName}|${x}|${y}`);
 	}
 
 	function keydown(e) {
@@ -192,7 +210,12 @@ function selectionScene(){
 	let storage = document.getElementById("selectionScene");
 	let ipToggle = document.getElementById("ipToggle");
 	let ip = document.getElementById("ip");
-	ipToggle.onclick = () => {ip.style.display = ipToggle.checked?"block":"none";};
+	let sel = document.getElementById("skin");
+	let img = document.getElementById("char");
+	ip.style.display = "none";
+	ipToggle.onchange = () => {ip.style.display = ipToggle.checked?"block":"none";};
+	sel.onchange = () => {img.src = cows.strings[sel.value]}
+	img.src = cows.strings[sel.value];
 	function unbindLocal(){
 		storage.appendChild(container.children[0]);
 	}
@@ -202,9 +225,9 @@ function selectionScene(){
 	}
 	function hostRoom(){
 		console.log("host");
-		let nam = container.children[0].children[0].value;
-		let rId = container.children[0].children[2].value;
-		let skn = container.children[0].children[4].value;
+		let nam = container.children[0].children[5].value;
+		let rId = container.children[0].children[7].value;
+		let skn = container.children[0].children[9].value;
 		if (rId.length != 4) {alert("Room ID needs 4 characters"); return 0;}
 		if (skn < 0) {alert("Select Skin"); return 0;}
 		sock = new WebSocket(chooseAddr());
@@ -212,7 +235,7 @@ function selectionScene(){
 		sock.onmessage = (message) => {if (message.data.toString() == -1){alert("Room Not Available");return 0;} 
 		else {
 			game=JSON.parse(message.data);
-			playerId = game.players.find(x => x.pName == nam).id;
+			playerName = nam;
 			roomNo = rId;
 			console.log("room made");
 			sock.onmessage = (message) => {
@@ -222,19 +245,19 @@ function selectionScene(){
 		}};
 	}
 	function joinRoom(){
-		let nam = container.children[0].children[0].value;
-		let rId = container.children[0].children[2].value;
-		let skn = container.children[0].children[4].value;
+		let nam = container.children[0].children[5].value;
+		let rId = container.children[0].children[7].value;
+		let skn = container.children[0].children[9].value;
 		if (rId.length != 4) {alert("Room ID needs 4 characters"); return 0;}
 		if (skn < 0) {alert("Select Skin"); return 0;}
+		if (chooseAddr == "ws://"){alert("Input IP address"); return;}
 		sock = new WebSocket(chooseAddr());
-		if (sock)
 		sock.onopen = () => {console.log(`j|${nam}|${rId}|${skn}`[0]);sock.send(`j|${nam}|${rId}|${skn}`)};
 		sock.onmessage = (message) => {if (message.data == -1){alert("Room Not Found");return 0;} 
 			else if (message.data == -2){alert("Another User Has This Name");return 0;} 
 			else if (message.data == -3){alert("This Room Is Full");return 0;}else {console.log(message.data); 
 			game = JSON.parse(message.data);
-			playerId = game.players.find(x => x.pName == nam).id;
+			playerName = nam;
 			roomNo = rId;
 			sock.onmessage = (message) => {
 				game = JSON.parse(message.data);
