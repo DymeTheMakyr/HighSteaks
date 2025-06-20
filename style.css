@@ -1,0 +1,29 @@
+canvas {
+    background: white;
+    image-rendering: pixelated; 
+}
+body {
+    background: black;
+    padding:0;
+    margin:0;
+}
+input {
+	width:160px;
+}
+select {
+	min-width:166px;
+	appearance: none;
+}
+button {
+	margin:1px;	
+	appearance:none;
+	width:80px;
+	height:20px;
+}
+.sceneStorage{
+	display:none;
+	width:0;
+	height:0;
+	padding:0;
+	margin:0;
+}

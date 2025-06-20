@@ -1,0 +1,131 @@
+▛▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▜
+▌Blackjack Rules▐
+▙▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▟
+
+	6 decks are used (312 cards)
+	Before deal begins, each player places a bet $2 - $500
+	Deck is shuffled and cut
+	Plastic divider is inserted so the last 60-75 cards are not dealt
+	when all bets are made, dealer gives one card, face up, to each player in clockwise rotation, then one face up card to the dealer
+	another round of cards is dealt face up to each player, cw, then face down to the dealer
+	If the dealer's face up (shown) card is an ace, a seperate "Insurance Bet" can be made based on if the dealer has a blackjack (A + card with value of ten)
+
+Naturals (Start A + 10)
+	If the player has a natural, they immediately get paid 1.5 * their bet
+	If the dealer has a natural, they immediately collect all of the bets from the players
+	If the player and the dealer have a natural, the bet is a stand-off (tie) and the player doesn't lose their chips
+
+The Play
+	Left of the dealer goes first
+	Stand or hit. If total of hand goes over 21 they are "bust". The player loses if they go bust. The players turn ends when they stand or they bust
+	When the player left of the dealer goes bust or stands, the dealer moves onto the next player (to the left)
+	If the player goes bust with an ACE in hand, they instead have ten removed from their score and continue, as ACE can be 1 or 11
+
+The Dealer's Play
+	After the dealer has served every player, the face down card is turned over. 
+	If the total of the dealers hand is 17 or over, they must stand.
+	If the total of the dealers hand is 16 or under, they must hit.
+	The dealer must continue to hit until their hand is 17 or over.
+	If the dealer has an ACE, and counting it as 11 would make the hand 17 or over, the dealer must stand.
+
+Splitting Pairs
+	If the players starting hand consists of two cards with the same value, they can be split and treated as two hands (sHands).
+	The original bet is placed on one sHand and a bet of equal value must be placed on the other sHand.
+	The player first plays the sHand to the left. When the player goes bust or stands on the left sHand, the dealer then serves the right sHand.
+	Also, with a pair of aces, the player is given one card per ace and is not allowed to hit. If the player attains "blackjack" with a split hand, the pay-off is 1 not 1.5
+
+Doubling Down
+	When a player is dealt a hand with the sum value of 9, 10 or 11, the player can double their bet.
+	When the players turn arrives, they can add a bet equal to their initial bet. They are only given one card, which is dealt face-down, and is not turned until the bets are settled 
+
+The dealer can neither double down or split.
+With a hand of two 5's, the player can double down OR split OR play regularly
+
+Insurance
+	When the dealers face up car is an ace, any of the player may make a side bet of up to half their original bet that the dealers face down card has the value of ten
+	Once all side bets are made, the dealer peeks the face down card. If it is of value 10, it is flipped and players are paid with a payoff of 1 (2 * insurance bet)
+	If the card is of value ten, the Natuals rules take effect
+
+Settlement
+	A paid and collected bet is never returned. Since the dealer goes last, if a player goes bust, they cannot win any money.
+	If the dealer goes bust, the dealer pays out all players according to their bet and payoff factor (1 by default, 1.5 blackjack etc.)
+	If the dealer stands at 21 or less, they pay out to all players with a hand of greater value (excl. bust players)
+	If the player and dealer have the same hand value, no bets are collected or paid.
+
+Reshuffling
+	When all bets are settled, the dealer gathers the players cards and places them face up to the side against a clear plastic shield (aligner) (discard pile)
+	When the dealer reaches the plastic divider, it indicates a need to reshuffle. The dealer takes ALL cards, reshuffles them, cuts them and then returns them to the shoe
+
+▛▀▀▀▀▀▀▀▀▀▀▀▀▀▀▜
+▌Roulette Rules▐
+▙▄▄▄▄▄▄▄▄▄▄▄▄▄▄▟
+
+Bets and Payouts
+1	Single Number(straight) - 35:1
+2	Double Number(split)    - 17:1
+3	Three Number (street)   - 11:1
+4	Four number  (crnr bet) - 8:1
+5	Five Number  (has to be 0-00-1-2-3) 6:1
+6	Six Number   (line)	- 5:1
+7	12 No (dozens 1st2nd3rd)- 2:1
+8	12 no in a row (column) - 2:1
+9	18 numbers (1-18)	- 1:1
+10	18 numbers (19-36)	- 1:1
+11	Red or Black		- 1:1
+12	Odd or Even		- 1:1
+
+The Play
+	Player make bets 1 by 1
+	The wheel is spun
+	Bets are collected or (returned and paid out)
+
+▛▀▀▀▀▀▀▀▀▀▀▀▜
+▌Poker Rules▐
+▙▄▄▄▄▄▄▄▄▄▄▄▟
+
+54 card deck is used, with jokers as wild cards.
+
+The Deal
+	Every player is dealt two cards face down, which are privy to them
+	The dealer spreads five cards, three cards, then one, then another
+
+The Play
+	At the start of the game, the player left of the dealer make must bet a small blind, a forced bet.
+	The next player to the left must bet the big blind, which is typically twice the value of the small blind, but may vary.
+	
+BETTING	Players are then dealt two "hole" cards. betting proceeds from the player left of the big blind and propogates left until all players have checked.
+	The betting options a player has are [fold, check, bet, call, raise]. If no bet has been made, the player can either check (not bet), or bet.
+	If a bet has been made previously, the play can fold, call or raise.
+	
+Pre	When the all players are dealt their hole cards, they can either fold, call or raise the big blind. Betting continues in a left propogating motion until all players have bet
+Flop	an equal amount into the main pot
+
+The	Now, the first three community, face down, cards are overturned, or three face up cards are dealt onto the table.
+Flop	Another round of betting then occurs, starting with the player left of the dealer. The betting continues until equal bets are entered by all players that haven't folded
+	into the main pot.
+
+The	After betting is complete for the flop, a fourth card is turned or a fourth card is dealt face up.
+Turn	Another round of betting occurs, left propogating from the player left of the dealer until equal bets are entered into the main pot by players haven't folded
+
+The	After betting is complete for the turn, a fifth and final card is turned or a fifth card is dealt face up.
+River	A final round of betting occurs.
+
+The Showdown : The last person to bet shows their cards, unless no bet was made. in that case, the player immediately left of the dealer shows their cards.
+		The next player then shows their cards so on and so forth. The player with the best five card hand is then awarded the all bets from the pot.
+		Cards are then collected, the deck is shuffled and another round begins.
+
+Poker Hands (ranked)
+1	Five of a kind	(4 cards of same type and a wildcard)
+2	Royal Flush	(A K Q J 10 | of same suit)
+3	Straight Flush	(5 consecutive cards of same suit | 3 4 5 6 7 of spades)
+4	Four of a kind	(4 cards of same rank | K K K K | Q Q Q Q)
+5	Full House	(3 cards of one rank and 2 cards of another | 5 5 5 3 3 | 3 3 3 K K)
+6	Flush		(5 cards of same suit | 3 9 A J 10 of Diamonds)
+7	Straight	(5 consecutive cards  | 3 4 5 6 7 of differing suits)
+8	Three of a kind (3 cards of same rank | 3 3 3 | A A A)
+9	Two pair	(2 One Pair | 2 2 + 3 3)
+10	One pair	(2 cards of same rank | 5 5)
+11	High card	(1 card | K | A)
+
+If two players have the same hand, then the hand with higher rank will win
+If two players have the same hand of the same rank, and it is the best hand of both players, then the hand is discounted only between those two players

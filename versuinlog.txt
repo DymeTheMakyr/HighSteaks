@@ -1,0 +1,84 @@
+Ver 1
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>High Steaks</title>
+    </head>
+    <body>
+        <script src="scripts.js">
+        </script>
+    </body>
+</html>
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//Populate and initialise index.html
+const canv = document.createElement("canvas"); //create canvas
+canv.width = "1000"; //internal width
+canv.height = "1000"; //internal height
+canv.style.width = "400px"; //external width
+canv.style.height = "400px"; //external height
+canv.style.border = "solid 1px blue"; //border
+document.body.appendChild(canv); //add to body
+canv.style.background="white"; //white bg
+const ctx = canv.getContext("2d"); //grab context
+
+//key variables
+class velocity{
+    x=0;
+    y=0;
+    constructor(){}
+}
+class player{
+    static x = 50;
+    static y = 50;
+    static width = 20;
+    static height = 40;
+    static baseSpeed = 1; // init speed
+    static sprintFact = 1; // sprintspeed = baseSpeed * (1+sprintfact)
+    static vel = new velocity();
+}
+class keys{
+    static w=0;
+    static a=0;
+    static s=0;
+    static d=0;
+    static shift = 0;
+}
+
+function mainloop(){
+    //Clear And Draw
+    ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    ctx.fillRect(player.x,player.y,player.width,player.height);
+
+    //Update Velocity
+    player.vel.x = player.baseSpeed * (keys.a^keys.d) * (keys.a?-1:1) * (keys.shift*player.sprintFact + 1);
+    player.vel.y = player.baseSpeed * (keys.w^keys.s) * (keys.w?-1:1) * (keys.shift*player.sprintFact + 1);
+    //Update Position
+    if ((0 < player.x & keys.a) | (player.x < ctx.canvas.width - player.width & keys.d)) player.x += player.vel.x;
+    if ((0 < player.y & keys.w) | (player.y < ctx.canvas.height - player.height & keys.s)) player.y += player.vel.y;
+}
+
+function keydown(e){
+    //Collect Keydowns
+    if (e.code === "KeyW") keys.w = 1;
+    if (e.code === "KeyA") keys.a = 1;
+    if (e.code === "KeyS") keys.s = 1;
+    if (e.code === "KeyD") keys.d = 1;
+    if (e.code === "ShiftLeft") keys.shift = 1;
+}
+function keyup(e){
+    //Collect Keyups
+    if (e.code === "KeyW") keys.w = 0;
+    if (e.code === "KeyA") keys.a = 0;
+    if (e.code === "KeyS") keys.s = 0;
+    if (e.code === "KeyD") keys.d = 0;
+    if (e.code === "ShiftLeft") keys.shift = 0;
+}
+
+//Assign Listeners
+window.addEventListener("keydown", keydown);
+window.addEventListener("keyup", keyup);
+setInterval(mainloop, 10);
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

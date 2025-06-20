@@ -1,0 +1,28 @@
+{
+	"gamestates":{
+		"game1":{
+			"players": [
+				{
+					"pos":[ 0, 1],
+					"item":"gun",
+					"skin":"hereford",
+					"health":100,
+					"id":0,
+					"money":0,
+					"cards":[[0,0],[1,12]]
+				},
+				{}
+			],
+			
+			"projectiles": [
+				{
+					"life":10,
+					"damage":10,
+					"speed":[0,1],
+					"pos":[0,1],
+					"owner":0
+				}
+			]
+		}
+	}
+}

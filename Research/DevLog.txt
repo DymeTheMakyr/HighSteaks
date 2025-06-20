@@ -1,0 +1,43 @@
+26/03/25
+Players will start with a fund of 500$.
+The game will consist of 3 nights of gambling and a fourth showdown night
+
+The first night will be the night with the lowest risk and reward, as well as the lowest inter player strategy - blackjack.
+The second night will be the night with the highest risk and reward, with the lowest rank inter player strategy - roulette.
+The final night will be the night with the option to lose or win it all, with players directly affecting eachothers money - poker.
+
+In the run up to the showdown, players will visit the shop to cash in their chips and by traits, perks and weapons, all themed on gambling, casinos and cards.
+Finally, on the showdon night, the players will be enterd into a playing field (casino themed ofc), and have a free for all match, with the last player standing winning
+
+After this, the next round begins, with all players keeping whatever money they didnt spend and an additionaly 250$
+The winning player will gain a 250$ bonus on the next round, to make a sum of 500$ plus whatever the saved.
+
+Concepts for items, traits and perks as of 26/03/25
+
+Weapons:
+	Primary
+		Uzi, Bat, Knuckle dusters, AR, grenade launcher, rocket launcher
+	Secondary
+		Molotov, Deck of Cards, Chip shield.
+Traits:
+Agility up, Attack speed up, Damage up, health/defense up.
+
+Affinities:
+Fire Affinity - Reduced fire dmg tkn, taking fire damage increases all traits
+Chaos Affinity - Deck of Cards effects are rerolled for a favorable effect
+Explosive Affinity - explosions deal reduced knockback and damage. For a duration of time after being exploded, all attacks create minor explosions with falloff with range.
+Dodge roll - performing a dash or dodge give I-Frames for the duration of the roll.
+
+26/03/25 - 2
+Lobby, Inbetween game lobby
+4 Player Max
+
+2/04/25
+Game called High Steaks, characters are designed after cows
+In final showdown round, instead of podium, there is 3 steaks and the winner
+Instead of "You Lose This Round" or similar message, "Cooked" will be displayed instead
+
+03/03/25
+Created 5 sprites for characters themed after Cows[Highland, Black Angus, Friesan, Hereford, Guernsey]
+Looking to make 8 sprites in total.
+Sprites for the Blackjack table, Poker table and cards have been made
