@@ -71,6 +71,16 @@ server.on ('connection', (socket) => {
 				game.players.push(new player([50,50], "", args[3], 100, game.players.length, 0, [], args[1]));
 				socket.send(JSON.stringify(game));
 			} else {socket.send(-1);}
+		} else if (message[0] == "m") {
+			let args = message.split("|");
+			let game = games.find(x => x.id==args[1]);
+			if (game != null){
+				let player = game.players[args[2]]; 
+				if (player != null){
+					player.pos = [args[3],args[4]];
+					socket.send(JSON.stringify(game));
+				}
+			}
 		} else {
 			console.log(message);
 		}

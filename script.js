@@ -217,7 +217,7 @@ function selectionScene(){
 			else if (message.data == -2){alert("Another User Has This Name");return 0;} 
 			else if (message.data == -3){alert("This Room Is Full");return 0;}else {console.log(message.data); 
 			game = JSON.parse(message.data);
-			id = game.players.find(x => x.pNam == nam);
+			id = game.players.find(x => x.pName == nam);
 			roomNo = rId;
 			sock.onmessage = (message) => {game = JSON.parse(message.data);}
 			changeScene("game");
