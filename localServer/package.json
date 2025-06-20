@@ -13,6 +13,7 @@
   "description": "",
   "dependencies": {
     "cors": "^2.8.5",
+    "http": "^0.0.1-security",
     "json-serve": "^0.1.0",
     "json-server": "^0.17.4",
     "ws": "^8.18.2"

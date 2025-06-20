@@ -1,7 +1,7 @@
 //init display variables
-sw = window.innerWidth - 1;
-sh = window.innerHeight - 1;
-factor = [16, 9];
+let sw = window.innerWidth - 1;
+let sh = window.innerHeight - 1;
+let factor = [16, 9];
 console.log([sw, sh]);
 sw = sw / factor[0] < sh / factor[1] ? sw : (sh / factor[1]) * factor[0];
 sh = sw / factor[0] > sh / factor[1] ? sh : (sw / factor[0]) * factor[1];
@@ -14,7 +14,7 @@ let game = 0;
 
 let sock;
 let roomNo;
-let id;
+let playerId;
 
 function changeScene(targetScene, ...args){
 	if (targetScene in scene){
@@ -54,6 +54,8 @@ function gameScene(id, roomId, skin) {
 		canv.style.width = sw.toString() + 'px'; //external width
 		canv.style.height = sh.toString() + 'px'; //external height
 	}
+
+	resize();
 
 	function loadImg(path){
 		let temp = new Image();
@@ -137,7 +139,9 @@ function gameScene(id, roomId, skin) {
 	function mainloop() {
 		//Clear And Draw
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-		ctx.fillRect(x, y, 20, 40);
+		for (let i = 0; i < game.players.length; i++){
+			ctx.fillRect(game.players[i].pos[0], game.players[i].pos[1], 20, 40);
+		}
 		
 		//Update Velocity
 		vel.x = baseSpeed * (keys.a ^ keys.d) * (keys.a ? -1 : 1) * (keys.shift * sprintFact + 1);
@@ -146,7 +150,7 @@ function gameScene(id, roomId, skin) {
 		if (((0 < x) & keys.a) | ((x < ctx.canvas.width - 20) & keys.d)) x += vel.x;
 		if (((0 < y) & keys.w) | ((y < ctx.canvas.height - 40) & keys.s)) y += vel.y;
 		
-		sock.send(`m|${roomNo}|${id}|${x}|${y}`);
+		sock.send(`m|${roomNo}|${playerId}|${x}|${y}`);
 	}
 
 	function keydown(e) {
@@ -186,8 +190,15 @@ scene.game = gameScene;
 
 function selectionScene(){
 	let storage = document.getElementById("selectionScene");
+	let ipToggle = document.getElementById("ipToggle");
+	let ip = document.getElementById("ip");
+	ipToggle.onclick = () => {ip.style.display = ipToggle.checked?"block":"none";};
 	function unbindLocal(){
 		storage.appendChild(container.children[0]);
+	}
+	function chooseAddr(){
+		console.log(ip.value);
+		return ipToggle.checked?("ws://"+ip.value):"ws://localhost:8000";
 	}
 	function hostRoom(){
 		console.log("host");
@@ -196,16 +207,15 @@ function selectionScene(){
 		let skn = container.children[0].children[4].value;
 		if (rId.length != 4) {alert("Room ID needs 4 characters"); return 0;}
 		if (skn < 0) {alert("Select Skin"); return 0;}
-		sock = new WebSocket("ws://localhost:8000");
+		sock = new WebSocket(chooseAddr());
 		sock.onopen = () => {console.log(`h|${nam}|${rId}|${skn}`[0]);sock.send(`h|${nam}|${rId}|${skn}`)};
 		sock.onmessage = (message) => {if (message.data.toString() == -1){alert("Room Not Available");return 0;} 
 		else {
 			game=JSON.parse(message.data);
-			id = 0;
+			playerId = game.players.find(x => x.pName == nam).id;
 			roomNo = rId;
 			console.log("room made");
 			sock.onmessage = (message) => {
-				console.log("update");
 				game = JSON.parse(message.data);
 			}
 			changeScene("game");
@@ -217,16 +227,16 @@ function selectionScene(){
 		let skn = container.children[0].children[4].value;
 		if (rId.length != 4) {alert("Room ID needs 4 characters"); return 0;}
 		if (skn < 0) {alert("Select Skin"); return 0;}
-		sock = new WebSocket("ws://localhost:8000");
+		sock = new WebSocket(chooseAddr());
+		if (sock)
 		sock.onopen = () => {console.log(`j|${nam}|${rId}|${skn}`[0]);sock.send(`j|${nam}|${rId}|${skn}`)};
 		sock.onmessage = (message) => {if (message.data == -1){alert("Room Not Found");return 0;} 
 			else if (message.data == -2){alert("Another User Has This Name");return 0;} 
 			else if (message.data == -3){alert("This Room Is Full");return 0;}else {console.log(message.data); 
 			game = JSON.parse(message.data);
-			id = game.players.find(x => x.pName == nam);
+			playerId = game.players.find(x => x.pName == nam).id;
 			roomNo = rId;
 			sock.onmessage = (message) => {
-				console.log("update");
 				game = JSON.parse(message.data);
 			}
 			changeScene("game");

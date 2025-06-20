@@ -4,21 +4,22 @@
         <link rel="stylesheet" href="style.css">
         <title>High Steaks</title>
         <div id="selectionScene" class="sceneStorage">
-    	<form>
-		  <input id="name" type="text" placeholder="Name" maxlength=10 size=20/><br />
-		  <input id="roomId" type="text" placeholder="Room ID" maxlength=4 size=20 /><br />
-		  <select id="skin" = "skin" size=1>
-		    <option value=-1>-- Select Skin --</option>
-		    <option value = 0>Hereford</option>
-		  </select><br />
-		  <button type="button" id="host">Host</button><button type="button" id="join">Join</button>
-    	</form>
+			<form>
+			
+				<input id="name" type="text" placeholder="Name" maxlength=10 size=20/><br />
+				<input id="roomId" type="text" placeholder="Room ID" maxlength=4 size=20 /><br />
+				<select id="skin" = "skin" size=1>
+					<option value=-1>-- Select Skin --</option>
+					<option value = 0>Hereford</option>
+			  	</select><br />
+			  	Use LAN <input type="checkbox" id="ipToggle" checked=false /><br/>
+			  	<input type="text" id="ip" placeholder = "IP_Address:Port">
+			  	<button type="button" id="host">Host</button><button type="button" id="join">Join</button>
+			</form>
     	</div>
     </head>
     <body>
-    	
-        <center id="container">
-        </center>
+        <center id="container"></center>
     	<script src="script.js"></script>
     </body>
 </html>
