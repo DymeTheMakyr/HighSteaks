@@ -14,6 +14,7 @@ class game{
 }
 class player {
 	pos = [0,0];
+	flipped = false;
 	item = "gun";
 	skin = "hereford";
 	health = 100;
@@ -32,6 +33,7 @@ class player {
 }
 class projectile {
 	pos = [0,0];
+	flipped = false;
 	speed = [0,0];
 	damage = 10;
 	life = 10;
@@ -81,6 +83,8 @@ server.on ('connection', (socket) => {
 				let player = game.players[pIndx]; 
 				if (player != null){
 					player.pos = [args[3],args[4]];
+					console.log(args[5]);
+					player.flipped = parseInt(args[5]);
 					socket.send(JSON.stringify(game));
 				}
 			}
@@ -90,18 +94,12 @@ server.on ('connection', (socket) => {
 	});	
 	
 	socket.on('close', (...args) => {
-		console.log("close : ", socket.id);
-		console.log(games[0].players);
 		let pId = socket.id.slice(0, -4);
 		let gIndx = games.findIndex(x => x.id == socket.id.slice(-4));
 		let pIndx = games[gIndx].players.findIndex(x => x.pName == pId);
-		console.log("close\n\npre");
-		console.log("\n\n====\n\n",games[gIndx].players,"\n");
-		console.log("\n",games,"\n\n====\n\n");
 		games[gIndx].players = arrPop(games[gIndx].players, pIndx);
 		if (games[gIndx].players.length == 0){
 			games = arrPop(games, gIndx);
-		} else {console.log("\n\npost\n\n====\n\n",games[gIndx].players,"\n");}
-		console.log("\n",games,"\n\n====\n\n");
+		}
 	});
 });

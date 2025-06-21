@@ -13,18 +13,21 @@ let unbind;
 const scene = {};
 let game = 0;
 
+// ease of use variables
 let sock;
 let roomNo;
 let playerName;
 let skin;
-let flip;
+let flip = 0;
 
+// img load helper function
 function loadImg(path){
 		let temp = new Image();
 		temp.src = path;
 		return temp;
 }
 
+// scene change function
 function changeScene(targetScene, ...args){
 	if (targetScene in scene){
 		unbind();
@@ -37,7 +40,7 @@ function changeScene(targetScene, ...args){
 	}
 }
 
-
+// card manager
 class cards {
 	static rNo = [];
 	static bNo = [];
@@ -57,9 +60,11 @@ class cards {
 		cards.bg = loadImg("cards\\030.png");
 	}
 }
+// cow manager
 class cows {
 	static strings = [];
 	static imgs = [];
+	static fimgs = [];
 	
 	static {
 		for (let i = 0; i < 8; i++){
@@ -68,9 +73,13 @@ class cows {
 		}
 		cows.strings.push("cows\\0-1.png")
 		cows.imgs.push(loadImg("cows\\0-1.png"));
+		for (let i = 0; i < 8; i++){
+			cows.fimgs.push(loadImg("cows\\flipped\\" + ("000" + (i)).substr(-3)+".png"));
+		}
 	}
 }
 
+// Game Scene
 function gameScene(id, roomId, skin) {
 	let players = [];
 	let projectiles = [];
@@ -98,17 +107,18 @@ function gameScene(id, roomId, skin) {
 		canv.style.height = sh.toString() + 'px'; //external height
 	}
 
+	//force call resize function
 	resize();
-
-	let canDisplay = false;
 
 	//key variables
 	let vel = {
 		"x" : 0,
 		"y" : 0
 	}
+	//player class
 	class player {
 		pos = [0,0];
+		flipped = false;
 		item = "gun";
 		skin = "hereford";
 		health = 100;
@@ -123,6 +133,7 @@ function gameScene(id, roomId, skin) {
 			this.cards = ca;
 		}
 	}
+	//projetile class
 	class projectile {
 		pos = [0,0];
 		speed = [0,0];
@@ -145,7 +156,7 @@ function gameScene(id, roomId, skin) {
 		"d" : 0,
 		"shift" : 0
 	}
-	//ed flood
+	
 	//Movement variables
 	const baseSpeed = 1
 	const sprintFact = 1
@@ -158,17 +169,24 @@ function gameScene(id, roomId, skin) {
 		vel.x = baseSpeed * (keys.a ^ keys.d) * (keys.a ? -1 : 1) * (keys.shift * sprintFact + 1);
 		vel.y = baseSpeed * (keys.w ^ keys.s) * (keys.w ? -1 : 1) * (keys.shift * sprintFact + 1);
 		//Update Position
-		if (((0 < x) & keys.a) | ((x < ctx.canvas.width - 16) & keys.d)) x += vel.x;
-		if (((0 < y) & keys.w) | ((y < ctx.canvas.height - 30) & keys.s)) y += vel.y;
+		if (((0 < x) & keys.a) | ((x < ctx.canvas.width - 8*charScaleFact) & keys.d)) x += vel.x;
+		if (((0 < y) & keys.w) | ((y < ctx.canvas.height - 15*charScaleFact) & keys.s)) y += vel.y;
+		
+		if (vel.x != 0) flip = 1 * (vel.x < 0);
+		
+		//Send To Serve
+		sock.send(`m|${roomNo}|${playerName}|${x}|${y}|${flip}`);
 		
 		//Clear And Draw
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 		for (let i = 0; i < game.players.length; i++){
-			ctx.drawImage(cows.imgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].pos[0] - 4*charScaleFact, game.players[i].pos[1] - charScaleFact, 16*charScaleFact, 16*charScaleFact)
+			let pFlip = parseInt(game.players[i].flipped);
+			if (pFlip){
+				ctx.drawImage(cows.fimgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].pos[0] - 4*charScaleFact, game.players[i].pos[1] - charScaleFact, 16*charScaleFact, 16*charScaleFact);			
+			} else {
+				ctx.drawImage(cows.imgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].pos[0] - 4*charScaleFact, game.players[i].pos[1] - charScaleFact, 16*charScaleFact, 16*charScaleFact)
+			}
 		}
-		
-		//Send To Serve
-		sock.send(`m|${roomNo}|${playerName}|${x}|${y}`);
 	}
 
 	function keydown(e) {
