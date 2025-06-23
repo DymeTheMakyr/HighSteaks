@@ -67,12 +67,10 @@ class cows {
 	static fimgs = [];
 	
 	static {
-		for (let i = 0; i < 8; i++){
+		for (let i = 0; i < 9	; i++){
 			cows.strings.push("cows\\" + ("000" + (i)).substr(-3)+".png")
 			cows.imgs.push(loadImg(cows.strings[i]));
 		}
-		cows.strings.push("cows\\0-1.png")
-		cows.imgs.push(loadImg("cows\\0-1.png"));
 		for (let i = 0; i < 8; i++){
 			cows.fimgs.push(loadImg("cows\\flipped\\" + ("000" + (i)).substr(-3)+".png"));
 		}
@@ -80,7 +78,7 @@ class cows {
 }
 
 // Game Scene
-function gameScene(id, roomId, skin) {
+function lobbyScene(id, roomId, skin) {
 	let players = [];
 	let projectiles = [];
 	//Populate and initialise index.html
@@ -177,6 +175,8 @@ function gameScene(id, roomId, skin) {
 		//Send To Serve
 		sock.send(`m|${roomNo}|${playerName}|${x}|${y}|${flip}`);
 		
+		//prepare draww order;
+		let draw = game.players.sort((a,b) => a.pos[1] - b.pos[1]);
 		//Clear And Draw
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 		for (let i = 0; i < game.players.length; i++){
@@ -222,7 +222,7 @@ function gameScene(id, roomId, skin) {
 	}
 	return unbindLocal;
 }
-scene.game = gameScene;
+scene.lobby = lobbyScene;
 
 function selectionScene(){
 	let storage = document.getElementById("selectionScene");
@@ -259,7 +259,7 @@ function selectionScene(){
 			sock.onmessage = (message) => {
 				game = JSON.parse(message.data);
 			}
-			changeScene("game");
+			changeScene("lobby");
 		}};
 	}
 	function joinRoom(){
@@ -280,7 +280,7 @@ function selectionScene(){
 			sock.onmessage = (message) => {
 				game = JSON.parse(message.data);
 			}
-			changeScene("game");
+			changeScene("lobby");
 		};}
 	}	
 	container.appendChild(document.getElementById("selectionScene").children[0]);
@@ -292,3 +292,5 @@ function selectionScene(){
 scene.selection = selectionScene;
 
 unbind = selectionScene();
+
+

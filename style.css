@@ -1,5 +1,5 @@
 canvas {
-    background: white;
+    background: #F9E4BC;
     image-rendering: pixelated; 
 }
 body {
@@ -10,7 +10,7 @@ body {
 	font:arial;
 }
 input[type="text"]{
-	width:160px;
+	width:25%;
 	font:arial;
 }
 #ip {
@@ -18,13 +18,13 @@ input[type="text"]{
 	margin:0px;
 }
 select {
-	min-width:166px;
+	min-width:25%;
 	appearance: none;
 }
 button {
 	margin:1px;	
 	appearance:none;
-	width:80px;
+	width:12.5%;
 	height:20px;
 	font:arial;
 }
@@ -37,8 +37,8 @@ button {
 }
 img {
 	background:#F9E4BC;
-	width:160px;
-	height:160px;
+	width:25%;
+	height:25%;
 	image-rendering: pixelated; 
 	border: blue 3px solid;
 }

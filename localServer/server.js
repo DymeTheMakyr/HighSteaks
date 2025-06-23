@@ -8,6 +8,7 @@ class game{
 	id = 0;
 	players = [];
 	projectiles = [];
+	locked = 0;
 	constructor(args) {
 		this.id=args;
 	}
@@ -83,7 +84,6 @@ server.on ('connection', (socket) => {
 				let player = game.players[pIndx]; 
 				if (player != null){
 					player.pos = [args[3],args[4]];
-					console.log(args[5]);
 					player.flipped = parseInt(args[5]);
 					socket.send(JSON.stringify(game));
 				}
