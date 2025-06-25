@@ -1,5 +1,5 @@
 Todo
--Name Display
+-Name Display --COMPLETE--
 -Rect property/class
 -collide function
 -lobby progression
@@ -23,3 +23,7 @@ Todo
 -podium scene
 -podium functionality
 -repeat system
+
+
+ERROR FIX LOG
+invalid request -> null id -> slice error
