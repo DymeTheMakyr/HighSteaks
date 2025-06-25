@@ -2,7 +2,7 @@
 let sw = window.innerWidth - 1;
 let sh = window.innerHeight - 1;
 let factor = [16, 9];
-let charScaleFact = 4;
+let charScaleFact = 2;
 console.log([sw, sh]);
 sw = sw / factor[0] < sh / factor[1] ? sw : (sh / factor[1]) * factor[0];
 sh = sw / factor[0] > sh / factor[1] ? sh : (sw / factor[0]) * factor[1];
@@ -158,8 +158,8 @@ function lobbyScene(id, roomId, skin) {
 	//Movement variables
 	const baseSpeed = 1
 	const sprintFact = 1
-	let x = 0;
-	let y = 0;
+	let x = 50;
+	let y = 50;
 
 	function mainloop() {
 		
@@ -173,13 +173,18 @@ function lobbyScene(id, roomId, skin) {
 		if (vel.x != 0) flip = 1 * (vel.x < 0);
 		
 		//Send To Serve
-		sock.send(`m|${roomNo}|${playerName}|${x}|${y}|${flip}`);
+		sock.send(`m⌥${roomNo}⌥${playerName}⌥${x}⌥${y}⌥${flip}`);
 		
 		//prepare draww order;
 		let draw = game.players.sort((a,b) => a.pos[1] - b.pos[1]);
 		//Clear And Draw
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 		for (let i = 0; i < game.players.length; i++){
+			ctx.fillStyle = `rgba(0,${(game.players[i].pName == playerName)*200},0,0.5)`;
+			ctx.fillRect(game.players[i].pos[0] + (3.5*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length), game.players[i].pos[1] - 0.5*charScaleFact, charScaleFact + 3*charScaleFact*game.players[i].pName.length, -5*charScaleFact);
+			ctx.font = `${charScaleFact*5}px Courier New`;
+			ctx.fillStyle = "rgba(255,255,255,1)";
+			ctx.fillText(game.players[i].pName, game.players[i].pos[0] + (4*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length),game.players[i].pos[1] - charScaleFact);
 			let pFlip = parseInt(game.players[i].flipped);
 			if (pFlip){
 				ctx.drawImage(cows.fimgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].pos[0] - 4*charScaleFact, game.players[i].pos[1] - charScaleFact, 16*charScaleFact, 16*charScaleFact);			
@@ -211,7 +216,7 @@ function lobbyScene(id, roomId, skin) {
 	window.addEventListener('keyup', keyup);
 	window.addEventListener('resize', resize);
 	mlId = setInterval(mainloop, 10);
-	gsId = setInterval(mainloop, 10);
+//	gsId = setInterval(mainloop, 10);
 	
 	function unbindLocal() {
 		window.removeEventListener('keydown', keydown);
@@ -246,18 +251,22 @@ function selectionScene(){
 		let nam = container.children[0].children[5].value;
 		let rId = container.children[0].children[7].value;
 		let skn = container.children[0].children[9].value;
+		if (nam.length = 0) {alert("Input Name"); return 0;}
+		if (nam.includes("⌥")) {alert("Forbidden character '⌥' in name"); return 0;}
 		if (rId.length != 4) {alert("Room ID needs 4 characters"); return 0;}
 		if (skn < 0) {alert("Select Skin"); return 0;}
 		sock = new WebSocket(chooseAddr());
-		sock.onopen = () => {console.log(`h|${nam}|${rId}|${skn}`[0]);sock.send(`h|${nam}|${rId}|${skn}`)};
-		sock.onmessage = (message) => {if (message.data.toString() == -1){alert("Room Not Available");return 0;} 
+		sock.onopen = () => {console.log(`h⌥${nam}⌥${rId}⌥${skn}`[0]);sock.send(`h⌥${nam}⌥${rId}⌥${skn}`)};
+		sock.onmessage = (message) => {if (message.data.toString() == -1){alert("Room Not Available");sock.close();return 0;} 
 		else {
 			game=JSON.parse(message.data);
 			playerName = nam;
 			roomNo = rId;
 			console.log("room made");
 			sock.onmessage = (message) => {
-				game = JSON.parse(message.data);
+				temp = JSON.parse(message.data);
+				temp.players.forEach((x) => (x.pos = [parseInt(x.pos[0]),parseInt(x.pos[1])]));
+				game = temp;
 			}
 			changeScene("lobby");
 		}};
@@ -266,19 +275,23 @@ function selectionScene(){
 		let nam = container.children[0].children[5].value;
 		let rId = container.children[0].children[7].value;
 		let skn = container.children[0].children[9].value;
+		if (nam.length = 0) {alert("Input Name"); return 0;}
+		if (nam.includes("⌥")) {alert("Forbidden character '⌥' in name"); return 0;}
 		if (rId.length != 4) {alert("Room ID needs 4 characters"); return 0;}
 		if (skn < 0) {alert("Select Skin"); return 0;}
 		if (chooseAddr == "ws://"){alert("Input IP address"); return;}
 		sock = new WebSocket(chooseAddr());
-		sock.onopen = () => {console.log(`j|${nam}|${rId}|${skn}`[0]);sock.send(`j|${nam}|${rId}|${skn}`)};
-		sock.onmessage = (message) => {if (message.data == -1){alert("Room Not Found");return 0;} 
-			else if (message.data == -2){alert("Another User Has This Name");return 0;} 
-			else if (message.data == -3){alert("This Room Is Full");return 0;}else {console.log(message.data); 
+		sock.onopen = () => {console.log(`j⌥${nam}⌥${rId}⌥${skn}`[0]);sock.send(`j⌥${nam}⌥${rId}⌥${skn}`)};
+		sock.onmessage = (message) => {if (message.data == -1){alert("Room Not Found");sock.close();return 0;} 
+			else if (message.data == -2){alert("Another User Has This Name");sock.close();return 0;} 
+			else if (message.data == -3){alert("This Room Is Full");sock.close();return 0;}else {console.log(message.data); 
 			game = JSON.parse(message.data);
 			playerName = nam;
 			roomNo = rId;
 			sock.onmessage = (message) => {
-				game = JSON.parse(message.data);
+				temp = JSON.parse(message.data);
+				temp.players.forEach((x) => (x.pos = [parseInt(x.pos[0]),parseInt(x.pos[1])]));
+				game = temp;
 			}
 			changeScene("lobby");
 		};}
@@ -292,5 +305,3 @@ function selectionScene(){
 scene.selection = selectionScene;
 
 unbind = selectionScene();
-
-
