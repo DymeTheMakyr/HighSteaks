@@ -26,7 +26,10 @@ function loadImg(path){
 		temp.src = path;
 		return temp;
 }
-
+//vector object helper
+function vec2(x, y){
+	return {"x":x, "y":y};
+}
 // scene change function
 function changeScene(targetScene, ...args){
 	if (targetScene in scene){
@@ -113,22 +116,34 @@ function lobbyScene(id, roomId, skin) {
 		"x" : 0,
 		"y" : 0
 	}
+	//collider class
+	class col {
+		origin = vec2(0,0);
+		points = [];
+		type = "r";
+		constructor(t, o, ...p){
+			this.origin = o;
+			this.type = t;
+			this.points = p;
+		}
+	}
 	//player class
 	class player {
-		pos = [0,0];
+		col = new col("r", vec2(50,50), [vec2(0,0),vec2(0,0),vec2(0,0),vec2(0,0)]);
 		flipped = false;
 		item = "gun";
 		skin = "hereford";
 		health = 100;
 		money = 0;
 		cards = [[0,0],[3,12]];
-		constructor(po, it, sk, he, mo, ca){
-			this.pos = po;
+		pName = "";
+		constructor(it, sk, he, mo, ca, na){
 			this.item = it;
 			this.skin = sk;
 			this.health = he;
 			this.money = mo;
 			this.cards = ca;
+			this.pName = na;
 		}
 	}
 	//projetile class
@@ -176,20 +191,20 @@ function lobbyScene(id, roomId, skin) {
 		sock.send(`m⌥${roomNo}⌥${playerName}⌥${x}⌥${y}⌥${flip}`);
 		
 		//prepare draww order;
-		let draw = game.players.sort((a,b) => a.pos[1] - b.pos[1]);
+		let draw = game.players.sort((a,b) => a.rect.pos.y - b.rect.pos.y);
 		//Clear And Draw
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 		for (let i = 0; i < game.players.length; i++){
 			ctx.fillStyle = `rgba(0,${(game.players[i].pName == playerName)*200},0,0.5)`;
-			ctx.fillRect(game.players[i].pos[0] + (3.5*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length), game.players[i].pos[1] - 0.5*charScaleFact, charScaleFact + 3*charScaleFact*game.players[i].pName.length, -5*charScaleFact);
+			ctx.fillRect(game.players[i].rect.pos.x + (3.5*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length), game.players[i].rect.pos.y - 0.5*charScaleFact, charScaleFact + 3*charScaleFact*game.players[i].pName.length, -5*charScaleFact);
 			ctx.font = `${charScaleFact*5}px Courier New`;
 			ctx.fillStyle = "rgba(255,255,255,1)";
-			ctx.fillText(game.players[i].pName, game.players[i].pos[0] + (4*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length),game.players[i].pos[1] - charScaleFact);
+			ctx.fillText(game.players[i].pName, game.players[i].rect.pos.x + (4*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length),game.players[i].rect.pos.y - charScaleFact);
 			let pFlip = parseInt(game.players[i].flipped);
 			if (pFlip){
-				ctx.drawImage(cows.fimgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].pos[0] - 4*charScaleFact, game.players[i].pos[1] - charScaleFact, 16*charScaleFact, 16*charScaleFact);			
+				ctx.drawImage(cows.fimgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].col.pos.x - 4*charScaleFact, game.players[i].col.pos.y - charScaleFact, 16*charScaleFact, 16*charScaleFact);			
 			} else {
-				ctx.drawImage(cows.imgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].pos[0] - 4*charScaleFact, game.players[i].pos[1] - charScaleFact, 16*charScaleFact, 16*charScaleFact)
+				ctx.drawImage(cows.imgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].col.pos.x - 4*charScaleFact, game.players[i].col.pos.y - charScaleFact, 16*charScaleFact, 16*charScaleFact)
 			}
 		}
 	}
@@ -265,7 +280,7 @@ function selectionScene(){
 			console.log("room made");
 			sock.onmessage = (message) => {
 				temp = JSON.parse(message.data);
-				temp.players.forEach((x) => (x.pos = [parseInt(x.pos[0]),parseInt(x.pos[1])]));
+				temp.players.forEach((x) => {x.rect.pos.x = parseInt(x.rect.pos.x); x.rect.pos.y = parseInt(x.rect.pos.y)});
 				game = temp;
 			}
 			changeScene("lobby");
@@ -290,7 +305,7 @@ function selectionScene(){
 			roomNo = rId;
 			sock.onmessage = (message) => {
 				temp = JSON.parse(message.data);
-				temp.players.forEach((x) => (x.pos = [parseInt(x.pos[0]),parseInt(x.pos[1])]));
+				temp.players.forEach((x) => {x.rect.pos.x = parseInt(x.rect.pos.x); x.rect.pos.y = parseInt(x.rect.pos.y)});
 				game = temp;
 			}
 			changeScene("lobby");
