@@ -196,16 +196,24 @@ function lobbyScene(id, roomId, skin) {
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 		for (let i = 0; i < game.players.length; i++){
 			ctx.fillStyle = `rgba(0,${(game.players[i].pName == playerName)*200},0,0.5)`;
-			ctx.fillRect(game.players[i].rect.pos.x + (3.5*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length), game.players[i].rect.pos.y - 0.5*charScaleFact, charScaleFact + 3*charScaleFact*game.players[i].pName.length, -5*charScaleFact);
+			ctx.fillRect(game.players[i].col.origin.x + (3.5*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length), game.players[i].col.origin.y - 0.5*charScaleFact, charScaleFact + 3*charScaleFact*game.players[i].pName.length, -5*charScaleFact);
 			ctx.font = `${charScaleFact*5}px Courier New`;
 			ctx.fillStyle = "rgba(255,255,255,1)";
-			ctx.fillText(game.players[i].pName, game.players[i].rect.pos.x + (4*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length),game.players[i].rect.pos.y - charScaleFact);
+			ctx.fillText(game.players[i].pName, game.players[i].col.origin.x + (4*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length),game.players[i].col.origin.y - charScaleFact);
 			let pFlip = parseInt(game.players[i].flipped);
 			if (pFlip){
-				ctx.drawImage(cows.fimgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].col.pos.x - 4*charScaleFact, game.players[i].col.pos.y - charScaleFact, 16*charScaleFact, 16*charScaleFact);			
+				ctx.drawImage(cows.fimgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].col.origin.x - 4*charScaleFact, game.players[i].col.origin.y - charScaleFact, 16*charScaleFact, 16*charScaleFact);			
 			} else {
-				ctx.drawImage(cows.imgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].col.pos.x - 4*charScaleFact, game.players[i].col.pos.y - charScaleFact, 16*charScaleFact, 16*charScaleFact)
+				ctx.drawImage(cows.imgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].col.origin.x - 4*charScaleFact, game.players[i].col.origin.y - charScaleFact, 16*charScaleFact, 16*charScaleFact)
 			}
+		}
+		for (let i = 0; i < game.projectiles.length; i++){
+			ctx.lineWidth = game.projectiles[i].col.thickness*2;
+			ctx.strokeStyle = 'black';
+			ctx.beginPath();
+			ctx.moveTo(game.projectiles[i].col.origin.x, game.projectiles[i].col.origin.y);
+			ctx.lineTo(game.projectiles[i].col.origin.x+game.projectiles[i].col.points[1].x,game.projectiles[i].col.origin.y+game.projectiles[i].col.points[1].y);
+			ctx.stroke();
 		}
 	}
 
@@ -280,7 +288,7 @@ function selectionScene(){
 			console.log("room made");
 			sock.onmessage = (message) => {
 				temp = JSON.parse(message.data);
-				temp.players.forEach((x) => {x.rect.pos.x = parseInt(x.rect.pos.x); x.rect.pos.y = parseInt(x.rect.pos.y)});
+				temp.players.forEach((x) => {x.col.origin.x = parseInt(x.col.origin.x); x.col.origin.y = parseInt(x.col.origin.y)});
 				game = temp;
 			}
 			changeScene("lobby");
