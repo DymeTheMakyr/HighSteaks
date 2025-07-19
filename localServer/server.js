@@ -41,6 +41,8 @@ class col {
 	}
 	static rect(o, w, h){
 		let c = new col("r", o, vec2(0,0), vec2(0+w,0), vec2(0+w,0+h), vec2(0,0+h));
+		c.width = w;
+		c.height = h;
 		return c;
 	}
 	static sphere(o, r){
@@ -94,45 +96,72 @@ function arrPop(array, index){
 
 function overlap(a, b){
 	if (b.type == "l"){
+	
 		b.points[1].y += b.points[1].y==0?0.000001:0; 
 		let m = (b.points[1].y/b.points[1].x);
 		let c = b.origin.y - m*b.origin.x;
 		let mid = avgVec(a.origin, ...a.points);
+		
 		if (mid.y - m*mid.x < c){
 			let phi = Math.atan(m);
 			c = c - (b.thickness/Math.cos(phi));
+			let edgeCheck = false;
+			let endCheck = false;
+			
 			for (let i = 0; i < 4; i++){
-				let p = addVec(a.points[i], a.origin);
-				if (p.y - m*(p.x) > c){
-					let test = (b.points[1].y>0);
-					console.log(test, b.points[1].y)
-					let abv = test?addVec(b.origin,b.points[1]):b.origin;
-					let blw = test?b.origin:addVec(b.origin,b.points[1]);
-					m = 1/(m==0?0.000001:0);
-					c = p.y + (p.x/m);
-					console.log(c, abv.y+(abv.x/m), blw.y+(blw.x/m));
-					if (c < abv.y + (abv.x/m) && c > blw.y + (blw.x/m)) {
-						return 1;
+				let edge = false;
+				let x = a.points[i].x + a.origin.x;
+				let y = a.points[i].y + a.origin.y;
+				
+				let t = b.points[1].y > 0;
+				let abv = t?addVec(b.points[1],b.origin):b.origin;
+				let blw = t?b.origin:addVec(b.points[1]+b.origin);
+				let im = 1/(m==0?m+0.000001:m);
+				
+				if (y - m*(x) > c) {edgeCheck = true; edge = true;}
+				let endCon = (y + x/m > blw.y + blw.x/m && y + x/m < abv.y + abv.x/m) 
+				if (endCon && edge) { endCheck = true;
+				} else if (endCon && !edge) {
+					let xoff = Math.abs(b.thickness * Math.sin(phi) * 0.9);
+					let yoff = Math.abs(b.thickness * Math.cos(phi) * 0.9);
+					let t = blw.x < abv.x;
+					let lft = t?blw.x:abv.x;
+					let rgt = t?abv.x:blw.x;
+					if ((x > lft - xoff && x < rgt +xoff) && (y > blw.y - yoff && y < abv.y + yoff)){
+						endCheck = true;
 					}
 				}
+				if (edgeCheck && endCheck) return 1;
 			} return 0;
 		} else if (mid.y - m*mid.x > c) {
 			let phi = Math.atan(m);
 			c = c + (b.thickness/Math.cos(phi));
+			let edgeCheck = false;
+			let endCheck  = false;
 			for (let i = 0; i < 4; i++){
-				let p = addVec(a.points[i], a.origin);
-				if (p.y - m*(p.x) > c){
-					let test = (b.points[1].y>0);
-					console.log(test, b.points[1].y);
-					let abv = test?addVec(b.origin,b.points[1]):b.origin;
-					let blw = test?b.origin:addVec(b.origin,b.points[1]);
-					m = 1/(m==0?0.000001:0);
-					c = p.y + (p.x/m);
-					console.log(c, abv, blw, abv.y+(abv.x/m), blw.y+(blw.x/m));
-					if (c < abv.y + (abv.x/m) && c > blw.y + (blw.x/m)) {
-						return 1;
+				let edge = false
+				let x = a.points[i].x + a.origin.x;
+				let y = a.points[i].y + a.origin.y;
+				
+				let t = b.points[1].y > 0;
+				let abv = t?addVec(b.points[1],b.origin):b.origin;
+				let blw = t?b.origin:addVec(b.points[1]+b.origin);
+				let im = 1/(m==0?m+0.000001:m);
+				
+				if (y - m*(x) < c) {edgeCheck = true; edge = true}
+				let endCon = (y + x/m > blw.y + blw.x/m && y + x/m < abv.y + abv.x/m)
+				if (endCon && edge) { endCheck = true;
+				} else if (endCon && !edge) {
+					let xoff = Math.abs(b.thickness * Math.sin(phi) * 0.9);
+					let yoff = Math.abs(b.thickness * Math.cos(phi) * 0.9);
+					let t = blw.x < abv.x;
+					let lft = t?blw.x:abv.x;
+					let rgt = t?abv.x:blw.x;
+					if ((x > lft - xoff && x < rgt +xoff) && (y > blw.y - yoff && y < abv.y + yoff)){
+						endCheck = true;
 					}
 				}
+				if (edgeCheck && endCheck) return 1;
 			} return 0;
 		} else {
 			return 1;
@@ -144,19 +173,17 @@ function overlap(a, b){
 	}
 }
 function temp(){
-	console.log("-"*100);
-	console.log("dia",overlap(games[0].players[0].col, games[0].projectiles[0].col));
-	console.log("lft",overlap(games[0].players[0].col, games[0].projectiles[1].col));
-	console.log("rgt",overlap(games[0].players[0].col, games[0].projectiles[2].col));
+	console.log("-"*100)
+	console.log("lft",overlap(games[0].players[0].col, games[0].projectiles[0].col));
+	console.log("rgt",overlap(games[0].players[0].col, games[0].projectiles[1].col));
 }
 
 function colliderTest(){
 	console.log(1);
 	if (games.length>0){
 		console.log(2);
-		games[0].projectiles.push(new projectile(col.line(vec2(0,0), vec2(640,360), 20), 0, 0, 0, 0));
-		games[0].projectiles.push(new projectile(col.line(vec2(100,100), vec2(300,260), 10), 0, 0, 0, 0));
-		games[0].projectiles.push(new projectile(col.line(vec2(540,0), vec2(340,360), 15), 0, 0, 0, 0));
+		games[0].projectiles.push(new projectile(col.line(vec2(200,100), vec2(400,260), 10), 0, 0, 0, 0));
+		games[0].projectiles.push(new projectile(col.line(vec2(400,100), vec2(200,260), 10), 0, 0, 0, 0));
 		console.log(3);
 		if (games[0].players.length>0){
 			console.log(4);
