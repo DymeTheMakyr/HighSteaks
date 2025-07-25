@@ -96,7 +96,6 @@ function arrPop(array, index){
 
 function overlap(a, b){
 	if (b.type == "l"){
-	
 		b.points[1].y += b.points[1].y==0?0.000001:0; 
 		let m = (b.points[1].y/b.points[1].x);
 		let c = b.origin.y - m*b.origin.x;
