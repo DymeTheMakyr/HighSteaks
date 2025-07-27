@@ -4,20 +4,32 @@ const server = new WebSocket.Server({host:'0.0.0.0', port : 8000 });
 
 let games = [];
 
-function vec2(x, y){
-	return {"x":parseFloat(x), "y":parseFloat(y)};
+class vec{
+	x = 0;
+	y = 0;
+	constructor(_x, _y){
+		this.x = parseFloat(_x);
+		this.y = parseFloat(_y);
+	}
+	static n(_x, _y){
+		return new vec(_x, _y);
+	}
+	static avg(off, ...vecs){
+		let x = 0;
+		let y = 0;
+		vecs.forEach(v => {x += v.x; y += v.y;});
+		x = Math.round(x/vecs.length);
+		y = Math.round(y/vecs.length);
+		return vec.n(off.x+x, off.y+y);
+	}
+	static add(a,b){
+		return vec.n(a.x+b.x, a.y+b.y);
+	}
+	add(a){
+		return vec.n(a.x+this.x, a.y+this.y);
+	}
 }
-function addVec(a,b){
-	return vec2(a.x+b.x, a.y+b.y);
-}
-function avgVec(off, ...vecs){
-	let x = 0;
-	let y = 0;
-	vecs.forEach(v => {x += v.x; y += v.y;});
-	x = Math.round(x/vecs.length);
-	y = Math.round(y/vecs.length);
-	return vec2(off.x+x, off.y+y);
-}
+
 function setPos(obj, x, y){
 	obj.col.origin = {"x":x, "y":y};
 }
@@ -31,7 +43,7 @@ class game{
 	}
 }
 class col {
-	origin = vec2(0,0);
+	origin = vec.n(0,0);
 	points = [];
 	type = "r";
 	constructor(t, o, ...p){
@@ -40,24 +52,24 @@ class col {
 		this.points = p;
 	}
 	static rect(o, w, h){
-		let c = new col("r", o, vec2(0,0), vec2(0+w,0), vec2(0+w,0+h), vec2(0,0+h));
+		let c = new col("r", o, vec.n(0,0), vec.n(0+w,0), vec.n(0+w,0+h), vec.n(0,0+h));
 		c.width = w;
 		c.height = h;
 		return c;
 	}
 	static sphere(o, r){
-		let c = new col("s", o, vec2(0,0));
+		let c = new col("s", o, vec.n(0,0));
 		c.radius = r;
 		return c;
 	}
 	static line(o, e, t){
-		let c = new col("l", o, vec2(0,0), vec2(e.x-o.x, e.y-o.y));
+		let c = new col("l", o, vec.n(0,0), vec.n(e.x-o.x, e.y-o.y));
 		c.thickness = t;
 		return c;
 	}
 }
 class player {
-	col = col.rect(vec2(50,50), 16, 30);
+	col = col.rect(vec.n(50,50), 16, 30);
 	flipped = false;
 	item = "gun";
 	skin = "hereford";
@@ -77,7 +89,7 @@ class player {
 class projectile {
 	col;
 	flipped = false;
-	speed = new vec2(0,0);
+	speed = vec.n(0,0);
 	damage = 10;
 	life = 10;
 	owner = 0;
@@ -99,7 +111,7 @@ function overlap(a, b){
 		b.points[1].y += b.points[1].y==0?0.000001:0; 
 		let m = (b.points[1].y/b.points[1].x);
 		let c = b.origin.y - m*b.origin.x;
-		let mid = avgVec(a.origin, ...a.points);
+		let mid = vec.avg(a.origin, ...a.points);
 		
 		if (mid.y - m*mid.x < c){
 			let phi = Math.atan(m);
@@ -113,8 +125,8 @@ function overlap(a, b){
 				let y = a.points[i].y + a.origin.y;
 				
 				let t = b.points[1].y > 0;
-				let abv = t?addVec(b.points[1],b.origin):b.origin;
-				let blw = t?b.origin:addVec(b.points[1]+b.origin);
+				let abv = t?vec.add(b.points[1],b.origin):b.origin;
+				let blw = t?b.origin:vec.add(b.points[1]+b.origin);
 				let im = 1/(m==0?m+0.000001:m);
 				
 				if (y - m*(x) > c) {edgeCheck = true; edge = true;}
@@ -143,8 +155,8 @@ function overlap(a, b){
 				let y = a.points[i].y + a.origin.y;
 				
 				let t = b.points[1].y > 0;
-				let abv = t?addVec(b.points[1],b.origin):b.origin;
-				let blw = t?b.origin:addVec(b.points[1]+b.origin);
+				let abv = t?vec.add(b.points[1],b.origin):b.origin;
+				let blw = t?b.origin:vec.add(b.points[1]+b.origin);
 				let im = 1/(m==0?m+0.000001:m);
 				
 				if (y - m*(x) < c) {edgeCheck = true; edge = true}
@@ -168,7 +180,9 @@ function overlap(a, b){
 	} else if (b.type == "r"){
 		
 	} else if (b.type == "s"){
-	
+		for (let i = 0; i < 4; i++){
+			
+		}
 	}
 }
 function temp(){
@@ -181,8 +195,8 @@ function colliderTest(){
 	console.log(1);
 	if (games.length>0){
 		console.log(2);
-		games[0].projectiles.push(new projectile(col.line(vec2(200,100), vec2(400,260), 10), 0, 0, 0, 0));
-		games[0].projectiles.push(new projectile(col.line(vec2(400,100), vec2(200,260), 10), 0, 0, 0, 0));
+		games[0].projectiles.push(new projectile(col.line(vec.n(200,100), vec.n(400,260), 10), 0, 0, 0, 0));
+		games[0].projectiles.push(new projectile(col.line(vec.n(400,100), vec.n(200,260), 10), 0, 0, 0, 0));
 		console.log(3);
 		if (games[0].players.length>0){
 			console.log(4);
@@ -224,7 +238,7 @@ server.on('connection', (socket) => {
 				let pIndx = game.players.findIndex(x => x.pName == args[2]);
 				let player = game.players[pIndx]; 
 				if (player != null){
-					player.col.origin = vec2(args[3],args[4]);
+					player.col.origin = vec.n(args[3],args[4]);
 					player.flipped = parseInt(args[5]);
 					socket.send(JSON.stringify(game));
 				}
