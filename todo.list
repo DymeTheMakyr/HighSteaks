@@ -1,10 +1,10 @@
 Todo
 -Name Display --COMPLETE--
 -Rect property/class --COMPLETE--
--collide function (1/3)
+-collide function (2/3)
  -line --COMPLETE--
  -4corner rect
- -sphere
+ -sphere --COMPLETE--
 -lobby sprites
 -lobby progression
 -blackjack sprites

@@ -7,3 +7,4 @@ Circle 4 corner
 3rd exaple:
 if circle is approching bottom right of rect, check if top of circle is higher than bottom and is between the bottom corners
 					    , check if left of curcle is left of right and is between the right corners
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

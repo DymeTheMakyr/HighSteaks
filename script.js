@@ -208,12 +208,21 @@ function lobbyScene(id, roomId, skin) {
 			}
 		}
 		for (let i = 0; i < game.projectiles.length; i++){
-			ctx.lineWidth = game.projectiles[i].col.thickness*2;
-			ctx.strokeStyle = 'black';
-			ctx.beginPath();
-			ctx.moveTo(game.projectiles[i].col.origin.x, game.projectiles[i].col.origin.y);
-			ctx.lineTo(game.projectiles[i].col.origin.x+game.projectiles[i].col.points[1].x,game.projectiles[i].col.origin.y+game.projectiles[i].col.points[1].y);
-			ctx.stroke();
+			if (game.projectiles[i].col.type == "l"){
+				let c = game.projectiles[i].col;
+				ctx.lineWidth = c.thickness*2;
+				ctx.strokeStyle = 'black';
+				ctx.beginPath();
+				ctx.moveTo(c.origin.x, c.origin.y);
+				ctx.lineTo(c.origin.x + c.points[1].x, c.origin.y + c.points[1].y);
+				ctx.stroke();
+			} else if (game.projectiles[i].col.type == "c"){
+				let c = game.projectiles[i].col;
+				ctx.fillStyle = 'red';
+				ctx.beginPath();
+				ctx.arc(c.origin.x, c.origin.y, c.radius, 0, 2*Math.PI);
+				ctx.fill();
+			}
 		}
 	}
 

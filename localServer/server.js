@@ -20,13 +20,20 @@ class vec{
 		vecs.forEach(v => {x += v.x; y += v.y;});
 		x = Math.round(x/vecs.length);
 		y = Math.round(y/vecs.length);
-		return vec.n(off.x+x, off.y+y);
+		if (off.x != null && off.y != null){
+			return vec.n(off.x+x, off.y+y);
+		} else {
+			return vec.n(x, y);
+		}
 	}
 	static add(a,b){
 		return vec.n(a.x+b.x, a.y+b.y);
 	}
-	add(a){
-		return vec.n(a.x+this.x, a.y+this.y);
+	static sub(a,b){
+		return vec.n(a.x-b.x, a.y-b.y);
+	}
+	static distance(a,b){
+		return ((a.x-b.x)**2 + (a.y-b.y)**2)**0.5;
 	}
 }
 
@@ -57,8 +64,8 @@ class col {
 		c.height = h;
 		return c;
 	}
-	static sphere(o, r){
-		let c = new col("s", o, vec.n(0,0));
+	static circle(o, r){
+		let c = new col("c", o, vec.n(0,0));
 		c.radius = r;
 		return c;
 	}
@@ -179,16 +186,27 @@ function overlap(a, b){
 		}
 	} else if (b.type == "r"){
 		
-	} else if (b.type == "s"){
+	} else if (b.type == "c"){
 		for (let i = 0; i < 4; i++){
-			
+			if (vec.distance(vec.add(a.origin,a.points[i]),b.origin) < b.radius){
+				return 1;
+			}
 		}
+		let aCntr = vec.add(vec.avg(0, ...a.points), a.origin);
+		let xdif = Math.abs(aCntr.x - b.origin.x);
+		let ydif = Math.abs(aCntr.y - b.origin.y);
+		if ((xdif < b.radius + a.width/2 && ydif < a.height/2) || (ydif < b.radius + a.height/2 && xdif < a.width/2)){
+			return 1;
+		}
+		return 0;
 	}
 }
 function temp(){
 	console.log("-"*100)
 	console.log("lft",overlap(games[0].players[0].col, games[0].projectiles[0].col));
 	console.log("rgt",overlap(games[0].players[0].col, games[0].projectiles[1].col));
+	console.log("CRC",overlap(games[0].players[0].col, games[0].projectiles[2].col));
+	console.log("crc",overlap(games[0].players[0].col, games[0].projectiles[3].col));
 }
 
 function colliderTest(){
@@ -197,6 +215,8 @@ function colliderTest(){
 		console.log(2);
 		games[0].projectiles.push(new projectile(col.line(vec.n(200,100), vec.n(400,260), 10), 0, 0, 0, 0));
 		games[0].projectiles.push(new projectile(col.line(vec.n(400,100), vec.n(200,260), 10), 0, 0, 0, 0));
+		games[0].projectiles.push(new projectile(col.circle(vec.n(300, 50), 20), 0,0,0,0));
+		games[0].projectiles.push(new projectile(col.circle(vec.n(400, 50), 5), 0,0,0,0));
 		console.log(3);
 		if (games[0].players.length>0){
 			console.log(4);
