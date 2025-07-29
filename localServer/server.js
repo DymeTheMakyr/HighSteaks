@@ -185,14 +185,19 @@ function overlap(a, b){
 			return 1;
 		}
 	} else if (b.type == "r"){
-		
+		let aCntr = vec.avg(a.origin, ...a.points);
+		let bCntr = vec.avg(b.origin, ...b.points);
+		if (aCntr.x - bCntr.x < (a.width+b.width)/2 && aCntr.y - bCntr.y < (a.height - b.height)/2){
+			return 1;
+		}
+		return 0;
 	} else if (b.type == "c"){
 		for (let i = 0; i < 4; i++){
 			if (vec.distance(vec.add(a.origin,a.points[i]),b.origin) < b.radius){
 				return 1;
 			}
 		}
-		let aCntr = vec.add(vec.avg(0, ...a.points), a.origin);
+		let aCntr = vec.avg(a.origin, ...a.points);
 		let xdif = Math.abs(aCntr.x - b.origin.x);
 		let ydif = Math.abs(aCntr.y - b.origin.y);
 		if ((xdif < b.radius + a.width/2 && ydif < a.height/2) || (ydif < b.radius + a.height/2 && xdif < a.width/2)){

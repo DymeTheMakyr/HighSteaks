@@ -3,7 +3,7 @@ Todo
 -Rect property/class --COMPLETE--
 -collide function (2/3)
  -line --COMPLETE--
- -4corner rect
+ -4corner rect --IN PROGRESS--
  -sphere --COMPLETE--
 -lobby sprites
 -lobby progression
