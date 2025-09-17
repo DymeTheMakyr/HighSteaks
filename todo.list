@@ -1,7 +1,7 @@
 Todo
 -Name Display --COMPLETE--
 -Rect property/class --COMPLETE--
--collide function (2/3)
+-collide function (3/3) --COMPLETE--
  -line --COMPLETE--
  -distance rect --COMPLETE--
  -sphere --COMPLETE--
