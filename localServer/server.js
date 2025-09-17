@@ -187,7 +187,8 @@ function overlap(a, b){
 	} else if (b.type == "r"){
 		let aCntr = vec.avg(a.origin, ...a.points);
 		let bCntr = vec.avg(b.origin, ...b.points);
-		if (aCntr.x - bCntr.x < (a.width+b.width)/2 && aCntr.y - bCntr.y < (a.height - b.height)/2){
+		
+		if (Math.abs(aCntr.x - bCntr.x) < (a.width + b.width)/2 && Math.abs(aCntr.y - bCntr.y) < (a.height+b.height)/2){
 			return 1;
 		}
 		return 0;
@@ -212,6 +213,8 @@ function temp(){
 	console.log("rgt",overlap(games[0].players[0].col, games[0].projectiles[1].col));
 	console.log("CRC",overlap(games[0].players[0].col, games[0].projectiles[2].col));
 	console.log("crc",overlap(games[0].players[0].col, games[0].projectiles[3].col));
+	console.log("LCT",overlap(games[0].players[0].col, games[0].projectiles[4].col));
+	console.log("RCT",overlap(games[0].players[0].col, games[0].projectiles[5].col));
 }
 
 function colliderTest(){
@@ -222,6 +225,9 @@ function colliderTest(){
 		games[0].projectiles.push(new projectile(col.line(vec.n(400,100), vec.n(200,260), 10), 0, 0, 0, 0));
 		games[0].projectiles.push(new projectile(col.circle(vec.n(300, 50), 20), 0,0,0,0));
 		games[0].projectiles.push(new projectile(col.circle(vec.n(400, 50), 5), 0,0,0,0));
+		games[0].projectiles.push(new projectile(col.rect(vec.n(40, 280), 40, 40), 0,0,0,0));
+		games[0].projectiles.push(new projectile(col.rect(vec.n(560, 280), 40, 40), 0,0,0,0));
+		
 		console.log(3);
 		if (games[0].players.length>0){
 			console.log(4);

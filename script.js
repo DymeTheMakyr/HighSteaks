@@ -230,6 +230,11 @@ function lobbyScene(id, roomId, skin) {
 				ctx.beginPath();
 				ctx.arc(c.origin.x, c.origin.y, c.radius, 0, 2*Math.PI);
 				ctx.fill();
+			} else if (game.projectiles[i].col.type == "r"){
+				let c = game.projectiles[i].col;
+				console.log(c);
+				ctx.fillStyle = 'blue';
+				ctx.fillRect(c.origin.x, c.origin.y, c.width, c.height);
 			}
 		}
 	}
