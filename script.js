@@ -178,6 +178,14 @@ function lobbyScene(id, roomId, skin) {
 
 	function mainloop() {
 		
+		if (sock.readyState === WebSocket.CLOSED){
+			try{
+				return;
+			} finally {
+				changeScene("selection");
+			}
+		}
+		
 		//Update Velocity
 		vel.x = baseSpeed * (keys.a ^ keys.d) * (keys.a ? -1 : 1) * (keys.shift * sprintFact + 1);
 		vel.y = baseSpeed * (keys.w ^ keys.s) * (keys.w ? -1 : 1) * (keys.shift * sprintFact + 1);
@@ -255,7 +263,7 @@ function lobbyScene(id, roomId, skin) {
 		window.removeEventListener('keyup', keyup);
 		window.removeEventListener('resize', resize);
 		clearInterval(mlId);
-		clearInterval(gsId);
+//		clearInterval(gsId);
 	}
 	return unbindLocal;
 }
