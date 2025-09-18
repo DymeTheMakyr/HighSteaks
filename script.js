@@ -196,7 +196,7 @@ function lobbyScene(id, roomId, skin) {
 		if (vel.x != 0) flip = 1 * (vel.x < 0);
 		
 		//Send To Serve
-		sock.send(`m⌥${roomNo}⌥${playerName}⌥${x}⌥${y}⌥${flip}`);
+		sock.send(`m\x1F${roomNo}\x1F${playerName}\x1F${x}\x1F${y}\x1F${flip}`);
 		
 		//prepare draww order;
 		let draw = game.players.sort((a,b) => a.rect.pos.y - b.rect.pos.y);
@@ -297,11 +297,11 @@ function selectionScene(){
 		let rId = container.children[0].children[7].value;
 		let skn = container.children[0].children[9].value;
 		if (nam.length = 0) {alert("Input Name"); return 0;}
-		if (nam.includes("⌥")) {alert("Forbidden character '⌥' in name"); return 0;}
+		if (nam.includes("\x1F")) {alert("Forbidden character '\x1F' in name"); return 0;}
 		if (rId.length != 4) {alert("Room ID needs 4 characters"); return 0;}
 		if (skn < 0) {alert("Select Skin"); return 0;}
 		sock = new WebSocket(chooseAddr());
-		sock.onopen = () => {console.log(`h⌥${nam}⌥${rId}⌥${skn}`[0]);sock.send(`h⌥${nam}⌥${rId}⌥${skn}`)};
+		sock.onopen = () => {console.log(`h\x1F${nam}\x1F${rId}\x1F${skn}`);sock.send(`h\x1F${nam}\x1F${rId}\x1F${skn}`)};
 		sock.onmessage = (message) => {if (message.data.toString() == -1){alert("Room Not Available");sock.close();return 0;} 
 		else {
 			game=JSON.parse(message.data);
@@ -321,12 +321,12 @@ function selectionScene(){
 		let rId = container.children[0].children[7].value;
 		let skn = container.children[0].children[9].value;
 		if (nam.length = 0) {alert("Input Name"); return 0;}
-		if (nam.includes("⌥")) {alert("Forbidden character '⌥' in name"); return 0;}
+		if (nam.includes("\x1F")) {alert("Forbidden character '\x1F' in name"); return 0;}
 		if (rId.length != 4) {alert("Room ID needs 4 characters"); return 0;}
 		if (skn < 0) {alert("Select Skin"); return 0;}
 		if (chooseAddr == "ws://"){alert("Input IP address"); return;}
 		sock = new WebSocket(chooseAddr());
-		sock.onopen = () => {console.log(`j⌥${nam}⌥${rId}⌥${skn}`[0]);sock.send(`j⌥${nam}⌥${rId}⌥${skn}`)};
+		sock.onopen = () => {console.log(`j\x1F${nam}\x1F${rId}\x1F${skn}`[0]);sock.send(`j\x1F${nam}\x1F${rId}\x1F${skn}`)};
 		sock.onmessage = (message) => {if (message.data == -1){alert("Room Not Found");sock.close();return 0;} 
 			else if (message.data == -2){alert("Another User Has This Name");sock.close();return 0;} 
 			else if (message.data == -3){alert("This Room Is Full");sock.close();return 0;}else {console.log(message.data); 

@@ -83,14 +83,14 @@ class player {
 	health = 100;
 	money = 0;
 	cards = [[0,0],[3,12]];
-	pName = "";
+	pName = "NullName";
 	constructor(it, sk, he, mo, ca, na){
 		this.item = it;
 		this.skin = sk;
 		this.health = he;
 		this.money = mo;
 		this.cards = ca;
-		this.pName = na;
+		if (na != null) this.pName = na;
 	}
 }
 class projectile {
@@ -242,7 +242,7 @@ server.on('connection', (socket) => {
 	socket.on('message', (message) => {
 		message = message.toString();
 		if (message[0] == 'h'){
-			let args = message.split("⌥");
+			let args = message.split("\x1F");
 			if (games.find(x => x.id == args[2]) == null){
 				id = args[1]+args[2];
 				let nGame = new game(args[2]);
@@ -253,7 +253,7 @@ server.on('connection', (socket) => {
 			} else {socket.send(-1); console.log("room not made");}
 		} else if (message[0] == 'j') {
 			console.log("joining");
-			let args = message.split("⌥");
+			let args = message.split("\x1F");
 			let game = games.find(x => x.id == args[2]);
 			if (game != null){
 				if (game.players.find(x => x.pName == args[1]) != null){socket.send(-2); return 0;}
@@ -263,7 +263,7 @@ server.on('connection', (socket) => {
 				socket.send(JSON.stringify(game));
 			} else {socket.send(-1);}
 		} else if (message[0] == "m") {
-			let args = message.split("⌥");
+			let args = message.split("\x1F");
 			let game = games.find(x => x.id==args[1]);
 			if (game != null){
 				let pIndx = game.players.findIndex(x => x.pName == args[2]);
