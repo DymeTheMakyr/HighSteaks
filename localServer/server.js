@@ -221,8 +221,8 @@ function colliderTest(){
 	console.log(1);
 	if (games.length>0){
 		console.log(2);
-		games[0].projectiles.push(new projectile(col.line(vec.n(200,100), vec.n(400,260), 10), 0, 0, 0, 0));
-		games[0].projectiles.push(new projectile(col.line(vec.n(400,100), vec.n(200,260), 10), 0, 0, 0, 0));
+		games[0].projectiles.push(new projectile(col.line(vec.n(200,100), vec.n(440,260), 10), 0, 0, 0, 0));
+		games[0].projectiles.push(new projectile(col.line(vec.n(440,100), vec.n(200,260), 10), 0, 0, 0, 0));
 		games[0].projectiles.push(new projectile(col.circle(vec.n(300, 50), 20), 0,0,0,0));
 		games[0].projectiles.push(new projectile(col.circle(vec.n(400, 50), 5), 0,0,0,0));
 		games[0].projectiles.push(new projectile(col.rect(vec.n(40, 280), 40, 40), 0,0,0,0));

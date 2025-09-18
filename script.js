@@ -84,7 +84,7 @@ class background {
 	static imgs = [];
 	
 	static {
-		background.imgs.push(loadImg("bg\\lobby.png"));
+		background.imgs.push(loadImg("./background/floor2.png"));
 	}
 }
 
@@ -211,8 +211,10 @@ function lobbyScene(id, roomId, skin) {
 		let draw = game.players.sort((a,b) => a.col.origin.y - b.col.origin.y);
 		//Clear And Draw
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-		ctx.drawImage(background.imgs[0],0,0)
+		ctx.drawImage(background.imgs[0],0,0,640,360)
 		for (let i = 0; i < game.players.length; i++){
+			ctx.fillStyle = `rgba(10,10,10,0.5)`
+			ctx.fillRect(game.players[i].col.origin.x - charScaleFact, game.players[i].col.origin.y + 13*charScaleFact, 10*charScaleFact, 3*charScaleFact)
 			ctx.fillStyle = `rgba(0,${(game.players[i].pName == playerName)*200},0,0.5)`;
 			ctx.fillRect(game.players[i].col.origin.x + (3.5*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length), game.players[i].col.origin.y - 0.5*charScaleFact, charScaleFact + 3*charScaleFact*game.players[i].pName.length, -5*charScaleFact);
 			ctx.font = `${charScaleFact*5}px Courier New`;
@@ -241,8 +243,7 @@ function lobbyScene(id, roomId, skin) {
 				ctx.arc(c.origin.x, c.origin.y, c.radius, 0, 2*Math.PI);
 				ctx.fill();
 			} else if (game.projectiles[i].col.type == "r"){
-				let c = game.projectiles[i].col;
-				console.log(c);
+				let c = game.projectiles[i].col; 
 				ctx.fillStyle = 'blue';
 				ctx.fillRect(c.origin.x, c.origin.y, c.width, c.height);
 			}
