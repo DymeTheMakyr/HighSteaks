@@ -79,6 +79,15 @@ class cows {
 		}
 	}
 }
+// background manager
+class background {
+	static imgs = [];
+	
+	static {
+		background.imgs.push(loadImg("bg\\lobby.png"));
+	}
+}
+
 
 // Game Scene
 function lobbyScene(id, roomId, skin) {
@@ -199,9 +208,10 @@ function lobbyScene(id, roomId, skin) {
 		sock.send(`m\x1F${roomNo}\x1F${playerName}\x1F${x}\x1F${y}\x1F${flip}`);
 		
 		//prepare draww order;
-		let draw = game.players.sort((a,b) => a.rect.pos.y - b.rect.pos.y);
+		let draw = game.players.sort((a,b) => a.col.origin.y - b.col.origin.y);
 		//Clear And Draw
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+		ctx.drawImage(background.imgs[0],0,0)
 		for (let i = 0; i < game.players.length; i++){
 			ctx.fillStyle = `rgba(0,${(game.players[i].pName == playerName)*200},0,0.5)`;
 			ctx.fillRect(game.players[i].col.origin.x + (3.5*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length), game.players[i].col.origin.y - 0.5*charScaleFact, charScaleFact + 3*charScaleFact*game.players[i].pName.length, -5*charScaleFact);
@@ -335,7 +345,7 @@ function selectionScene(){
 			roomNo = rId;
 			sock.onmessage = (message) => {
 				temp = JSON.parse(message.data);
-				temp.players.forEach((x) => {x.rect.pos.x = parseInt(x.rect.pos.x); x.rect.pos.y = parseInt(x.rect.pos.y)});
+				temp.players.forEach((x) => {x.col.origin.x = parseInt(x.col.origin.x); x.col.origin.y = parseInt(x.col.origin.y)});
 				game = temp;
 			}
 			changeScene("lobby");
