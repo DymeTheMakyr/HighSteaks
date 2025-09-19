@@ -336,12 +336,14 @@ function lobbyScene(id, roomId, skin) {
 		vel.x = baseSpeed * (keys.a ^ keys.d) * (keys.a ? -1 : 1) * (keys.shift * sprintFact + 1);
 		vel.y = baseSpeed * (keys.w ^ keys.s) * (keys.w ? -1 : 1) * (keys.shift * sprintFact + 1);
 		//Update Position
-		if (((0 < x) & keys.a) | ((x < ctx.canvas.width - 8*charScaleFact) & keys.d)) x += vel.x;
-		if (((0 < y) & keys.w) | ((y < ctx.canvas.height - 15*charScaleFact) & keys.s)) y += vel.y;
+		//if (((0 < x) & keys.a) | ((x < ctx.canvas.width - 8*charScaleFact) & keys.d)) x += vel.x;
+		//if (((0 < y) & keys.w) | ((y < ctx.canvas.height - 15*charScaleFact) & keys.s)) y += vel.y;
+		
+		
 		
 		if (vel.x != 0) flip = 1 * (vel.x < 0);
 		//Send To Serve
-		sock.send(`m\x1F${roomNo}\x1F${playerName}\x1F${x}\x1F${y}\x1F${flip}`);
+		sock.send(`m\x1F${roomNo}\x1F${playerName}\x1F${vel.x}\x1F${vel.y}\x1F${flip}`);
 		
 		//prepare draww order;
 		let draw = game.players.sort((a,b) => a.col.origin.y - b.col.origin.y);
@@ -364,7 +366,7 @@ function lobbyScene(id, roomId, skin) {
 			}
 		}
 		for (let i = 0; i < game.colliders.length; i++){
-			if (game.projectiles[i].type == "l"){
+			if (game.colliders[i].type == "l"){
 				let c = game.colliders[i];
 				ctx.lineWidth = c.thickness*2;
 				ctx.strokeStyle = 'black';
@@ -378,7 +380,7 @@ function lobbyScene(id, roomId, skin) {
 				ctx.beginPath();
 				ctx.arc(c.origin.x, c.origin.y, c.radius, 0, 2*Math.PI);
 				ctx.fill();
-			} else if (game.projectiles[i].type == "r"){
+			} else if (game.colliders[i].type == "r"){
 				let c = game.colliders[i]; 
 				ctx.fillStyle = 'blue';
 				ctx.fillRect(c.origin.x, c.origin.y, c.width, c.height);

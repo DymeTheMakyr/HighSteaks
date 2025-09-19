@@ -41,8 +41,12 @@ class vec{
 	}
 }
 
-function setPos(obj, x, y){
-	obj.col.origin = {"x":x, "y":y};
+function setPos(obj, ...args){
+	if (args.length == 3){
+		obj.col.origin = {"x":args[1], "y":args[2]};
+	} else if (args.length == 2){
+		obj.col.origin = args[1];
+	}
 }
 class game{
 	id = 0;
@@ -137,7 +141,11 @@ function collide(a, b){
 		let yDist = Math.abs(aCntr.y - bCntr.y);
 		
 		if (xDist < tWidth && yDist < tHeight){
-			return vec.n((bCntr.x<aCntr.x?1:-1)*(tWidth - xDist), (bCntr.y<aCntr.y?1:-1)*(tHeight - yDist));
+			if (xDist/tWidth < yDist/tHeight){
+				return vec.n(0, (bCntr.y<aCntr.y?1:-1)*(tHeight - yDist));
+			} else {
+				return vec.n((bCntr.x<aCntr.x?1:-1)*(tWidth - xDist),0);
+			}
 		}
 		return 0;
 	} return -1;
@@ -238,29 +246,13 @@ function overlap(a, b){
 	}
 }
 
-function colliderTest(id){
-	console.log(1);
-	if (gameManager.games.length>0){
-		console.log(2);
-		gameManager.games[id].colliders.push(col.srect(vec.n(40, 280), 40, 40));
-		gameManager.games[id].colliders.push(col.srect(vec.n(560, 280), 40, 40));
-		
-		console.log(3);
-		if (gameManager.games[id].players.length>0){
-			console.log(4);
-			setInterval(temp,1000);
-		}
-	}	
-}
 
 function collisionHandler(id){
-	console.log(gameManager.games[id])
 	for (let p = 0; p < gameManager.games[id].players.length; p++){
 		for (let c = 0; c < gameManager.games[id].colliders.length; c++){
-			let adj = collide(p.col, c);
-			if (typeof(a) == 'object'){
-				console.log(adj);
-				p.col.origin = vec.add(p.col.origin, adj);
+			let adj = collide(gameManager.games[id].players[p].col, gameManager.games[id].colliders[c]);
+			if (typeof(adj) == 'object'){
+				gameManager.games[id].players[p].col.origin = vec.add(gameManager.games[id].players[p].col.origin, adj);
 			}
 		}
 	}	
@@ -281,10 +273,11 @@ server.on('connection', (socket) => {
 				id = args[1]+args[2];
 				let nGame = new game(args[2]);
 				nGame.players.push(new player("", args[3], 100, 0, [], args[1]));
+				nGame.colliders.push(col.srect(vec.n(40, 280), 40, 40));
+				nGame.colliders.push(col.srect(vec.n(560, 280), 40, 40));
 				gameManager.games[args[2]] = nGame;
-				gameManager.collisionHandlers[args[2]] = setInterval(collisionHandler, 1000, args[2]);
+				gameManager.collisionHandlers[args[2]] = collisionHandler;
 				socket.send(JSON.stringify(nGame));
-				colliderTest(args[2]);
 			} else {socket.send(-1); console.log("room not made");}
 		} else if (message[0] == 'j') {
 			console.log("joining");
@@ -304,8 +297,9 @@ server.on('connection', (socket) => {
 				let pIndx = game.players.findIndex(x => x.pName == args[2]);
 				let player = game.players[pIndx]; 
 				if (player != null){
-					player.col.origin = vec.n(args[3],args[4]);
+					player.col.origin = vec.add(player.col.origin, vec.n(args[3],args[4]));
 					player.flipped = parseInt(args[5]);
+					gameManager.collisionHandlers[args[1]](args[1]);
 					socket.send(JSON.stringify(game));
 				}
 			}
@@ -320,13 +314,10 @@ server.on('connection', (socket) => {
 			let gId = id.slice(-4);
 			let pIndx = gameManager.games[gId].players.findIndex(x => x.pName == pId);
 			gameManager.games[gId].players = arrPop(gameManager.games[gId].players, pIndx);
-			console.log(gameManager.games[gId]);
-			console.log(gameManager.collisionHandlers);
 			if (gameManager.games[gId].players.length == 0){
 				delete gameManager.games[gId];
 				clearInterval(gameManager.collisionHandlers[gId]);
 				delete gameManager.collisionHandlers[gId];
-				console.log(gameManager.collisionHandlers);
 			}
 		}
 	});
