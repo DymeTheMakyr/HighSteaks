@@ -2,7 +2,11 @@ const WebSocket = require('ws');
 
 const server = new WebSocket.Server({host:'0.0.0.0', port : 8000 });
 
-let games = [];
+class gameManager{
+	static games = {};
+	static collisionHandlers = {};
+	static projectileHandlers = [];
+}
 
 class vec{
 	x = 0;
@@ -42,8 +46,10 @@ function setPos(obj, x, y){
 }
 class game{
 	id = 0;
+	currentRound = 0;
 	players = [];
 	projectiles = [];
+	colliders = [];
 	locked = 0;
 	constructor(args) {
 		this.id=args;
@@ -62,6 +68,14 @@ class col {
 		let c = new col("r", o, vec.n(0,0), vec.n(0+w,0), vec.n(0+w,0+h), vec.n(0,0+h));
 		c.width = w;
 		c.height = h;
+		c.solid = false;
+		return c;
+	}
+	static srect(o, w, h){
+		let c = new col("r", o, vec.n(0,0), vec.n(0+w,0), vec.n(0+w,0+h), vec.n(0,0+h));
+		c.width = w;
+		c.height = h;
+		c.solid = true;
 		return c;
 	}
 	static circle(o, r){
@@ -111,6 +125,22 @@ class projectile {
 
 function arrPop(array, index){
 	return array.slice(0, index).concat(array.slice(index+1));
+}
+
+function collide(a, b){
+	if (b.type == "r" && b.solid){
+		let aCntr = vec.avg(a.origin, ...a.points);
+		let bCntr = vec.avg(b.origin, ...b.points);
+		let tWidth = (a.width+b.width)/2;
+		let tHeight = (a.height+b.height)/2;
+		let xDist = Math.abs(aCntr.x - bCntr.x);
+		let yDist = Math.abs(aCntr.y - bCntr.y);
+		
+		if (xDist < tWidth && yDist < tHeight){
+			return vec.n((bCntr.x<aCntr.x?1:-1)*(tWidth - xDist), (bCntr.y<aCntr.y?1:-1)*(tHeight - yDist));
+		}
+		return 0;
+	} return -1;
 }
 
 function overlap(a, b){
@@ -184,7 +214,7 @@ function overlap(a, b){
 		} else {
 			return 1;
 		}
-	} else if (b.type == "r"){
+	} else if (b.type == "r" && !b.solid){
 		let aCntr = vec.avg(a.origin, ...a.points);
 		let bCntr = vec.avg(b.origin, ...b.points);
 		
@@ -207,33 +237,37 @@ function overlap(a, b){
 		return 0;
 	}
 }
-function temp(){
-	console.log("-"*100)
-	console.log("lft",overlap(games[0].players[0].col, games[0].projectiles[0].col));
-	console.log("rgt",overlap(games[0].players[0].col, games[0].projectiles[1].col));
-	console.log("CRC",overlap(games[0].players[0].col, games[0].projectiles[2].col));
-	console.log("crc",overlap(games[0].players[0].col, games[0].projectiles[3].col));
-	console.log("LCT",overlap(games[0].players[0].col, games[0].projectiles[4].col));
-	console.log("RCT",overlap(games[0].players[0].col, games[0].projectiles[5].col));
-}
 
-function colliderTest(){
+function colliderTest(id){
 	console.log(1);
-	if (games.length>0){
+	if (gameManager.games.length>0){
 		console.log(2);
-		games[0].projectiles.push(new projectile(col.line(vec.n(200,100), vec.n(440,260), 10), 0, 0, 0, 0));
-		games[0].projectiles.push(new projectile(col.line(vec.n(440,100), vec.n(200,260), 10), 0, 0, 0, 0));
-		games[0].projectiles.push(new projectile(col.circle(vec.n(300, 50), 20), 0,0,0,0));
-		games[0].projectiles.push(new projectile(col.circle(vec.n(400, 50), 5), 0,0,0,0));
-		games[0].projectiles.push(new projectile(col.rect(vec.n(40, 280), 40, 40), 0,0,0,0));
-		games[0].projectiles.push(new projectile(col.rect(vec.n(560, 280), 40, 40), 0,0,0,0));
+		gameManager.games[id].colliders.push(col.srect(vec.n(40, 280), 40, 40));
+		gameManager.games[id].colliders.push(col.srect(vec.n(560, 280), 40, 40));
 		
 		console.log(3);
-		if (games[0].players.length>0){
+		if (gameManager.games[id].players.length>0){
 			console.log(4);
 			setInterval(temp,1000);
 		}
 	}	
+}
+
+function collisionHandler(id){
+	console.log(gameManager.games[id])
+	for (let p = 0; p < gameManager.games[id].players.length; p++){
+		for (let c = 0; c < gameManager.games[id].colliders.length; c++){
+			let adj = collide(p.col, c);
+			if (typeof(a) == 'object'){
+				console.log(adj);
+				p.col.origin = vec.add(p.col.origin, adj);
+			}
+		}
+	}	
+}
+
+function projectileHandler(id){
+	
 }
 
 server.on('connection', (socket) => {
@@ -243,18 +277,19 @@ server.on('connection', (socket) => {
 		message = message.toString();
 		if (message[0] == 'h'){
 			let args = message.split("\x1F");
-			if (games.find(x => x.id == args[2]) == null){
+			if (gameManager.games[args[2]] == null){
 				id = args[1]+args[2];
 				let nGame = new game(args[2]);
 				nGame.players.push(new player("", args[3], 100, 0, [], args[1]));
-				games.push(nGame);
+				gameManager.games[args[2]] = nGame;
+				gameManager.collisionHandlers[args[2]] = setInterval(collisionHandler, 1000, args[2]);
 				socket.send(JSON.stringify(nGame));
-				colliderTest();
+				colliderTest(args[2]);
 			} else {socket.send(-1); console.log("room not made");}
 		} else if (message[0] == 'j') {
 			console.log("joining");
 			let args = message.split("\x1F");
-			let game = games.find(x => x.id == args[2]);
+			let game = gameManager.games[args[2]];
 			if (game != null){
 				if (game.players.find(x => x.pName == args[1]) != null){socket.send(-2); return 0;}
 				if (game.players.length == 4){socket.send(-3); return 0;}
@@ -264,7 +299,7 @@ server.on('connection', (socket) => {
 			} else {socket.send(-1);}
 		} else if (message[0] == "m") {
 			let args = message.split("\x1F");
-			let game = games.find(x => x.id==args[1]);
+			let game = gameManager.games[args[1]];
 			if (game != null){
 				let pIndx = game.players.findIndex(x => x.pName == args[2]);
 				let player = game.players[pIndx]; 
@@ -282,11 +317,16 @@ server.on('connection', (socket) => {
 	socket.on('close', (...args) => {
 		if (id != null) {
 			let pId = id.slice(0, -4);
-			let gIndx = games.findIndex(x => x.id == id.slice(-4));
-			let pIndx = games[gIndx].players.findIndex(x => x.pName == pId);
-			games[gIndx].players = arrPop(games[gIndx].players, pIndx);
-			if (games[gIndx].players.length == 0){
-				games = arrPop(games, gIndx);
+			let gId = id.slice(-4);
+			let pIndx = gameManager.games[gId].players.findIndex(x => x.pName == pId);
+			gameManager.games[gId].players = arrPop(gameManager.games[gId].players, pIndx);
+			console.log(gameManager.games[gId]);
+			console.log(gameManager.collisionHandlers);
+			if (gameManager.games[gId].players.length == 0){
+				delete gameManager.games[gId];
+				clearInterval(gameManager.collisionHandlers[gId]);
+				delete gameManager.collisionHandlers[gId];
+				console.log(gameManager.collisionHandlers);
 			}
 		}
 	});

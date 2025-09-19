@@ -20,6 +20,114 @@ let playerName;
 let skin;
 let flip = 0;
 
+// Collision function
+function overlap(a, b){
+	if (b.type == "l"){
+		b.points[1].y += b.points[1].y==0?0.000001:0; 
+		let m = (b.points[1].y/b.points[1].x);
+		let c = b.origin.y - m*b.origin.x;
+		let mid = vec.avg(a.origin, ...a.points);
+		
+		if (mid.y - m*mid.x < c){
+			let phi = Math.atan(m);
+			c = c - (b.thickness/Math.cos(phi));
+			let edgeCheck = false;
+			let endCheck = false;
+			
+			for (let i = 0; i < 4; i++){
+				let edge = false;
+				let x = a.points[i].x + a.origin.x;
+				let y = a.points[i].y + a.origin.y;
+				
+				let t = b.points[1].y > 0;
+				let abv = t?vec.add(b.points[1],b.origin):b.origin;
+				let blw = t?b.origin:vec.add(b.points[1]+b.origin);
+				let im = 1/(m==0?m+0.000001:m);
+				
+				if (y - m*(x) > c) {edgeCheck = true; edge = true;}
+				let endCon = (y + x/m > blw.y + blw.x/m && y + x/m < abv.y + abv.x/m) 
+				if (endCon && edge) { endCheck = true;
+				} else if (endCon && !edge) {
+					let xoff = Math.abs(b.thickness * Math.sin(phi) * 0.9);
+					let yoff = Math.abs(b.thickness * Math.cos(phi) * 0.9);
+					let t = blw.x < abv.x;
+					let lft = t?blw.x:abv.x;
+					let rgt = t?abv.x:blw.x;
+					if ((x > lft - xoff && x < rgt +xoff) && (y > blw.y - yoff && y < abv.y + yoff)){
+						endCheck = true;
+					}
+				}
+				if (edgeCheck && endCheck) return 1;
+			} return 0;
+		} else if (mid.y - m*mid.x > c) {
+			let phi = Math.atan(m);
+			c = c + (b.thickness/Math.cos(phi));
+			let edgeCheck = false;
+			let endCheck  = false;
+			for (let i = 0; i < 4; i++){
+				let edge = false
+				let x = a.points[i].x + a.origin.x;
+				let y = a.points[i].y + a.origin.y;
+				
+				let t = b.points[1].y > 0;
+				let abv = t?vec.add(b.points[1],b.origin):b.origin;
+				let blw = t?b.origin:vec.add(b.points[1]+b.origin);
+				let im = 1/(m==0?m+0.000001:m);
+				
+				if (y - m*(x) < c) {edgeCheck = true; edge = true}
+				let endCon = (y + x/m > blw.y + blw.x/m && y + x/m < abv.y + abv.x/m)
+				if (endCon && edge) { endCheck = true;
+				} else if (endCon && !edge) {
+					let xoff = Math.abs(b.thickness * Math.sin(phi) * 0.9);
+					let yoff = Math.abs(b.thickness * Math.cos(phi) * 0.9);
+					let t = blw.x < abv.x;
+					let lft = t?blw.x:abv.x;
+					let rgt = t?abv.x:blw.x;
+					if ((x > lft - xoff && x < rgt +xoff) && (y > blw.y - yoff && y < abv.y + yoff)){
+						endCheck = true;
+					}
+				}
+				if (edgeCheck && endCheck) return 1;
+			} return 0;
+		} else {
+			return 1;
+		}
+	} else if (b.type == "r" && !b.solid){
+		let aCntr = vec.avg(a.origin, ...a.points);
+		let bCntr = vec.avg(b.origin, ...b.points);
+		
+		if (Math.abs(aCntr.x - bCntr.x) < (a.width + b.width)/2 && Math.abs(aCntr.y - bCntr.y) < (a.height+b.height)/2){
+			return 1;
+		}
+		return 0;
+	} else if (b.type == "r" && b.solid){
+		let aCntr = vec.avg(a.origin, ...a.points);
+		let bCntr = vec.avg(b.origin, ...b.points);
+		let tWidth = (a.width+b.width)/2;
+		let tHeight = (a.height+b.height)/2;
+		let xDist = Math.abs(aCntr.x - bCntr.x);
+		let yDist = Math.abs(aCntr.y - bCntr.y);
+		
+		if (xDist < tWidth && yDist < tHeight){
+			return vec.n((bCntr.x<aCntr.x?1:-1)*(tWidth - xDist), (bCntr.y<aCntr.y?1:-1)*(tHeight - yDist));
+		}
+		return 0;
+	} else if (b.type == "c"){
+		for (let i = 0; i < 4; i++){
+			if (vec.distance(vec.add(a.origin,a.points[i]),b.origin) < b.radius){
+				return 1;
+			}
+		}
+		let aCntr = vec.avg(a.origin, ...a.points);
+		let xdif = Math.abs(aCntr.x - b.origin.x);
+		let ydif = Math.abs(aCntr.y - b.origin.y);
+		if ((xdif < b.radius + a.width/2 && ydif < a.height/2) || (ydif < b.radius + a.height/2 && xdif < a.width/2)){
+			return 1;
+		}
+		return 0;
+	}
+}
+
 // img load helper function
 function loadImg(path){
 		let temp = new Image();
@@ -27,8 +135,37 @@ function loadImg(path){
 		return temp;
 }
 //vector object helper
-function vec2(x, y){
-	return {"x":x, "y":y};
+class vec{
+	x = 0;
+	y = 0;
+	constructor(_x, _y){
+		this.x = parseFloat(_x);
+		this.y = parseFloat(_y);
+	}
+	static n(_x, _y){
+		return new vec(_x, _y);
+	}
+	static avg(off, ...vecs){
+		let x = 0;
+		let y = 0;
+		vecs.forEach(v => {x += v.x; y += v.y;});
+		x = Math.round(x/vecs.length);
+		y = Math.round(y/vecs.length);
+		if (off.x != null && off.y != null){
+			return vec.n(off.x+x, off.y+y);
+		} else {
+			return vec.n(x, y);
+		}
+	}
+	static add(a,b){
+		return vec.n(a.x+b.x, a.y+b.y);
+	}
+	static sub(a,b){
+		return vec.n(a.x-b.x, a.y-b.y);
+	}
+	static distance(a,b){
+		return ((a.x-b.x)**2 + (a.y-b.y)**2)**0.5;
+	}
 }
 // scene change function
 function changeScene(targetScene, ...args){
@@ -127,7 +264,7 @@ function lobbyScene(id, roomId, skin) {
 	}
 	//collider class
 	class col {
-		origin = vec2(0,0);
+		origin = vec.n(0,0);
 		points = [];
 		type = "r";
 		constructor(t, o, ...p){
@@ -138,7 +275,7 @@ function lobbyScene(id, roomId, skin) {
 	}
 	//player class
 	class player {
-		col = new col("r", vec2(50,50), [vec2(0,0),vec2(0,0),vec2(0,0),vec2(0,0)]);
+		col = new col("r", vec.n(50,50), [vec.n(0,0),vec.n(0,0),vec.n(0,0),vec.n(0,0)]);
 		flipped = false;
 		item = "gun";
 		skin = "hereford";
@@ -203,7 +340,6 @@ function lobbyScene(id, roomId, skin) {
 		if (((0 < y) & keys.w) | ((y < ctx.canvas.height - 15*charScaleFact) & keys.s)) y += vel.y;
 		
 		if (vel.x != 0) flip = 1 * (vel.x < 0);
-		
 		//Send To Serve
 		sock.send(`m\x1F${roomNo}\x1F${playerName}\x1F${x}\x1F${y}\x1F${flip}`);
 		
@@ -227,23 +363,23 @@ function lobbyScene(id, roomId, skin) {
 				ctx.drawImage(cows.imgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].col.origin.x - 4*charScaleFact, game.players[i].col.origin.y - charScaleFact, 16*charScaleFact, 16*charScaleFact)
 			}
 		}
-		for (let i = 0; i < game.projectiles.length; i++){
-			if (game.projectiles[i].col.type == "l"){
-				let c = game.projectiles[i].col;
+		for (let i = 0; i < game.colliders.length; i++){
+			if (game.projectiles[i].type == "l"){
+				let c = game.colliders[i];
 				ctx.lineWidth = c.thickness*2;
 				ctx.strokeStyle = 'black';
 				ctx.beginPath();
 				ctx.moveTo(c.origin.x, c.origin.y);
 				ctx.lineTo(c.origin.x + c.points[1].x, c.origin.y + c.points[1].y);
 				ctx.stroke();
-			} else if (game.projectiles[i].col.type == "c"){
-				let c = game.projectiles[i].col;
+			} else if (game.colliders[i].type == "c"){
+				let c = game.colliders[i];
 				ctx.fillStyle = 'red';
 				ctx.beginPath();
 				ctx.arc(c.origin.x, c.origin.y, c.radius, 0, 2*Math.PI);
 				ctx.fill();
-			} else if (game.projectiles[i].col.type == "r"){
-				let c = game.projectiles[i].col; 
+			} else if (game.projectiles[i].type == "r"){
+				let c = game.colliders[i]; 
 				ctx.fillStyle = 'blue';
 				ctx.fillRect(c.origin.x, c.origin.y, c.width, c.height);
 			}
