@@ -454,7 +454,7 @@ function selectionScene(sock){
 		if (skn == 8) {alert("Select Skin"); return 0;}
 		try {
 			sock = new WebSocket(chooseAddr(0));
-		} except {
+		} catch {
 			sock = new WebSocket(choosAddr(1))
 		}
 		sock.onopen = () => {console.log(`h\x1F${nam}\x1F${rId}\x1F${skn}`);sock.send(`h\x1F${nam}\x1F${rId}\x1F${skn}`)};
