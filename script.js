@@ -435,9 +435,13 @@ function selectionScene(sock){
 	function unbindLocal(){
 		storage.appendChild(container.children[0]);
 	}
-	function chooseAddr(){
+	function chooseAddr(priv){
 		console.log(ip.value);
-		return ipToggle.checked?("ws://"+ip.value):"ws://localhost:8000";
+		if (priv === 1){
+			return ipToggle.checked?("wss://"+ip.value):"wss://localhost:8000";
+		} else {
+			return ipToggle.checked?("ws://"+ip.value):"ws://localhost:8000";
+		}
 	}
 	function hostRoom(){
 		console.log("host");
@@ -448,7 +452,11 @@ function selectionScene(sock){
 		if (nam.includes("\x1F")) {alert("Forbidden character '\x1F' in name"); return 0;}
 		if (rId.length != 4) {alert("Room ID needs 4 characters"); return 0;}
 		if (skn == 8) {alert("Select Skin"); return 0;}
-		sock = new WebSocket(chooseAddr());
+		try {
+			sock = new WebSocket(chooseAddr(0));
+		} except {
+			sock = new WebSocket(choosAddr(1))
+		}
 		sock.onopen = () => {console.log(`h\x1F${nam}\x1F${rId}\x1F${skn}`);sock.send(`h\x1F${nam}\x1F${rId}\x1F${skn}`)};
 		sock.onmessage = (message) => {if (message.data.toString() == -1){alert("Room Not Available");sock.close();return 0;} 
 		else {
@@ -473,7 +481,11 @@ function selectionScene(sock){
 		if (rId.length != 4) {alert("Room ID needs 4 characters"); return 0;}
 		if (skn == 8) {alert("Select Skin"); return 0;}
 		if (chooseAddr == "ws://"){alert("Input IP address"); return;}
-		sock = new WebSocket(chooseAddr());
+		try {
+			sock = new WebSocket(chooseAddr(0));
+		} except {
+			sock = new WebSocket(choosAddr(1))
+		}
 		sock.onopen = () => {console.log(`j\x1F${nam}\x1F${rId}\x1F${skn}`[0]);sock.send(`j\x1F${nam}\x1F${rId}\x1F${skn}`)};
 		sock.onmessage = (message) => {if (message.data == -1){alert("Room Not Found");sock.close();return 0;} 
 			else if (message.data == -2){alert("Another User Has This Name");sock.close();return 0;} 

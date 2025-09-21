@@ -1,6 +1,13 @@
 const WebSocket = require('ws');
+const readline = require('readline').createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
-const server = new WebSocket.Server({host:'0.0.0.0', port : 8000 });
+let hostInput = null;
+readline.question("Input IPv4 address: ", inp => {hostInput = inp;readline.close();})
+
+const server = new WebSocket.Server({host: hostInput, port : 8000 });
 
 class gameManager{
 	static games = {};
