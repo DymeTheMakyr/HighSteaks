@@ -483,7 +483,7 @@ function selectionScene(sock){
 		if (chooseAddr == "ws://"){alert("Input IP address"); return;}
 		try {
 			sock = new WebSocket(chooseAddr(0));
-		} except {
+		} catch {
 			sock = new WebSocket(choosAddr(1))
 		}
 		sock.onopen = () => {console.log(`j\x1F${nam}\x1F${rId}\x1F${skn}`[0]);sock.send(`j\x1F${nam}\x1F${rId}\x1F${skn}`)};
