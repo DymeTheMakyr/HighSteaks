@@ -5,7 +5,8 @@ Todo
  -line --COMPLETE--
  -distance rect --COMPLETE--
  -sphere --COMPLETE--
--lobby sprites
+-encapsulate socket
+-lobby sprites --IN PROGRESS--
 -lobby progression
 -blackjack sprites
 -blackjack scene
