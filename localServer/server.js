@@ -94,7 +94,7 @@ class col {
 	}
 }
 class player {
-	col = col.rect(vec.n(50,50), 16, 30);
+	col = col.rect(vec.n(312,175), 16, 30);
 	flipped = false;
 	item = "gun";
 	skin = "hereford";

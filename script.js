@@ -14,7 +14,6 @@ const scene = {};
 let game = 0;
 
 // ease of use variables
-let sock;
 let roomNo;
 let playerName;
 let skin;
@@ -168,13 +167,13 @@ class vec{
 	}
 }
 // scene change function
-function changeScene(targetScene, ...args){
+function changeScene(targetScene, sock, ...args){
 	if (targetScene in scene){
 		unbind();
 		for (let i = 0; i < container.children.length; i++){
 			container.children[0].remove();
 		}	
-		unbind = scene[targetScene](...args);
+		unbind = scene[targetScene](sock, ...args);
 	} else {
 		throw new Error("targetScene not found, is it in scene object?");
 	}
@@ -227,7 +226,7 @@ class background {
 
 
 // Game Scene
-function lobbyScene(id, roomId, skin) {
+function lobbyScene(sock) {
 	let players = [];
 	let projectiles = [];
 	//Populate and initialise index.html
@@ -328,7 +327,7 @@ function lobbyScene(id, roomId, skin) {
 			try{
 				return;
 			} finally {
-				changeScene("selection");
+				changeScene("selection", null);
 			}
 		}
 		
@@ -423,7 +422,7 @@ function lobbyScene(id, roomId, skin) {
 }
 scene.lobby = lobbyScene;
 
-function selectionScene(){
+function selectionScene(sock){
 	let storage = document.getElementById("selectionScene");
 	let ipToggle = document.getElementById("ipToggle");
 	let ip = document.getElementById("ip");
@@ -448,7 +447,7 @@ function selectionScene(){
 		if (nam.length = 0) {alert("Input Name"); return 0;}
 		if (nam.includes("\x1F")) {alert("Forbidden character '\x1F' in name"); return 0;}
 		if (rId.length != 4) {alert("Room ID needs 4 characters"); return 0;}
-		if (skn < 0) {alert("Select Skin"); return 0;}
+		if (skn == 8) {alert("Select Skin"); return 0;}
 		sock = new WebSocket(chooseAddr());
 		sock.onopen = () => {console.log(`h\x1F${nam}\x1F${rId}\x1F${skn}`);sock.send(`h\x1F${nam}\x1F${rId}\x1F${skn}`)};
 		sock.onmessage = (message) => {if (message.data.toString() == -1){alert("Room Not Available");sock.close();return 0;} 
@@ -462,7 +461,7 @@ function selectionScene(){
 				temp.players.forEach((x) => {x.col.origin.x = parseInt(x.col.origin.x); x.col.origin.y = parseInt(x.col.origin.y)});
 				game = temp;
 			}
-			changeScene("lobby");
+			changeScene("lobby", sock);
 		}};
 	}
 	function joinRoom(){
@@ -472,7 +471,7 @@ function selectionScene(){
 		if (nam.length = 0) {alert("Input Name"); return 0;}
 		if (nam.includes("\x1F")) {alert("Forbidden character '\x1F' in name"); return 0;}
 		if (rId.length != 4) {alert("Room ID needs 4 characters"); return 0;}
-		if (skn < 0) {alert("Select Skin"); return 0;}
+		if (skn == 8) {alert("Select Skin"); return 0;}
 		if (chooseAddr == "ws://"){alert("Input IP address"); return;}
 		sock = new WebSocket(chooseAddr());
 		sock.onopen = () => {console.log(`j\x1F${nam}\x1F${rId}\x1F${skn}`[0]);sock.send(`j\x1F${nam}\x1F${rId}\x1F${skn}`)};
@@ -487,7 +486,7 @@ function selectionScene(){
 				temp.players.forEach((x) => {x.col.origin.x = parseInt(x.col.origin.x); x.col.origin.y = parseInt(x.col.origin.y)});
 				game = temp;
 			}
-			changeScene("lobby");
+			changeScene("lobby", sock);
 		};}
 	}	
 	container.appendChild(document.getElementById("selectionScene").children[0]);
