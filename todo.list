@@ -5,13 +5,9 @@ Todo
  -line --COMPLETE--
  -distance rect --COMPLETE--
  -sphere --COMPLETE--
-<<<<<<< Updated upstream
--encapsulate socket
+-encapsulate socket --COMPLETE--
 -lobby sprites --IN PROGRESS--
-=======
--lobby sprites
 -rectify collision system and data structure
->>>>>>> Stashed changes
 -lobby progression
 -blackjack sprites
 -blackjack scene
