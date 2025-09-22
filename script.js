@@ -335,10 +335,6 @@ function lobbyScene(sock) {
 		vel.x = baseSpeed * (keys.a ^ keys.d) * (keys.a ? -1 : 1) * (keys.shift * sprintFact + 1);
 		vel.y = baseSpeed * (keys.w ^ keys.s) * (keys.w ? -1 : 1) * (keys.shift * sprintFact + 1);
 		//Update Position
-		//if (((0 < x) & keys.a) | ((x < ctx.canvas.width - 8*charScaleFact) & keys.d)) x += vel.x;
-		//if (((0 < y) & keys.w) | ((y < ctx.canvas.height - 15*charScaleFact) & keys.s)) y += vel.y;
-		
-		
 		
 		if (vel.x != 0) flip = 1 * (vel.x < 0);
 		//Send To Serve
