@@ -13,6 +13,12 @@ let unbind;
 const scene = {};
 let game = 0;
 
+//public debug variables
+let debug = {
+	"showHitboxes":false,
+	"hitboxOpacity":0.1
+};
+
 // ease of use variables
 let roomNo;
 let playerName;
@@ -217,10 +223,12 @@ class cows {
 }
 // background manager
 class background {
-	static imgs = [];
+	static imgs = {};
 	
 	static {
-		background.imgs.push(loadImg("./background/floor2.png"));
+		background.imgs.lobby = {};
+		background.imgs.lobby.Floor = loadImg("./background/lfloor.png");
+		background.imgs.lobby.Wall = loadImg("./background/lwall.png");
 	}
 }
 
@@ -344,10 +352,13 @@ function lobbyScene(sock) {
 		let draw = game.players.sort((a,b) => a.col.origin.y - b.col.origin.y);
 		//Clear And Draw
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-		ctx.drawImage(background.imgs[0],0,0,640,360)
-		for (let i = 0; i < game.players.length; i++){
+		ctx.drawImage(background.imgs.lobby.Floor,0,0,640,360); //draw floor
+		for (let i=0; i < game.players.length; i++){ //draw shadows
 			ctx.fillStyle = `rgba(10,10,10,0.5)`
 			ctx.fillRect(game.players[i].col.origin.x - charScaleFact, game.players[i].col.origin.y + 13*charScaleFact, 10*charScaleFact, 3*charScaleFact)
+		}
+		ctx.drawImage(background.imgs.lobby.Wall,0,0,640,360); //draw walls
+		for (let i = 0; i < game.players.length; i++){ //draw players
 			ctx.fillStyle = `rgba(0,${(game.players[i].pName == playerName)*200},0,0.5)`;
 			ctx.fillRect(game.players[i].col.origin.x + (3.5*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length), game.players[i].col.origin.y - 0.5*charScaleFact, charScaleFact + 3*charScaleFact*game.players[i].pName.length, -5*charScaleFact);
 			ctx.font = `${charScaleFact*5}px Courier New`;
@@ -360,25 +371,28 @@ function lobbyScene(sock) {
 				ctx.drawImage(cows.imgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].col.origin.x - 4*charScaleFact, game.players[i].col.origin.y - charScaleFact, 16*charScaleFact, 16*charScaleFact)
 			}
 		}
-		for (let i = 0; i < game.colliders.length; i++){
-			if (game.colliders[i].type == "l"){
-				let c = game.colliders[i];
-				ctx.lineWidth = c.thickness*2;
-				ctx.strokeStyle = 'black';
-				ctx.beginPath();
-				ctx.moveTo(c.origin.x, c.origin.y);
-				ctx.lineTo(c.origin.x + c.points[1].x, c.origin.y + c.points[1].y);
-				ctx.stroke();
-			} else if (game.colliders[i].type == "c"){
-				let c = game.colliders[i];
-				ctx.fillStyle = 'red';
-				ctx.beginPath();
-				ctx.arc(c.origin.x, c.origin.y, c.radius, 0, 2*Math.PI);
-				ctx.fill();
-			} else if (game.colliders[i].type == "r"){
-				let c = game.colliders[i]; 
-				ctx.fillStyle = 'blue';
-				ctx.fillRect(c.origin.x, c.origin.y, c.width, c.height);
+		if (debug.showHitboxes){
+			debug.hitboxOpacity = Math.max(0, Math.min(1, debug.hitboxOpacity));
+			for (let i = 0; i < game.colliders.length; i++){ //render colliders
+				if (game.colliders[i].type == "l"){
+					let c = game.colliders[i];
+					ctx.lineWidth = c.thickness*2;
+					ctx.strokeStyle = `rgba(0,255,0,${debug.hitboxOpacity})`;
+					ctx.beginPath();
+					ctx.moveTo(c.origin.x, c.origin.y);
+					ctx.lineTo(c.origin.x + c.points[1].x, c.origin.y + c.points[1].y);
+					ctx.stroke();
+				} else if (game.colliders[i].type == "c"){
+					let c = game.colliders[i];
+					ctx.fillStyle = `rgba(255,0,0,${debug.hitboxOpacity})`;
+					ctx.beginPath();
+					ctx.arc(c.origin.x, c.origin.y, c.radius, 0, 2*Math.PI);
+					ctx.fill();
+				} else if (game.colliders[i].type == "r"){
+					let c = game.colliders[i]; 
+					ctx.fillStyle = `rgba(0,0,255,${debug.hitboxOpacity})`;
+					ctx.fillRect(c.origin.x, c.origin.y, c.width, c.height);
+				}
 			}
 		}
 	}

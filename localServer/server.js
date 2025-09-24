@@ -134,6 +134,16 @@ class projectile {
 	}
 }
 
+const sceneColliders = {
+	"lobby": [
+		col.srect(vec.n(0,0), 16, 360),
+		col.srect(vec.n(0,0), 640, 39),
+		col.srect(vec.n(640-16,0), 16, 360),
+		col.srect(vec.n(0,360-16), 640, 16),
+		col.srect(vec.n(96,0), 96, 59),
+	]
+}
+
 function arrPop(array, index){
 	return array.slice(0, index).concat(array.slice(index+1));
 }
@@ -254,13 +264,11 @@ function overlap(a, b){
 }
 
 
-function collisionHandler(id){
-	for (let p = 0; p < gameManager.games[id].players.length; p++){
-		for (let c = 0; c < gameManager.games[id].colliders.length; c++){
-			let adj = collide(gameManager.games[id].players[p].col, gameManager.games[id].colliders[c]);
-			if (typeof(adj) == 'object'){
-				gameManager.games[id].players[p].col.origin = vec.add(gameManager.games[id].players[p].col.origin, adj);
-			}
+function collisionHandler(id, p){
+	for (let c = 0; c < gameManager.games[id].colliders.length; c++){
+		let adj = collide(p.col, gameManager.games[id].colliders[c]);
+		if (typeof(adj) == 'object'){
+			p.col.origin = vec.add(p.col.origin, adj);
 		}
 	}	
 }
@@ -283,6 +291,7 @@ server.on('connection', (socket) => {
 				nGame.colliders.push(col.srect(vec.n(40, 280), 40, 40));
 				nGame.colliders.push(col.srect(vec.n(560, 280), 40, 40));
 				gameManager.games[args[2]] = nGame;
+				gameManager.games[args[2]].colliders = sceneColliders.lobby;
 				gameManager.collisionHandlers[args[2]] = collisionHandler;
 				socket.send(JSON.stringify(nGame));
 			} else {socket.send(-1); console.log("room not made");}
@@ -306,7 +315,7 @@ server.on('connection', (socket) => {
 				if (player != null){
 					player.col.origin = vec.add(player.col.origin, vec.n(args[3],args[4]));
 					player.flipped = parseInt(args[5]);
-					gameManager.collisionHandlers[args[1]](args[1]);
+					gameManager.collisionHandlers[args[1]](args[1], player);
 					socket.send(JSON.stringify(game));
 				}
 			}
