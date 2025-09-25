@@ -141,6 +141,11 @@ const sceneColliders = {
 		col.srect(vec.n(640-16,0), 16, 360),
 		col.srect(vec.n(0,360-16), 640, 16),
 		col.srect(vec.n(96,0), 96, 59),
+		col.srect(vec.n(304,20), 32,31),
+		col.srect(vec.n(304,20), 32,31),
+		col.srect(vec.n(304,20), 32,31),
+		col.srect(vec.n(304,20), 32,31),
+		col.srect(vec.n(304,20), 32,31),
 	]
 }
 

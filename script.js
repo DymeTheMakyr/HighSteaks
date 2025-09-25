@@ -229,9 +229,9 @@ class background {
 		background.imgs.lobby = {};
 		background.imgs.lobby.Floor = loadImg("./background/lfloor.png");
 		background.imgs.lobby.Wall = loadImg("./background/lwall.png");
+		background.imgs.lobby.Slots = loadImg("./background/lslots.png");
 	}
 }
-
 
 // Game Scene
 function lobbyScene(sock) {
@@ -358,6 +358,7 @@ function lobbyScene(sock) {
 			ctx.fillRect(game.players[i].col.origin.x - charScaleFact, game.players[i].col.origin.y + 13*charScaleFact, 10*charScaleFact, 3*charScaleFact)
 		}
 		ctx.drawImage(background.imgs.lobby.Wall,0,0,640,360); //draw walls
+		ctx.drawImage(background.imgs.lobby.Slots,304,20);
 		for (let i = 0; i < game.players.length; i++){ //draw players
 			ctx.fillStyle = `rgba(0,${(game.players[i].pName == playerName)*200},0,0.5)`;
 			ctx.fillRect(game.players[i].col.origin.x + (3.5*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length), game.players[i].col.origin.y - 0.5*charScaleFact, charScaleFact + 3*charScaleFact*game.players[i].pName.length, -5*charScaleFact);
