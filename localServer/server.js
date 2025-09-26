@@ -56,17 +56,20 @@ function setPos(obj, ...args){
 	}
 }
 class game{
+	className = "game";
 	id = 0;
-	currentRound = 0;
+	currentRound = "selection";
 	players = [];
 	projectiles = [];
 	colliders = [];
+	interactables = [];
 	locked = 0;
 	constructor(args) {
 		this.id=args;
 	}
 }
 class col {
+	className = "col";
 	origin = vec.n(0,0);
 	points = [];
 	type = "r";
@@ -101,6 +104,7 @@ class col {
 	}
 }
 class player {
+	className = "player";
 	col = col.rect(vec.n(312,175), 16, 30);
 	flipped = false;
 	item = "gun";
@@ -119,6 +123,7 @@ class player {
 	}
 }
 class projectile {
+	className = "projectile";
 	col;
 	flipped = false;
 	speed = vec.n(0,0);
@@ -134,7 +139,33 @@ class projectile {
 	}
 }
 
+class interactable {
+	className = "interactable";
+	col;
+	renderOffset = vec.n(0,0);
+	spritename = "";
+	
+	constructor(n, rO, c){
+		this.spritename = n;
+		this.renderOffset = rO;
+		this.col = c;
+	}
+}
+
+const sceneInteractables = {
+	"selection":[],
+	"lobby":[
+		new interactable("tableTemp", vec.n(16,16), col.rect(vec.n(150,150), 160, 95)),
+		new interactable("slots", vec.n(16,16), col.rect(vec.n(288, 4), 64,92))
+	],
+	"blackjack":[],
+	"roulette":[],
+	"poker":[],
+	"brawl":[]
+}
+
 const sceneColliders = {
+	"selection":[],
 	"lobby": [
 		col.srect(vec.n(0,0), 16, 360),
 		col.srect(vec.n(0,0), 640, 39),
@@ -142,11 +173,11 @@ const sceneColliders = {
 		col.srect(vec.n(0,360-16), 640, 16),
 		col.srect(vec.n(96,0), 96, 59),
 		col.srect(vec.n(304,20), 32,31),
-		col.srect(vec.n(304,20), 32,31),
-		col.srect(vec.n(304,20), 32,31),
-		col.srect(vec.n(304,20), 32,31),
-		col.srect(vec.n(304,20), 32,31),
-	]
+	],
+	"blackjack":[],
+	"roulette":[],
+	"poker":[],
+	"brawl":[]
 }
 
 function arrPop(array, index){
@@ -293,9 +324,9 @@ server.on('connection', (socket) => {
 				id = args[1]+args[2];
 				let nGame = new game(args[2]);
 				nGame.players.push(new player("", args[3], 100, 0, [], args[1]));
-				nGame.colliders.push(col.srect(vec.n(40, 280), 40, 40));
-				nGame.colliders.push(col.srect(vec.n(560, 280), 40, 40));
 				gameManager.games[args[2]] = nGame;
+				console.log(nGame);
+				gameManager.games[args[2]].interactables = sceneInteractables.lobby;
 				gameManager.games[args[2]].colliders = sceneColliders.lobby;
 				gameManager.collisionHandlers[args[2]] = collisionHandler;
 				socket.send(JSON.stringify(nGame));
@@ -324,7 +355,12 @@ server.on('connection', (socket) => {
 					socket.send(JSON.stringify(game));
 				}
 			}
-		} else {
+		} else if (message[0] == "c") {
+			let args = message.split("\x1F");
+			gameManager.games[args[1]].currentRound = args[2];
+			gameManager.games[args[1]].colliders = sceneColliders[args[2]];
+			gameManager.games[args[1]].interactables = sceneInteractables[args[2]];
+		}else {
 			console.log(message);
 		}
 	});	

@@ -7,8 +7,8 @@ Todo
  -sphere --COMPLETE--
 -encapsulate socket --COMPLETE--
 -lobby sprites --IN PROGRESS--
--rework drawing system --IN PROGRESS--
--rectify collision system and data structure
+-rework drawing system --COMPLETE--
+-rectify collision system and data structure --COMPLETE FOR NOW--
 -lobby progression
 -blackjack sprites
 -blackjack scene

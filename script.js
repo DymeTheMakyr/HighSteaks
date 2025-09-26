@@ -175,6 +175,7 @@ class vec{
 // scene change function
 function changeScene(targetScene, sock, ...args){
 	if (targetScene in scene){
+		if (sock != null) sock.send(`c\x1F${roomNo}\x1F${targetScene}`);
 		unbind();
 		for (let i = 0; i < container.children.length; i++){
 			container.children[0].remove();
@@ -205,6 +206,9 @@ class cards {
 		cards.bg = loadImg("cards\\030.png");
 	}
 }
+
+let drawQueue = [];
+
 // cow manager
 class cows {
 	static strings = [];
@@ -227,9 +231,18 @@ class background {
 	
 	static {
 		background.imgs.lobby = {};
-		background.imgs.lobby.Floor = loadImg("./background/lfloor.png");
-		background.imgs.lobby.Wall = loadImg("./background/lwall.png");
-		background.imgs.lobby.Slots = loadImg("./background/lslots.png");
+		background.imgs.lobby.floor = loadImg("./background/lfloor.png");
+		background.imgs.lobby.wall = loadImg("./background/lwall.png");
+	}
+}
+
+//Sprite Manager
+class sprites {
+	static imgs = {};
+	
+	static {
+		sprites.imgs.tableTemp = loadImg("./sprites/tableTemp.png");
+		sprites.imgs.slots = loadImg("./sprites/slots.png");
 	}
 }
 
@@ -330,8 +343,9 @@ function lobbyScene(sock) {
 	let y = 50;
 
 	function mainloop() {
+		drawQueue = [];
 		
-		if (sock.readyState === WebSocket.CLOSED){
+		if (sock == null || sock.readyState === WebSocket.CLOSED){
 			try{
 				return;
 			} finally {
@@ -349,29 +363,41 @@ function lobbyScene(sock) {
 		sock.send(`m\x1F${roomNo}\x1F${playerName}\x1F${vel.x}\x1F${vel.y}\x1F${flip}`);
 		
 		//prepare draww order;
-		let draw = game.players.sort((a,b) => a.col.origin.y - b.col.origin.y);
+		drawQueue = drawQueue.concat(game.players);
+		drawQueue = drawQueue.concat(game.interactables);
 		//Clear And Draw
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-		ctx.drawImage(background.imgs.lobby.Floor,0,0,640,360); //draw floor
+		ctx.drawImage(background.imgs.lobby.floor,0,0,640,360); //draw floor
 		for (let i=0; i < game.players.length; i++){ //draw shadows
 			ctx.fillStyle = `rgba(10,10,10,0.5)`
 			ctx.fillRect(game.players[i].col.origin.x - charScaleFact, game.players[i].col.origin.y + 13*charScaleFact, 10*charScaleFact, 3*charScaleFact)
 		}
-		ctx.drawImage(background.imgs.lobby.Wall,0,0,640,360); //draw walls
-		ctx.drawImage(background.imgs.lobby.Slots,304,20);
-		for (let i = 0; i < game.players.length; i++){ //draw players
+		ctx.drawImage(background.imgs.lobby.wall,0,0,640,360); //draw walls
+		
+		// draw sprites and players in order
+		drawQueue.sort((a,b) => {
+			let first = (a.className == "player")?a.col.origin.y + a.col.height:a.col.origin.y + a.col.height - a.renderOffset.y; 
+			let second = (b.className == "player")?b.col.origin.y + b.col.height:b.col.origin.y + b.col.height - b.renderOffset.y;
+			return first - second;
+		});
+		
+		drawQueue.forEach((i) => {
+			if (i.className == "player"){
+				if (i.flipped == true) ctx.drawImage(cows.fimgs[i.skin], 0, 0, 16, 16, i.col.origin.x - 4*charScaleFact, i.col.origin.y - charScaleFact, 16*charScaleFact, 16*charScaleFact);
+				else ctx.drawImage(cows.imgs[i.skin], 0, 0, 16, 16, i.col.origin.x - 4*charScaleFact, i.col.origin.y - charScaleFact, 16*charScaleFact, 16*charScaleFact);
+			} else if (i.className == "interactable"){
+				if (sprites.imgs[i.spritename] != null) ctx.drawImage(sprites.imgs[i.spritename], i.col.origin.x + i.renderOffset.x, i.col.origin.y + i.renderOffset.y);
+			}
+		});
+		
+		for (let i = 0; i < game.players.length; i++){ //draw player names
 			ctx.fillStyle = `rgba(0,${(game.players[i].pName == playerName)*200},0,0.5)`;
 			ctx.fillRect(game.players[i].col.origin.x + (3.5*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length), game.players[i].col.origin.y - 0.5*charScaleFact, charScaleFact + 3*charScaleFact*game.players[i].pName.length, -5*charScaleFact);
 			ctx.font = `${charScaleFact*5}px Courier New`;
 			ctx.fillStyle = "rgba(255,255,255,1)";
 			ctx.fillText(game.players[i].pName, game.players[i].col.origin.x + (4*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length),game.players[i].col.origin.y - charScaleFact);
-			let pFlip = parseInt(game.players[i].flipped);
-			if (pFlip){
-				ctx.drawImage(cows.fimgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].col.origin.x - 4*charScaleFact, game.players[i].col.origin.y - charScaleFact, 16*charScaleFact, 16*charScaleFact);			
-			} else {
-				ctx.drawImage(cows.imgs[game.players[i].skin], 0, 0, 16, 16, game.players[i].col.origin.x - 4*charScaleFact, game.players[i].col.origin.y - charScaleFact, 16*charScaleFact, 16*charScaleFact)
-			}
 		}
+		
 		if (debug.showHitboxes){
 			debug.hitboxOpacity = Math.max(0, Math.min(1, debug.hitboxOpacity));
 			for (let i = 0; i < game.colliders.length; i++){ //render colliders
