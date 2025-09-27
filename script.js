@@ -26,78 +26,9 @@ let skin;
 let flip = 0;
 
 // Collision function
+
 function overlap(a, b){
-	if (b.type == "l"){
-		b.points[1].y += b.points[1].y==0?0.000001:0; 
-		let m = (b.points[1].y/b.points[1].x);
-		let c = b.origin.y - m*b.origin.x;
-		let mid = vec.avg(a.origin, ...a.points);
-		
-		if (mid.y - m*mid.x < c){
-			let phi = Math.atan(m);
-			c = c - (b.thickness/Math.cos(phi));
-			let edgeCheck = false;
-			let endCheck = false;
-			
-			for (let i = 0; i < 4; i++){
-				let edge = false;
-				let x = a.points[i].x + a.origin.x;
-				let y = a.points[i].y + a.origin.y;
-				
-				let t = b.points[1].y > 0;
-				let abv = t?vec.add(b.points[1],b.origin):b.origin;
-				let blw = t?b.origin:vec.add(b.points[1]+b.origin);
-				let im = 1/(m==0?m+0.000001:m);
-				
-				if (y - m*(x) > c) {edgeCheck = true; edge = true;}
-				let endCon = (y + x/m > blw.y + blw.x/m && y + x/m < abv.y + abv.x/m) 
-				if (endCon && edge) { endCheck = true;
-				} else if (endCon && !edge) {
-					let xoff = Math.abs(b.thickness * Math.sin(phi) * 0.9);
-					let yoff = Math.abs(b.thickness * Math.cos(phi) * 0.9);
-					let t = blw.x < abv.x;
-					let lft = t?blw.x:abv.x;
-					let rgt = t?abv.x:blw.x;
-					if ((x > lft - xoff && x < rgt +xoff) && (y > blw.y - yoff && y < abv.y + yoff)){
-						endCheck = true;
-					}
-				}
-				if (edgeCheck && endCheck) return 1;
-			} return 0;
-		} else if (mid.y - m*mid.x > c) {
-			let phi = Math.atan(m);
-			c = c + (b.thickness/Math.cos(phi));
-			let edgeCheck = false;
-			let endCheck  = false;
-			for (let i = 0; i < 4; i++){
-				let edge = false
-				let x = a.points[i].x + a.origin.x;
-				let y = a.points[i].y + a.origin.y;
-				
-				let t = b.points[1].y > 0;
-				let abv = t?vec.add(b.points[1],b.origin):b.origin;
-				let blw = t?b.origin:vec.add(b.points[1]+b.origin);
-				let im = 1/(m==0?m+0.000001:m);
-				
-				if (y - m*(x) < c) {edgeCheck = true; edge = true}
-				let endCon = (y + x/m > blw.y + blw.x/m && y + x/m < abv.y + abv.x/m)
-				if (endCon && edge) { endCheck = true;
-				} else if (endCon && !edge) {
-					let xoff = Math.abs(b.thickness * Math.sin(phi) * 0.9);
-					let yoff = Math.abs(b.thickness * Math.cos(phi) * 0.9);
-					let t = blw.x < abv.x;
-					let lft = t?blw.x:abv.x;
-					let rgt = t?abv.x:blw.x;
-					if ((x > lft - xoff && x < rgt +xoff) && (y > blw.y - yoff && y < abv.y + yoff)){
-						endCheck = true;
-					}
-				}
-				if (edgeCheck && endCheck) return 1;
-			} return 0;
-		} else {
-			return 1;
-		}
-	} else if (b.type == "r" && !b.solid){
+	if (b.type == "r" && !b.solid){
 		let aCntr = vec.avg(a.origin, ...a.points);
 		let bCntr = vec.avg(b.origin, ...b.points);
 		
@@ -105,32 +36,7 @@ function overlap(a, b){
 			return 1;
 		}
 		return 0;
-	} else if (b.type == "r" && b.solid){
-		let aCntr = vec.avg(a.origin, ...a.points);
-		let bCntr = vec.avg(b.origin, ...b.points);
-		let tWidth = (a.width+b.width)/2;
-		let tHeight = (a.height+b.height)/2;
-		let xDist = Math.abs(aCntr.x - bCntr.x);
-		let yDist = Math.abs(aCntr.y - bCntr.y);
-		
-		if (xDist < tWidth && yDist < tHeight){
-			return vec.n((bCntr.x<aCntr.x?1:-1)*(tWidth - xDist), (bCntr.y<aCntr.y?1:-1)*(tHeight - yDist));
-		}
-		return 0;
-	} else if (b.type == "c"){
-		for (let i = 0; i < 4; i++){
-			if (vec.distance(vec.add(a.origin,a.points[i]),b.origin) < b.radius){
-				return 1;
-			}
-		}
-		let aCntr = vec.avg(a.origin, ...a.points);
-		let xdif = Math.abs(aCntr.x - b.origin.x);
-		let ydif = Math.abs(aCntr.y - b.origin.y);
-		if ((xdif < b.radius + a.width/2 && ydif < a.height/2) || (ydif < b.radius + a.height/2 && xdif < a.width/2)){
-			return 1;
-		}
-		return 0;
-	}
+	} return -1;
 }
 
 // img load helper function
@@ -208,6 +114,7 @@ class cards {
 }
 
 let drawQueue = [];
+let currentInteractable = undefined;
 
 // cow manager
 class cows {
@@ -374,6 +281,15 @@ function lobbyScene(sock) {
 		}
 		ctx.drawImage(background.imgs.lobby.wall,0,0,640,360); //draw walls
 		
+		//get interactable if any
+		currentInteractable = null;
+		for (let i = 0; i < game.interactables.length; i++){
+			let over = overlap(game.players.find((x) => {return x.pName == playerName}).col, game.interactables[i].col);
+			if (over == 1){
+				currentInteractable = game.interactables[i];
+			}
+		}
+		
 		// draw sprites and players in order
 		drawQueue.sort((a,b) => {
 			let first = (a.className == "player")?a.col.origin.y + a.col.height:a.col.origin.y + a.col.height - a.renderOffset.y; 
@@ -381,11 +297,16 @@ function lobbyScene(sock) {
 			return first - second;
 		});
 		
+		ctx.fillStyle = "rgba(255,255,255,0.3)";
+		if (typeof(currentInteractable) == "object" && currentInteractable != null) {ctx.fillRect(currentInteractable.col.origin.x, currentInteractable.col.origin.y, currentInteractable.col.width, currentInteractable.col.height);}
+		
 		drawQueue.forEach((i) => {
 			if (i.className == "player"){
 				if (i.flipped == true) ctx.drawImage(cows.fimgs[i.skin], 0, 0, 16, 16, i.col.origin.x - 4*charScaleFact, i.col.origin.y - charScaleFact, 16*charScaleFact, 16*charScaleFact);
 				else ctx.drawImage(cows.imgs[i.skin], 0, 0, 16, 16, i.col.origin.x - 4*charScaleFact, i.col.origin.y - charScaleFact, 16*charScaleFact, 16*charScaleFact);
 			} else if (i.className == "interactable"){
+				ctx.fillStyle="rgba(255,255,255,0.4)";
+				ctx.fillRect(i.col.origin.x, i.col.origin.y, i.col.width, i.col.height);
 				if (sprites.imgs[i.spritename] != null) ctx.drawImage(sprites.imgs[i.spritename], i.col.origin.x + i.renderOffset.x, i.col.origin.y + i.renderOffset.y);
 			}
 		});
@@ -396,6 +317,14 @@ function lobbyScene(sock) {
 			ctx.font = `${charScaleFact*5}px Courier New`;
 			ctx.fillStyle = "rgba(255,255,255,1)";
 			ctx.fillText(game.players[i].pName, game.players[i].col.origin.x + (4*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length),game.players[i].col.origin.y - charScaleFact);
+		}
+		
+		if (debug.showInteractables){
+			for (let i = 0; i < game.interactables.length; i++){
+				let j = game.interactables[i];
+				ctx.fillStyle = `rbga(255,255,255,0.1)`;
+				ctx.fillRect(j.col.origin.x, j.col.origin.y, j.col.width, j.col.height);
+			}
 		}
 		
 		if (debug.showHitboxes){

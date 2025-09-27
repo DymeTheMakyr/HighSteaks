@@ -155,8 +155,11 @@ class interactable {
 const sceneInteractables = {
 	"selection":[],
 	"lobby":[
-		new interactable("tableTemp", vec.n(16,16), col.rect(vec.n(150,150), 160, 95)),
-		new interactable("slots", vec.n(16,16), col.rect(vec.n(288, 4), 64,92))
+		new interactable("tableTemp", vec.n(16,16), col.rect(vec.n(41,104), 160, 95)),
+		new interactable("tableTemp", vec.n(16,16), col.rect(vec.n(41,224), 160, 95)),
+		new interactable("tableTemp", vec.n(16,16), col.rect(vec.n(439,104), 160, 95)),
+		new interactable("tableTemp", vec.n(16,16), col.rect(vec.n(439,224), 160, 95)),
+		new interactable("slots", vec.n(4,4), col.rect(vec.n(300, 16), 40,68))
 	],
 	"blackjack":[],
 	"roulette":[],
@@ -325,9 +328,6 @@ server.on('connection', (socket) => {
 				let nGame = new game(args[2]);
 				nGame.players.push(new player("", args[3], 100, 0, [], args[1]));
 				gameManager.games[args[2]] = nGame;
-				console.log(nGame);
-				gameManager.games[args[2]].interactables = sceneInteractables.lobby;
-				gameManager.games[args[2]].colliders = sceneColliders.lobby;
 				gameManager.collisionHandlers[args[2]] = collisionHandler;
 				socket.send(JSON.stringify(nGame));
 			} else {socket.send(-1); console.log("room not made");}
