@@ -283,6 +283,7 @@ function lobbyScene(sock) {
 		
 		//get interactable if any
 		currentInteractable = null;
+		game.interactables.sort((a,b) => {return a.col.y - b.col.y});
 		for (let i = 0; i < game.interactables.length; i++){
 			let over = overlap(game.players.find((x) => {return x.pName == playerName}).col, game.interactables[i].col);
 			if (over == 1){

@@ -11,6 +11,7 @@ const server = new WebSocket.Server({host: hostInput, port : 8000 });
 
 class gameManager{
 	static games = {};
+	static playerMem = {};
 	static collisionHandlers = {};
 	static projectileHandlers = [];
 }
@@ -329,6 +330,7 @@ server.on('connection', (socket) => {
 				nGame.players.push(new player("", args[3], 100, 0, [], args[1]));
 				gameManager.games[args[2]] = nGame;
 				gameManager.collisionHandlers[args[2]] = collisionHandler;
+				gameManager.playerMem[args[2]] = {};
 				socket.send(JSON.stringify(nGame));
 			} else {socket.send(-1); console.log("room not made");}
 		} else if (message[0] == 'j') {
@@ -339,7 +341,10 @@ server.on('connection', (socket) => {
 				if (game.players.find(x => x.pName == args[1]) != null){socket.send(-2); return 0;}
 				if (game.players.length == 4){socket.send(-3); return 0;}
 				id = args[1]+args[2];
-				game.players.push(new player("", args[3], 100, 0, [], args[1]));
+				if (gameManager.playerMem[args[2]][args[1]] != null) {
+					game.players.push(gameManager.playerMem[args[2]][args[1]]);
+					delete gameManager.playerMem[args[2]][args[1]];
+				} else game.players.push(new player("", args[3], 100, 0, [], args[1]));
 				socket.send(JSON.stringify(game));
 			} else {socket.send(-1);}
 		} else if (message[0] == "m") {
@@ -370,12 +375,20 @@ server.on('connection', (socket) => {
 			let pId = id.slice(0, -4);
 			let gId = id.slice(-4);
 			let pIndx = gameManager.games[gId].players.findIndex(x => x.pName == pId);
+			gameManager.playerMem[gId][pId] = gameManager.games[gId].players[pIndx];
 			gameManager.games[gId].players = arrPop(gameManager.games[gId].players, pIndx);
 			if (gameManager.games[gId].players.length == 0){
 				delete gameManager.games[gId];
 				clearInterval(gameManager.collisionHandlers[gId]);
 				delete gameManager.collisionHandlers[gId];
+				delete gameManager.playerMem[gId];
 			}
+			console.log("----------------------------------------------------------------------");
+			console.log(gameManager.playerMem);
+			console.log("----------------------------------------------------------------------");
+			console.log(gameManager.playerMem[gId]);
+			console.log("----------------------------------------------------------------------");
+			
 		}
 	});
 });
