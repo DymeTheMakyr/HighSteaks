@@ -145,22 +145,29 @@ class interactable {
 	col;
 	renderOffset = vec.n(0,0);
 	spritename = "";
-	
-	constructor(n, rO, c){
+	short = false;
+	constructor(n, rO, c, s){
 		this.spritename = n;
 		this.renderOffset = rO;
 		this.col = c;
+		this.short = s;
+	}
+	static short(n, rO, c){
+		return new interactable(n, rO, c, true);
+	}
+	static tall(n, rO, c){
+		return new interactable(n, rO, c, false);
 	}
 }
 
 const sceneInteractables = {
 	"selection":[],
 	"lobby":[
-		new interactable("tableTemp", vec.n(16,16), col.rect(vec.n(41,104), 160, 95)),
-		new interactable("tableTemp", vec.n(16,16), col.rect(vec.n(41,224), 160, 95)),
-		new interactable("tableTemp", vec.n(16,16), col.rect(vec.n(439,104), 160, 95)),
-		new interactable("tableTemp", vec.n(16,16), col.rect(vec.n(439,224), 160, 95)),
-		new interactable("slots", vec.n(4,4), col.rect(vec.n(300, 16), 40,68))
+		interactable.short("tableTemp", vec.n(16,16), col.rect(vec.n(40,104), 160, 95)),
+		interactable.short("tableTemp", vec.n(16,16), col.rect(vec.n(40,224), 160, 95)),
+		interactable.short("tableTemp", vec.n(16,16), col.rect(vec.n(440,104), 160, 95)),
+		interactable.short("tableTemp", vec.n(16,16), col.rect(vec.n(440,224), 160, 95)),
+		interactable.tall("slots", vec.n(4,4), col.rect(vec.n(300, 16), 40,68))
 	],
 	"blackjack":[],
 	"roulette":[],
@@ -177,6 +184,11 @@ const sceneColliders = {
 		col.srect(vec.n(0,360-16), 640, 16),
 		col.srect(vec.n(96,0), 96, 59),
 		col.srect(vec.n(304,20), 32,31),
+		
+		col.srect(vec.n(56,134), 128, 21),
+		col.srect(vec.n(56,254), 128, 21),
+		col.srect(vec.n(456,134), 128, 21),
+		col.srect(vec.n(456,254), 128, 21),
 	],
 	"blackjack":[],
 	"roulette":[],
@@ -383,12 +395,6 @@ server.on('connection', (socket) => {
 				delete gameManager.collisionHandlers[gId];
 				delete gameManager.playerMem[gId];
 			}
-			console.log("----------------------------------------------------------------------");
-			console.log(gameManager.playerMem);
-			console.log("----------------------------------------------------------------------");
-			console.log(gameManager.playerMem[gId]);
-			console.log("----------------------------------------------------------------------");
-			
 		}
 	});
 });

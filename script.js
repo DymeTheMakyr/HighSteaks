@@ -252,7 +252,7 @@ function lobbyScene(sock) {
 	function mainloop() {
 		drawQueue = [];
 		
-		if (sock == null || sock.readyState === WebSocket.CLOSED){
+		if (sock == null || sock.readyState == WebSocket.CLOSED){
 			try{
 				return;
 			} finally {
@@ -293,21 +293,23 @@ function lobbyScene(sock) {
 		
 		// draw sprites and players in order
 		drawQueue.sort((a,b) => {
-			let first = (a.className == "player")?a.col.origin.y + a.col.height:a.col.origin.y + a.col.height - a.renderOffset.y; 
+			let first = (a.className == "player")?a.col.origin.y + a.col.height:a.col.origin.y + a.col.height - a.renderOffset.y;
+			if (a.short) first -= (a.col.height-(a.renderOffset.y*2) - (b.col.height*0.75));
 			let second = (b.className == "player")?b.col.origin.y + b.col.height:b.col.origin.y + b.col.height - b.renderOffset.y;
+			if (b.short) second -= (b.col.height-(b.renderOffset.y*2) - (a.col.height*0.75));
 			return first - second;
 		});
 		
-		ctx.fillStyle = "rgba(255,255,255,0.3)";
-		if (typeof(currentInteractable) == "object" && currentInteractable != null) {ctx.fillRect(currentInteractable.col.origin.x, currentInteractable.col.origin.y, currentInteractable.col.width, currentInteractable.col.height);}
+		//ctx.fillStyle = "rgba(255,255,255,0.3)";
+		//if (typeof(currentInteractable) == "object" && currentInteractable != null) {ctx.fillRect(currentInteractable.col.origin.x, currentInteractable.col.origin.y, currentInteractable.col.width, currentInteractable.col.height);}
 		
 		drawQueue.forEach((i) => {
 			if (i.className == "player"){
 				if (i.flipped == true) ctx.drawImage(cows.fimgs[i.skin], 0, 0, 16, 16, i.col.origin.x - 4*charScaleFact, i.col.origin.y - charScaleFact, 16*charScaleFact, 16*charScaleFact);
 				else ctx.drawImage(cows.imgs[i.skin], 0, 0, 16, 16, i.col.origin.x - 4*charScaleFact, i.col.origin.y - charScaleFact, 16*charScaleFact, 16*charScaleFact);
 			} else if (i.className == "interactable"){
-				ctx.fillStyle="rgba(255,255,255,0.4)";
-				ctx.fillRect(i.col.origin.x, i.col.origin.y, i.col.width, i.col.height);
+				//ctx.fillStyle="rgba(255,255,255,0.4)";
+				//ctx.fillRect(i.col.origin.x, i.col.origin.y, i.col.width, i.col.height);
 				if (sprites.imgs[i.spritename] != null) ctx.drawImage(sprites.imgs[i.spritename], i.col.origin.x + i.renderOffset.x, i.col.origin.y + i.renderOffset.y);
 			}
 		});
@@ -323,7 +325,7 @@ function lobbyScene(sock) {
 		if (debug.showInteractables){
 			for (let i = 0; i < game.interactables.length; i++){
 				let j = game.interactables[i];
-				ctx.fillStyle = `rbga(255,255,255,0.1)`;
+				ctx.fillStyle = `rbga(255,255,255,0.4)`;
 				ctx.fillRect(j.col.origin.x, j.col.origin.y, j.col.width, j.col.height);
 			}
 		}

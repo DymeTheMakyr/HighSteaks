@@ -6,6 +6,7 @@ Todo
  -distance rect --COMPLETE--
  -sphere --COMPLETE--
 -encapsulate socket --COMPLETE--
+-temporary player memory --COMPLETE--
 -lobby sprites --IN PROGRESS--
 -rework drawing system --COMPLETE--
 -rectify collision system and data structure --COMPLETE FOR NOW--
@@ -39,7 +40,4 @@ Todo
 -podium scene
 -podium functionality
 -repeat system
-
-
-ERROR FIX LOG
-invalid request -> null id -> slice error
+-character selection frame
