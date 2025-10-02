@@ -143,31 +143,35 @@ class projectile {
 class interactable {
 	className = "interactable";
 	col;
+	text = "";
 	renderOffset = vec.n(0,0);
 	spritename = "";
+	funcKey = "";
 	short = false;
-	constructor(n, rO, c, s){
+	constructor(n, rO, c, t, fk, s){
 		this.spritename = n;
 		this.renderOffset = rO;
 		this.col = c;
+		this.text = t;
+		this.funcKey = fk;
 		this.short = s;
 	}
-	static short(n, rO, c){
-		return new interactable(n, rO, c, true);
+	static short(n, rO, c, fk, t){
+		return new interactable(n, rO, c, t, fk, true);
 	}
-	static tall(n, rO, c){
-		return new interactable(n, rO, c, false);
+	static tall(n, rO, c, fk, t){
+		return new interactable(n, rO, c, t, fk, false);
 	}
 }
 
 const sceneInteractables = {
 	"selection":[],
 	"lobby":[
-		interactable.short("tableTemp", vec.n(16,16), col.rect(vec.n(40,104), 160, 95)),
-		interactable.short("tableTemp", vec.n(16,16), col.rect(vec.n(40,224), 160, 95)),
-		interactable.short("tableTemp", vec.n(16,16), col.rect(vec.n(440,104), 160, 95)),
-		interactable.short("tableTemp", vec.n(16,16), col.rect(vec.n(440,224), 160, 95)),
-		interactable.tall("slots", vec.n(4,4), col.rect(vec.n(300, 16), 40,68))
+		interactable.short("tableTemp", vec.n(16,8), col.rect(vec.n(40,104), 160, 79), "bj", "'E' for Blackjack"),
+		interactable.short("tableTemp", vec.n(16,8), col.rect(vec.n(40,224), 160, 79), "rl", "'E' for Roulette"),
+		interactable.short("tableTemp", vec.n(16,8), col.rect(vec.n(440,104), 160, 79), "pk","'E' for Poker"),
+		interactable.short("tableTemp", vec.n(16,8), col.rect(vec.n(440,224), 160, 79), "ff", "'E' for FFA"),
+		interactable.tall("slots", vec.n(4,4), col.rect(vec.n(300, 16), 40,68), "sl", "'E' to Spin")
 	],
 	"blackjack":[],
 	"roulette":[],

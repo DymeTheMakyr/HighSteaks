@@ -234,13 +234,25 @@ function lobbyScene(sock) {
 			this.owner = o;
 		}
 	}
+	
+	let interactFuncs = {
+		"bj" : () => {alert("Blackjack");},
+		"rl" : () => {alert("Roulette");},
+		"pk" : () => {alert("Poker");},
+		"ff" : () => {alert("Free for All");},
+		"sl" : () => {alert("Slot Spin");}
+	}
+	
 	//Key Manager;
 	let keys = {
 		"w" : 0,
 		"a" : 0,
 		"s" : 0,
 		"d" : 0,
-		"shift" : 0
+		"shift" : 0,
+		"funcs" : {
+			"e":() => {if(currentInteractable != null) interactFuncs[currentInteractable.funcKey]();}
+		}
 	}
 	
 	//Movement variables
@@ -290,7 +302,7 @@ function lobbyScene(sock) {
 				currentInteractable = game.interactables[i];
 			}
 		}
-		
+
 		// draw sprites and players in order
 		drawQueue.sort((a,b) => {
 			let first = (a.className == "player")?a.col.origin.y + a.col.height:a.col.origin.y + a.col.height - a.renderOffset.y;
@@ -300,8 +312,6 @@ function lobbyScene(sock) {
 			return first - second;
 		});
 		
-		//ctx.fillStyle = "rgba(255,255,255,0.3)";
-		//if (typeof(currentInteractable) == "object" && currentInteractable != null) {ctx.fillRect(currentInteractable.col.origin.x, currentInteractable.col.origin.y, currentInteractable.col.width, currentInteractable.col.height);}
 		
 		drawQueue.forEach((i) => {
 			if (i.className == "player"){
@@ -313,6 +323,17 @@ function lobbyScene(sock) {
 				if (sprites.imgs[i.spritename] != null) ctx.drawImage(sprites.imgs[i.spritename], i.col.origin.x + i.renderOffset.x, i.col.origin.y + i.renderOffset.y);
 			}
 		});
+		
+		//ctx.fillStyle = "rgba(255,255,255,0.3)";
+		if (currentInteractable != null) {
+			let c = currentInteractable;
+			ctx.fillStyle = `rbga(0,0,0,0.75)`;
+			ctx.fillRect(c.col.origin.x + (0.5*c.col.width) - (3*c.text.length), c.col.origin.y + c.renderOffset.y + 2, c.text.length * 6, 12);
+			ctx.font = `${charScaleFact*5}px Courier New`;
+			ctx.fillStyle = "rgba(255,255,255,1)";
+			ctx.fillText(c.text, c.col.origin.x + (0.5*c.col.width) - (3*c.text.length), c.col.origin.y + c.renderOffset.y + 12);
+		}
+		
 		
 		for (let i = 0; i < game.players.length; i++){ //draw player names
 			ctx.fillStyle = `rgba(0,${(game.players[i].pName == playerName)*200},0,0.5)`;
@@ -363,6 +384,8 @@ function lobbyScene(sock) {
 		if (e.code === 'KeyS') keys.s = 1;
 		if (e.code === 'KeyD') keys.d = 1;
 		if (e.code === 'ShiftLeft') keys.shift = 1;
+		
+		if (e.code === 'KeyE') keys.funcs.e();
 	}
 	function keyup(e) {
 		//Collect Keyups
