@@ -32,6 +32,10 @@ Todo
 -item system
 -hint/note system
 -shop functionality
+ -draw 3 purchasables
+ -pay money to reroll
+ -reroll = 50 + 1.2^rolls
+ -item = price + 1.1^rolls
 -brawl scene
 -projectile system
 -item usage system

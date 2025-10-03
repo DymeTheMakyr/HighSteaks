@@ -167,10 +167,12 @@ class interactable {
 const sceneInteractables = {
 	"selection":[],
 	"lobby":[
-		interactable.short("tableTemp", vec.n(16,8), col.rect(vec.n(40,104), 160, 79), "bj", "'E' for Blackjack"),
-		interactable.short("tableTemp", vec.n(16,8), col.rect(vec.n(40,224), 160, 79), "rl", "'E' for Roulette"),
-		interactable.short("tableTemp", vec.n(16,8), col.rect(vec.n(440,104), 160, 79), "pk","'E' for Poker"),
-		interactable.short("tableTemp", vec.n(16,8), col.rect(vec.n(440,224), 160, 79), "ff", "'E' for FFA"),
+		interactable.short("tableTemp", vec.n(16,8), col.rect(vec.n(40,112), 160, 79), "bj", "'E' for Blackjack"),
+		interactable.short("roulette", vec.n(16,8), col.rect(vec.n(40,232), 160, 79), "rl", "'E' for Roulette"),
+		interactable.short("tableTemp", vec.n(16,8), col.rect(vec.n(440,112), 160, 79), "pk","'E' for Poker"),
+		interactable.short("tableTemp", vec.n(16,8), col.rect(vec.n(440,232), 160, 79), "ff", "'E' to Fight"),
+		interactable.short("shop", vec.n(0,0), col.rect(vec.n(448,16), 96, 50), "sh", "'E' to Open Shop"),
+		interactable.short("bar", vec.n(0,0), col.rect(vec.n(80,22), 120, 62), "ba", "'E' to Get a Drink"),
 		interactable.tall("slots", vec.n(4,4), col.rect(vec.n(300, 16), 40,68), "sl", "'E' to Spin")
 	],
 	"blackjack":[],
@@ -186,7 +188,7 @@ const sceneColliders = {
 		col.srect(vec.n(0,0), 640, 39),
 		col.srect(vec.n(640-16,0), 16, 360),
 		col.srect(vec.n(0,360-16), 640, 16),
-		col.srect(vec.n(96,0), 96, 59),
+		col.srect(vec.n(96,0), 96, 55),
 		col.srect(vec.n(304,20), 32,31),
 		
 		col.srect(vec.n(56,134), 128, 21),

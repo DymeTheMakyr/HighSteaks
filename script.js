@@ -149,6 +149,7 @@ class sprites {
 	
 	static {
 		sprites.imgs.tableTemp = loadImg("./sprites/tableTemp.png");
+		sprites.imgs.roulette = loadImg("./sprites/roulette.png");
 		sprites.imgs.slots = loadImg("./sprites/slots.png");
 	}
 }
@@ -240,9 +241,11 @@ function lobbyScene(sock) {
 		"rl" : () => {alert("Roulette");},
 		"pk" : () => {alert("Poker");},
 		"ff" : () => {alert("Free for All");},
-		"sl" : () => {alert("Slot Spin");}
+		"sl" : () => {alert("Slot Spin");},
+		"sh" : () => {alert("welcome to shop");},
+		"ba" : () => {alert("dronk");}
 	}
-	
+		
 	//Key Manager;
 	let keys = {
 		"w" : 0,
