@@ -149,7 +149,10 @@ class sprites {
 	
 	static {
 		sprites.imgs.tableTemp = loadImg("./sprites/tableTemp.png");
+		sprites.imgs.blackjack = loadImg("./sprites/blackjack.png");
 		sprites.imgs.roulette = loadImg("./sprites/roulette.png");
+		sprites.imgs.poker = loadImg("./sprites/poker.png");
+		sprites.imgs.fight = loadImg("./sprites/fight.png");
 		sprites.imgs.slots = loadImg("./sprites/slots.png");
 	}
 }
@@ -330,10 +333,10 @@ function lobbyScene(sock) {
 		//ctx.fillStyle = "rgba(255,255,255,0.3)";
 		if (currentInteractable != null) {
 			let c = currentInteractable;
-			ctx.fillStyle = `rbga(0,0,0,0.75)`;
-			ctx.fillRect(c.col.origin.x + (0.5*c.col.width) - (3*c.text.length), c.col.origin.y + c.renderOffset.y + 2, c.text.length * 6, 12);
+			ctx.fillStyle = `rgba(0,0,0,0.8)`;
+			ctx.fillRect(c.col.origin.x + (0.5*c.col.width) - (3*c.text.length) - 2, c.col.origin.y + c.renderOffset.y + 2, c.text.length * 6 + 4, 12);
 			ctx.font = `${charScaleFact*5}px Courier New`;
-			ctx.fillStyle = "rgba(255,255,255,1)";
+			ctx.fillStyle = `white`;
 			ctx.fillText(c.text, c.col.origin.x + (0.5*c.col.width) - (3*c.text.length), c.col.origin.y + c.renderOffset.y + 12);
 		}
 		

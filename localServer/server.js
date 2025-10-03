@@ -167,12 +167,12 @@ class interactable {
 const sceneInteractables = {
 	"selection":[],
 	"lobby":[
-		interactable.short("tableTemp", vec.n(16,8), col.rect(vec.n(40,112), 160, 79), "bj", "'E' for Blackjack"),
+		interactable.short("blackjack", vec.n(16,8), col.rect(vec.n(40,112), 160, 79), "bj", "'E' for Blackjack"),
 		interactable.short("roulette", vec.n(16,8), col.rect(vec.n(40,232), 160, 79), "rl", "'E' for Roulette"),
-		interactable.short("tableTemp", vec.n(16,8), col.rect(vec.n(440,112), 160, 79), "pk","'E' for Poker"),
-		interactable.short("tableTemp", vec.n(16,8), col.rect(vec.n(440,232), 160, 79), "ff", "'E' to Fight"),
+		interactable.short("poker", vec.n(16,8), col.rect(vec.n(440,112), 160, 79), "pk","'E' for Poker"),
+		interactable.short("fight", vec.n(16,8), col.rect(vec.n(440,232), 160, 79), "ff", "'E' to Fight"),
 		interactable.short("shop", vec.n(0,0), col.rect(vec.n(448,16), 96, 50), "sh", "'E' to Open Shop"),
-		interactable.short("bar", vec.n(0,0), col.rect(vec.n(80,22), 120, 62), "ba", "'E' to Get a Drink"),
+		interactable.short("bar", vec.n(0,0), col.rect(vec.n(80,22), 128, 62), "ba", "'E' to Get a Drink"),
 		interactable.tall("slots", vec.n(4,4), col.rect(vec.n(300, 16), 40,68), "sl", "'E' to Spin")
 	],
 	"blackjack":[],
