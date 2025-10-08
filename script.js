@@ -13,6 +13,9 @@ let unbind;
 const scene = {};
 let game = 0;
 
+const pixelFont = new FontFace("pixel", "url(./fonts/pixel.otf)");
+document.fonts.add(pixelFont);
+
 //public debug variables
 let debug = {
 	"showHitboxes":false,
@@ -113,8 +116,10 @@ class cards {
 	}
 }
 
+///// DELETE LATER
 let drawQueue = [];
 let currentInteractable = undefined;
+let votes;
 
 // cow manager
 class cows {
@@ -240,13 +245,13 @@ function lobbyScene(sock) {
 	}
 	
 	let interactFuncs = {
-		"bj" : () => {alert("Blackjack");},
-		"rl" : () => {alert("Roulette");},
-		"pk" : () => {alert("Poker");},
-		"ff" : () => {alert("Free for All");},
-		"sl" : () => {alert("Slot Spin");},
-		"sh" : () => {alert("welcome to shop");},
-		"ba" : () => {alert("dronk");}
+		"sl" : () => {alert("spin slots");},
+		"ba" : () => {alert("get drink");}
+	}
+	
+	function interactFunc(key){
+		if (key in interactFuncs) interactFuncs[key]();
+		else sock.send(`v\x1F${roomNo}\x1F${playerName}\x1F${key}`);
 	}
 		
 	//Key Manager;
@@ -257,7 +262,7 @@ function lobbyScene(sock) {
 		"d" : 0,
 		"shift" : 0,
 		"funcs" : {
-			"e":() => {if(currentInteractable != null) interactFuncs[currentInteractable.funcKey]();}
+			"e":() => {if(currentInteractable != null) interactFunc(currentInteractable.funcKey);}
 		}
 	}
 	
@@ -319,7 +324,7 @@ function lobbyScene(sock) {
 		});
 		
 		
-		drawQueue.forEach((i) => {
+		for (const i of drawQueue){
 			if (i.className == "player"){
 				if (i.flipped == true) ctx.drawImage(cows.fimgs[i.skin], 0, 0, 16, 16, i.col.origin.x - 4*charScaleFact, i.col.origin.y - charScaleFact, 16*charScaleFact, 16*charScaleFact);
 				else ctx.drawImage(cows.imgs[i.skin], 0, 0, 16, 16, i.col.origin.x - 4*charScaleFact, i.col.origin.y - charScaleFact, 16*charScaleFact, 16*charScaleFact);
@@ -328,26 +333,53 @@ function lobbyScene(sock) {
 				//ctx.fillRect(i.col.origin.x, i.col.origin.y, i.col.width, i.col.height);
 				if (sprites.imgs[i.spritename] != null) ctx.drawImage(sprites.imgs[i.spritename], i.col.origin.x + i.renderOffset.x, i.col.origin.y + i.renderOffset.y);
 			}
-		});
+		}
+		
+		votes = {
+			"bj"  : 0,
+			"rl" : 0,
+			"pk" : 0,
+			"ff" : 0
+		};
+		for (let i in game.votes){
+			votes[game.votes[i]] += 1;
+		}
+		
+		for (let i = 0; i < game.interactables.length; i++){
+			let c = game.interactables[i];
+			if (votes[c.funcKey] > 0){
+				ctx.fillStyle = `rgba(0,0,0,0.5)`;
+				ctx.fillRect(c.col.origin.x + (0.5*c.col.width) - (28), c.col.origin.y + c.renderOffset.y - 4, 59, -29);
+				ctx.font = `30px pixel`;
+				ctx.fillStyle = `rgba(255,255,255,1)`;
+				ctx.fillText(`${votes[c.funcKey]}/${Object.keys(game.players).length}`, c.col.origin.x + (0.5*c.col.width) - (24), c.col.origin.y + c.renderOffset.y-8);
+			}
+		}
 		
 		//ctx.fillStyle = "rgba(255,255,255,0.3)";
 		if (currentInteractable != null) {
 			let c = currentInteractable;
+			let spaceCount = c.text.split("\x20").length - 1;
+			let pixelLength = c.text.length * 6 - 4*spaceCount-2;
 			ctx.fillStyle = `rgba(0,0,0,0.8)`;
-			ctx.fillRect(c.col.origin.x + (0.5*c.col.width) - (3*c.text.length) - 2, c.col.origin.y + c.renderOffset.y + 2, c.text.length * 6 + 4, 12);
-			ctx.font = `${charScaleFact*5}px Courier New`;
+			ctx.fillRect(c.col.origin.x + (0.5*c.col.width) - 0.5*pixelLength - 2, c.col.origin.y + c.renderOffset.y - 2, pixelLength + 4, 13);
+			ctx.font = `10px pixel`;
 			ctx.fillStyle = `white`;
-			ctx.fillText(c.text, c.col.origin.x + (0.5*c.col.width) - (3*c.text.length), c.col.origin.y + c.renderOffset.y + 12);
+			ctx.fillText(c.text, c.col.origin.x + (0.5*c.col.width) - 0.5*pixelLength, c.col.origin.y + c.renderOffset.y + 9);
 		}
 		
 		
 		for (let i = 0; i < game.players.length; i++){ //draw player names
+			let spaceCount = game.players[i].pName.split("\x20").length - 1;
+			let pixelLength = Math.round(game.players[i].pName.length * 6 - 3.5*spaceCount - 1);
+			pixelLength += pixelLength%2;
 			ctx.fillStyle = `rgba(0,${(game.players[i].pName == playerName)*200},0,0.5)`;
-			ctx.fillRect(game.players[i].col.origin.x + (3.5*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length), game.players[i].col.origin.y - 0.5*charScaleFact, charScaleFact + 3*charScaleFact*game.players[i].pName.length, -5*charScaleFact);
-			ctx.font = `${charScaleFact*5}px Courier New`;
+			ctx.fillRect(game.players[i].col.origin.x + (8 - 0.5*pixelLength) - 2, game.players[i].col.origin.y - 1, 2 + pixelLength, -10);
+			ctx.font = `10px pixel`;
 			ctx.fillStyle = "rgba(255,255,255,1)";
-			ctx.fillText(game.players[i].pName, game.players[i].col.origin.x + (4*charScaleFact - 1.5*charScaleFact*game.players[i].pName.length),game.players[i].col.origin.y - charScaleFact);
+			ctx.fillText(game.players[i].pName, game.players[i].col.origin.x + (8 - 0.5*pixelLength),game.players[i].col.origin.y - 2);
 		}
+		
 		
 		if (debug.showInteractables){
 			for (let i = 0; i < game.interactables.length; i++){

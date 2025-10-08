@@ -60,6 +60,7 @@ class game{
 	className = "game";
 	id = 0;
 	currentRound = "selection";
+	votes = {};
 	players = [];
 	projectiles = [];
 	colliders = [];
@@ -383,7 +384,12 @@ server.on('connection', (socket) => {
 			gameManager.games[args[1]].currentRound = args[2];
 			gameManager.games[args[1]].colliders = sceneColliders[args[2]];
 			gameManager.games[args[1]].interactables = sceneInteractables[args[2]];
-		}else {
+		} else if (message[0] == "v") {
+			let args = message.split("\x1F");
+			let game = gameManager.games[args[1]];
+			if (game.votes[args[2]] == args[3]) game.votes[args[2]] = 0;
+			else game.votes[args[2]] = args[3]; 
+		} else {
 			console.log(message);
 		}
 	});	
@@ -395,6 +401,7 @@ server.on('connection', (socket) => {
 			let pIndx = gameManager.games[gId].players.findIndex(x => x.pName == pId);
 			gameManager.playerMem[gId][pId] = gameManager.games[gId].players[pIndx];
 			gameManager.games[gId].players = arrPop(gameManager.games[gId].players, pIndx);
+			delete gameManager.games[gId].votes[pId];
 			if (gameManager.games[gId].players.length == 0){
 				delete gameManager.games[gId];
 				clearInterval(gameManager.collisionHandlers[gId]);
