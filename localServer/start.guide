@@ -1,0 +1,9 @@
+1. Make Sure Node.js is installed
+2. Open terminal / command prompt or any other command line interface.
+3. Navigate to the folder where the server is stored
+4. run command `npm run start`
+
+If you can't connect, try:
+Adding a firewall exception.
+Making sure every player is on same LAN
+(If on WAN) Make sure that there is a port forwarding rule for the server

@@ -48,6 +48,15 @@ function loadImg(path){
 		temp.src = path;
 		return temp;
 }
+
+// audio load helper function
+function loadAudio(path){
+	let temp = new Audio();
+	temp.src = path;
+	return temp;
+
+}
+
 //vector object helper
 class vec{
 	x = 0;
@@ -162,6 +171,17 @@ class sprites {
 	}
 }
 
+class audio {
+	static clips = {};
+	
+	static {
+		audio.clips.sel = loadAudio("./audio/select.wav");
+		audio.clips.desel = loadAudio("./audio/deselect.wav");
+		audio.clips.jazz = loadAudio("./audio/jazz.mp3");
+		audio.clips.jazz.loop = true;
+	}
+}
+
 // Game Scene
 function lobbyScene(sock) {
 	let players = [];
@@ -251,7 +271,7 @@ function lobbyScene(sock) {
 	
 	function interactFunc(key){
 		if (key in interactFuncs) interactFuncs[key]();
-		else sock.send(`v\x1F${roomNo}\x1F${playerName}\x1F${key}`);
+		else if (key in votes) sock.send(`v\x1F${roomNo}\x1F${playerName}\x1F${key}`);
 	}
 		
 	//Key Manager;
@@ -262,13 +282,17 @@ function lobbyScene(sock) {
 		"d" : 0,
 		"shift" : 0,
 		"funcs" : {
-			"e":() => {if(currentInteractable != null) interactFunc(currentInteractable.funcKey);}
+			"e":() => {if(currentInteractable != null) {
+				if (playerName in game.votes && game.votes[playerName] != currentInteractable.funcKey) audio.clips.sel.play();
+				else audio.clips.desel.play();
+				interactFunc(currentInteractable.funcKey);
+			}}
 		}
 	}
 	
 	//Movement variables
-	const baseSpeed = 1
-	const sprintFact = 1
+	const baseSpeed = 4
+	const sprintFact = 0.5
 	let x = 50;
 	let y = 50;
 
@@ -438,16 +462,19 @@ function lobbyScene(sock) {
 	window.addEventListener('keydown', keydown);
 	window.addEventListener('keyup', keyup);
 	window.addEventListener('resize', resize);
-	mlId = setInterval(mainloop, 10);
+	mlId = setInterval(mainloop, 25);
 //	gsId = setInterval(mainloop, 10);
 	
 	function unbindLocal() {
+		audio.clips.jazz.pause();
+		audio.clips.jazz.currentTime = 0;
 		window.removeEventListener('keydown', keydown);
 		window.removeEventListener('keyup', keyup);
 		window.removeEventListener('resize', resize);
 		clearInterval(mlId);
 //		clearInterval(gsId);
 	}
+	audio.clips.jazz.play();
 	return unbindLocal;
 }
 scene.lobby = lobbyScene;

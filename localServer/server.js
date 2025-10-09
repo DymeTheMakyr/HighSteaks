@@ -347,6 +347,7 @@ server.on('connection', (socket) => {
 				id = args[1]+args[2];
 				let nGame = new game(args[2]);
 				nGame.players.push(new player("", args[3], 100, 0, [], args[1]));
+				nGame.votes[args[1]] = 0;
 				gameManager.games[args[2]] = nGame;
 				gameManager.collisionHandlers[args[2]] = collisionHandler;
 				gameManager.playerMem[args[2]] = {};
@@ -364,6 +365,7 @@ server.on('connection', (socket) => {
 					game.players.push(gameManager.playerMem[args[2]][args[1]]);
 					delete gameManager.playerMem[args[2]][args[1]];
 				} else game.players.push(new player("", args[3], 100, 0, [], args[1]));
+				game.votes[args[1]] = 0;
 				socket.send(JSON.stringify(game));
 			} else {socket.send(-1);}
 		} else if (message[0] == "m") {
