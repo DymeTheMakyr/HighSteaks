@@ -177,6 +177,8 @@ class audio {
 	static {
 		audio.clips.sel = loadAudio("./audio/select.wav");
 		audio.clips.desel = loadAudio("./audio/deselect.wav");
+		audio.clips.slots = loadAudio("./audio/slots.wav");
+		audio.clips.bar = loadAudio("./audio/bar.wav");
 		audio.clips.jazz = loadAudio("./audio/jazz.mp3");
 		audio.clips.jazz.loop = true;
 	}
@@ -265,13 +267,17 @@ function lobbyScene(sock) {
 	}
 	
 	let interactFuncs = {
-		"sl" : () => {alert("spin slots");},
-		"ba" : () => {alert("get drink");}
+		"sl" : () => {audio.clips.slots.play();},
+		"ba" : () => {audio.clips.bar.play();}
 	}
 	
 	function interactFunc(key){
 		if (key in interactFuncs) interactFuncs[key]();
-		else if (key in votes) sock.send(`v\x1F${roomNo}\x1F${playerName}\x1F${key}`);
+		else if (key in votes) {
+			sock.send(`v\x1F${roomNo}\x1F${playerName}\x1F${key}`);
+			if (playerName in game.votes && game.votes[playerName] != currentInteractable.funcKey) audio.clips.sel.play();
+			else audio.clips.desel.play();
+		}
 	}
 		
 	//Key Manager;
@@ -283,8 +289,6 @@ function lobbyScene(sock) {
 		"shift" : 0,
 		"funcs" : {
 			"e":() => {if(currentInteractable != null) {
-				if (playerName in game.votes && game.votes[playerName] != currentInteractable.funcKey) audio.clips.sel.play();
-				else audio.clips.desel.play();
 				interactFunc(currentInteractable.funcKey);
 			}}
 		}
