@@ -179,6 +179,7 @@ class audio {
 		audio.clips.desel = loadAudio("./audio/deselect.wav");
 		audio.clips.slots = loadAudio("./audio/slots.wav");
 		audio.clips.bar = loadAudio("./audio/bar.wav");
+		audio.clips.shop = loadAudio("./audio/shop.mp3");
 		audio.clips.jazz = loadAudio("./audio/jazz.mp3");
 		audio.clips.jazz.loop = true;
 	}
@@ -268,7 +269,8 @@ function lobbyScene(sock) {
 	
 	let interactFuncs = {
 		"sl" : () => {audio.clips.slots.play();},
-		"ba" : () => {audio.clips.bar.play();}
+		"ba" : () => {audio.clips.bar.play();},
+		"sh" : () => {audio.clips.shop.play();}
 	}
 	
 	function interactFunc(key){
