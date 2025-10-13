@@ -9,7 +9,18 @@ sh = sw / factor[0] > sh / factor[1] ? sh : (sw / factor[0]) * factor[1];
 console.log([sw, sh]);
 
 const container = document.getElementById('container');
-let unbind;
+const storage = document.getElementById('sceneStorage');
+const canv = document.createElement('canvas'); //create canvas
+canv.width = '640'; //internal width
+canv.height = '360'; //internal height
+canv.style.width = sw.toString() + 'px'; //external width
+canv.style.height = sh.toString() + 'px'; //external height
+canv.style.border = 'solid 1px blue'; //border
+storage.appendChild(canv); //add to container
+const ctx = canv.getContext('2d'); //grab context
+ctx.imageSmoothingEnabled = false;
+
+let unload;
 const scene = {};
 let game = 0;
 
@@ -94,11 +105,10 @@ class vec{
 function changeScene(targetScene, sock, ...args){
 	if (targetScene in scene){
 		if (sock != null) sock.send(`c\x1F${roomNo}\x1F${targetScene}`);
-		unbind();
-		for (let i = 0; i < container.children.length; i++){
-			container.children[0].remove();
-		}	
-		unbind = scene[targetScene](sock, ...args);
+		unload();
+		if (targetScene == "selection") container.appendChild(document.getElementById("selectionScene"));
+		else container.appendChild(canv);
+		unload = scene[targetScene](sock, ...args);
 	} else {
 		throw new Error("targetScene not found, is it in scene object?");
 	}
@@ -154,6 +164,7 @@ class background {
 		background.imgs.lobby = {};
 		background.imgs.lobby.floor = loadImg("./background/lfloor.png");
 		background.imgs.lobby.wall = loadImg("./background/lwall.png");
+		background.imgs.blackjack = loadImg("./background/blackjack.png");
 	}
 }
 
@@ -187,19 +198,6 @@ class audio {
 
 // Game Scene
 function lobbyScene(sock) {
-	let players = [];
-	let projectiles = [];
-	//Populate and initialise index.html
-	const canv = document.createElement('canvas'); //create canvas
-	canv.width = '640'; //internal width
-	canv.height = '360'; //internal height
-	canv.style.width = sw.toString() + 'px'; //external width
-	canv.style.height = sh.toString() + 'px'; //external height
-	canv.style.border = 'solid 1px blue'; //border
-	container.appendChild(canv); //add to container
-	const ctx = canv.getContext('2d'); //grab context
-	ctx.imageSmoothingEnabled = false;
-
 	//key functions
 	function resize() {
 		sw = window.innerWidth - 1;
@@ -222,50 +220,6 @@ function lobbyScene(sock) {
 		"y" : 0
 	}
 	//collider class
-	class col {
-		origin = vec.n(0,0);
-		points = [];
-		type = "r";
-		constructor(t, o, ...p){
-			this.origin = o;
-			this.type = t;
-			this.points = p;
-		}
-	}
-	//player class
-	class player {
-		col = new col("r", vec.n(50,50), [vec.n(0,0),vec.n(0,0),vec.n(0,0),vec.n(0,0)]);
-		flipped = false;
-		item = "gun";
-		skin = "hereford";
-		health = 100;
-		money = 0;
-		cards = [[0,0],[3,12]];
-		pName = "";
-		constructor(it, sk, he, mo, ca, na){
-			this.item = it;
-			this.skin = sk;
-			this.health = he;
-			this.money = mo;
-			this.cards = ca;
-			this.pName = na;
-		}
-	}
-	//projetile class
-	class projectile {
-		pos = [0,0];
-		speed = [0,0];
-		damage = 10;
-		life = 10;
-		owner = 0;
-		constructor(p, s, d, l, o){
-			this.pos = p;
-			this.speed = s;
-			this.damage = d;
-			this.life = l;
-			this.owner = o;
-		}
-	}
 	
 	let interactFuncs = {
 		"sl" : () => {audio.clips.slots.play();},
@@ -311,6 +265,10 @@ function lobbyScene(sock) {
 			} finally {
 				changeScene("selection", null);
 			}
+		}
+		
+		if (game.currentScene != "lobby"){
+			changeScene(game.currentScene, sock);
 		}
 		
 		//Update Velocity
@@ -471,7 +429,8 @@ function lobbyScene(sock) {
 	mlId = setInterval(mainloop, 25);
 //	gsId = setInterval(mainloop, 10);
 	
-	function unbindLocal() {
+	function unloadLocal() {
+		storage.appendChild(canv);
 		audio.clips.jazz.pause();
 		audio.clips.jazz.currentTime = 0;
 		window.removeEventListener('keydown', keydown);
@@ -481,12 +440,11 @@ function lobbyScene(sock) {
 //		clearInterval(gsId);
 	}
 	audio.clips.jazz.play();
-	return unbindLocal;
+	return unloadLocal;
 }
 scene.lobby = lobbyScene;
 
 function selectionScene(sock){
-	let storage = document.getElementById("selectionScene");
 	let ipToggle = document.getElementById("ipToggle");
 	let ip = document.getElementById("ip");
 	let sel = document.getElementById("skin");
@@ -495,7 +453,7 @@ function selectionScene(sock){
 	ipToggle.onchange = () => {ip.style.display = ipToggle.checked?"block":"none";};
 	sel.onchange = () => {img.src = cows.strings[sel.value]}
 	img.src = cows.strings[sel.value];
-	function unbindLocal(){
+	function unloadLocal(){
 		storage.appendChild(container.children[0]);
 	}
 	function chooseAddr(priv){
@@ -563,13 +521,59 @@ function selectionScene(sock){
 			}
 			changeScene("lobby", sock);
 		};}
-	}	
-	container.appendChild(document.getElementById("selectionScene").children[0]);
+	}
+	container.appendChild(document.getElementById("selectionScene"));
 	document.getElementById("host").onclick = hostRoom;
 	document.getElementById("join").onclick = joinRoom;
 	
-	return unbindLocal;
+	return unloadLocal;
 }
 scene.selection = selectionScene;
+unload = selectionScene();
 
-unbind = selectionScene();
+function blackjackScene(sock){
+	function mainloop(){
+		if (sock == null || sock.readyState == WebSocket.CLOSED){
+			try{
+				return;
+			} finally {
+				changeScene("selection", null);
+			}
+		}
+		
+		sock.send(`r\x1F${roomNo}`);
+		
+		if (game.currentScene != "blackjack"){
+			changeScene(game.currentScene, sock);
+		}
+		
+		ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+		ctx.drawImage(background.imgs.blackjack, 0, 0);
+	}
+	
+	let keys = {
+		"e" : () => {
+			console.log("change to lobby");
+			sock.send(`c\x1F${roomNo}\x1Flobby`);
+		}
+	};
+	
+	function keydown(e){
+		if (e.code === "KeyE") keys.e();
+	}
+	function keyup(e){
+		
+	}
+	
+	window.addEventListener('keydown', keydown);
+	window.addEventListener('keyup', keyup);
+	mlId = setInterval(mainloop, 25);
+	
+	function unloadLocal(){
+		storage.appendChild(canv);
+		clearInterval(mlId);
+	}
+	
+	return unloadLocal
+}
+scene.blackjack = blackjackScene;

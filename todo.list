@@ -10,10 +10,10 @@ Todo
 -lobby sprites --IN PROGRESS--
 -rework drawing system --COMPLETE--
 -rectify collision system and data structure --COMPLETE FOR NOW--
--lobby progression (0/3)
- -Round Voting
- -Start Button
- -Slot machine and bar
+-lobby progression (2.5/3)
+ -Round Voting --COMPLETE--
+ -Start Button --DEPRECATED--
+ -Slot machine and bar --COMPLETEish--
 -blackjack sprites
 -blackjack scene
 -card system (0/3)

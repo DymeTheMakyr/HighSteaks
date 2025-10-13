@@ -30,7 +30,7 @@ button {
 	height:20px;
 	font:arial;
 }
-.sceneStorage{
+#sceneStorage{
 	display:none;
 	width:0;
 	height:0;

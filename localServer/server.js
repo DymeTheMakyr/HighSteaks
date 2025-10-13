@@ -59,7 +59,7 @@ function setPos(obj, ...args){
 class game{
 	className = "game";
 	id = 0;
-	currentRound = "selection";
+	currentScene = "lobby";
 	votes = {};
 	players = [];
 	projectiles = [];
@@ -163,6 +163,13 @@ class interactable {
 	static tall(n, rO, c, fk, t){
 		return new interactable(n, rO, c, t, fk, false);
 	}
+}
+
+let kts = {
+	"bj" : "blackjack",
+	"rl" : "roulette",
+	"pk" : "poker",
+	"ff" : "fight"
 }
 
 const sceneInteractables = {
@@ -383,7 +390,7 @@ server.on('connection', (socket) => {
 			}
 		} else if (message[0] == "c") {
 			let args = message.split("\x1F");
-			gameManager.games[args[1]].currentRound = args[2];
+			gameManager.games[args[1]].currentScene = args[2];
 			gameManager.games[args[1]].colliders = sceneColliders[args[2]];
 			gameManager.games[args[1]].interactables = sceneInteractables[args[2]];
 		} else if (message[0] == "v") {
@@ -391,8 +398,26 @@ server.on('connection', (socket) => {
 			let game = gameManager.games[args[1]];
 			if (game.votes[args[2]] == args[3]) game.votes[args[2]] = 0;
 			else game.votes[args[2]] = args[3]; 
+			
+			let count = 0;
+			for (let v in game.votes) {count += (game.votes[v]==args[3])};
+			if (count == game.players.length){
+				console.log(`proceed with ${args[3]}`);
+				for (let v in game.votes) {game.votes[v] = 0;}
+				if (args[3] == "bj"){
+					game.currentScene = "blackjack";
+					game.colliders = sceneColliders["blackjack"];
+					game.interactables = sceneInteractables["blackjack"];
+				}
+			}
+			
+		} else if (message[0] == "r"){
+			let args = message.split("\x1F");
+			if (gameManager.games[args[1]] != null){
+				socket.send(JSON.stringify(gameManager.games[args[1]]));
+			}
 		} else {
-			console.log(message);
+			console.log("unmatched message : " + message);
 		}
 	});	
 	
