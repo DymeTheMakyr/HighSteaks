@@ -60,6 +60,8 @@ class game{
 	className = "game";
 	id = 0;
 	currentScene = "lobby";
+	currentPlayer;
+	turnOptions;
 	votes = {};
 	players = [];
 	projectiles = [];
@@ -343,6 +345,36 @@ function projectileHandler(id){
 	
 }
 
+let blackjackMemory = {};
+async function blackjack(game, socket){
+	let cards = [];
+	let divider = Math.round(Math.random() * 15);
+	for (let i = 0; i < 6; i++){ //create a random deck consisting of 6 52 card decks
+		for (let i = 0; i < 52; i++){
+			cards.push(Math.floor(i/13)*100 + ((i+1)%13));
+		}
+	}
+	cards = cards.map((a) => ({ sort: Math.random(), value: a })).sort((a, b) => a.sort - b.sort).map((a) => a.value);
+	
+	game.currentPlayer = game.players[0].pName;
+	//get bets
+	game.turnOptions = "bjBet";
+//	for (let i = 0; i < game.players.length; i++){
+//		game.currentPlayer = game.players[i].pName;
+//		blackjackMemory[game.players[i].pName] = {}
+//		blackjackMemory[game.players[i].pName].bet = 0;
+//		while (blackjackMemory[game.players[i].pName].bet == 0){}
+//		console.log(blackjackMemory[game.players[i].pName].bet);
+//	}
+	//deal cards
+	//player 1
+	//player n
+	//dealer
+	//money
+	//continue vote
+	//repeat
+}
+
 server.on('connection', (socket) => {
 	console.log("connected");
 	let id;
@@ -395,19 +427,23 @@ server.on('connection', (socket) => {
 			gameManager.games[args[1]].interactables = sceneInteractables[args[2]];
 		} else if (message[0] == "v") {
 			let args = message.split("\x1F");
+			console.log("vote");
 			let game = gameManager.games[args[1]];
 			if (game.votes[args[2]] == args[3]) game.votes[args[2]] = 0;
 			else game.votes[args[2]] = args[3]; 
 			
 			let count = 0;
 			for (let v in game.votes) {count += (game.votes[v]==args[3])};
+			console.log(`${count}/${game.players.length}`);
 			if (count == game.players.length){
 				console.log(`proceed with ${args[3]}`);
 				for (let v in game.votes) {game.votes[v] = 0;}
 				if (args[3] == "bj"){
-					game.currentScene = "blackjack";
-					game.colliders = sceneColliders["blackjack"];
-					game.interactables = sceneInteractables["blackjack"];
+					let t = kts[args[3]]
+					game.currentScene = t;
+					game.colliders = sceneColliders[t];
+					game.interactables = sceneInteractables[t];
+					blackjack(game, socket);
 				}
 			}
 			
@@ -415,6 +451,11 @@ server.on('connection', (socket) => {
 			let args = message.split("\x1F");
 			if (gameManager.games[args[1]] != null){
 				socket.send(JSON.stringify(gameManager.games[args[1]]));
+			}
+		} else if (message[0] == "a") {
+			let args = message.split("\x1F");
+			if (gameManager.games[args[2]].turnOptions == "bjBet"){
+				blackjackMemory[args[1]].bet = args[3];
 			}
 		} else {
 			console.log("unmatched message : " + message);

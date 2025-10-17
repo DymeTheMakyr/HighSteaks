@@ -39,6 +39,13 @@ let playerName;
 let skin;
 let flip = 0;
 
+let kts = {
+	"bj" : "blackjack",
+	"rl" : "roulette",
+	"pk" : "poker",
+	"ff" : "fight"
+}
+
 // Collision function
 
 function overlap(a, b){
@@ -111,6 +118,60 @@ function changeScene(targetScene, sock, ...args){
 		unload = scene[targetScene](sock, ...args);
 	} else {
 		throw new Error("targetScene not found, is it in scene object?");
+	}
+}
+
+class col {
+	className = "col";
+	origin = vec.n(0,0);
+	points = [];
+	type = "r";
+	constructor(t, o, ...p){
+		this.type = t;
+		this.origin = o;
+		this.points = p;
+	}
+	static rect(o, w, h){
+		let c = new col("r", o, vec.n(0,0), vec.n(0+w,0), vec.n(0+w,0+h), vec.n(0,0+h));
+		c.width = w;
+		c.height = h;
+		c.solid = false;
+		return c;
+	}
+	static srect(o, w, h){
+		let c = new col("r", o, vec.n(0,0), vec.n(0+w,0), vec.n(0+w,0+h), vec.n(0,0+h));
+		c.width = w;
+		c.height = h;
+		c.solid = true;
+		return c;
+	}
+	static circle(o, r){
+		let c = new col("c", o, vec.n(0,0));
+		c.radius = r;
+		return c;
+	}
+	static line(o, e, t){
+		let c = new col("l", o, vec.n(0,0), vec.n(e.x-o.x, e.y-o.y));
+		c.thickness = t;
+		return c;
+	}
+}
+
+
+class button {
+	col;
+	text;
+	textCol;
+	colour;
+	colourPressed;
+	pressed = 0;
+	
+	constructor(t, tc, c, co, cop){
+		this.col = c;
+		this.text = t;
+		this.textCol = tc;
+		this.colour = co;
+		this.colourPressed = cop;
 	}
 }
 
@@ -246,6 +307,7 @@ function lobbyScene(sock) {
 		"funcs" : {
 			"e":() => {if(currentInteractable != null) {
 				interactFunc(currentInteractable.funcKey);
+				console.log("interact");
 			}}
 		}
 	}
@@ -314,8 +376,8 @@ function lobbyScene(sock) {
 		
 		for (const i of drawQueue){
 			if (i.className == "player"){
-				if (i.flipped == true) ctx.drawImage(cows.fimgs[i.skin], 0, 0, 16, 16, i.col.origin.x - 4*charScaleFact, i.col.origin.y - charScaleFact, 16*charScaleFact, 16*charScaleFact);
-				else ctx.drawImage(cows.imgs[i.skin], 0, 0, 16, 16, i.col.origin.x - 4*charScaleFact, i.col.origin.y - charScaleFact, 16*charScaleFact, 16*charScaleFact);
+				if (i.flipped == true) ctx.drawImage(cows.fimgs[i.skin], 0, 1, 16, 15, i.col.origin.x-4*charScaleFact, i.col.origin.y, 16*charScaleFact, 15*charScaleFact);
+				else ctx.drawImage(cows.imgs[i.skin], 0, 1, 16, 15, i.col.origin.x-4*charScaleFact, i.col.origin.y, 16*charScaleFact, 15*charScaleFact);
 			} else if (i.className == "interactable"){
 				//ctx.fillStyle="rgba(255,255,255,0.4)";
 				//ctx.fillRect(i.col.origin.x, i.col.origin.y, i.col.width, i.col.height);
@@ -324,11 +386,12 @@ function lobbyScene(sock) {
 		}
 		
 		votes = {
-			"bj"  : 0,
+			"bj" : 0,
 			"rl" : 0,
 			"pk" : 0,
 			"ff" : 0
 		};
+		
 		for (let i in game.votes){
 			votes[game.votes[i]] += 1;
 		}
@@ -364,7 +427,7 @@ function lobbyScene(sock) {
 			ctx.fillStyle = `rgba(0,${(game.players[i].pName == playerName)*200},0,0.5)`;
 			ctx.fillRect(game.players[i].col.origin.x + (8 - 0.5*pixelLength) - 2, game.players[i].col.origin.y - 1, 2 + pixelLength, -10);
 			ctx.font = `10px pixel`;
-			ctx.fillStyle = "rgba(255,255,255,1)";
+			ctx.fillStyle = `rgba(255,255,255,1)`;
 			ctx.fillText(game.players[i].pName, game.players[i].col.origin.x + (8 - 0.5*pixelLength),game.players[i].col.origin.y - 2);
 		}
 		
@@ -435,7 +498,7 @@ function lobbyScene(sock) {
 		audio.clips.jazz.currentTime = 0;
 		window.removeEventListener('keydown', keydown);
 		window.removeEventListener('keyup', keyup);
-		window.removeEventListener('resize', resize);
+//		window.removeEventListener('resize', resize);
 		clearInterval(mlId);
 //		clearInterval(gsId);
 	}
@@ -510,7 +573,7 @@ function selectionScene(sock){
 		sock.onopen = () => {console.log(`j\x1F${nam}\x1F${rId}\x1F${skn}`[0]);sock.send(`j\x1F${nam}\x1F${rId}\x1F${skn}`)};
 		sock.onmessage = (message) => {if (message.data == -1){alert("Room Not Found");sock.close();return 0;} 
 			else if (message.data == -2){alert("Another User Has This Name");sock.close();return 0;} 
-			else if (message.data == -3){alert("This Room Is Full");sock.close();return 0;}else {console.log(message.data); 
+			else if (message.data == -3){alert("This Room Is Full");sock.close();return 0;} else { 
 			game = JSON.parse(message.data);
 			playerName = nam;
 			roomNo = rId;
@@ -530,8 +593,36 @@ function selectionScene(sock){
 }
 scene.selection = selectionScene;
 unload = selectionScene();
-
+let buttons = {};
+	
+let rounds = {
+	"bet" : {
+		"raise" : new button("bet", "black", col.rect(vec.n(200,100), 150, 100), `rgba(255,0,0,1)`, `rgba(255,255,255,1)`)
+	},
+	"turn" : {
+		//hit
+		//stand
+	},
+	"split" : {
+		//split
+		//hit
+		//stand
+	},
+	"double" : {
+		//double
+		//hit
+		//stand
+	},
+	"doublesplit" : {
+		//double
+		//split
+		//hit
+		//stand
+	}
+}	
 function blackjackScene(sock){
+	
+
 	function mainloop(){
 		if (sock == null || sock.readyState == WebSocket.CLOSED){
 			try{
@@ -547,15 +638,82 @@ function blackjackScene(sock){
 			changeScene(game.currentScene, sock);
 		}
 		
+		let pOffset = 576 / game.players.length;
 		ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
 		ctx.drawImage(background.imgs.blackjack, 0, 0);
+		for (let i = 0; i < game.players.length; i++){
+			let p = game.players[i];
+			let curOff = 32 + (pOffset * 0.5) + (pOffset*i);
+			ctx.fillStyle = `rgba(255,230,120,0.5)`;
+			ctx.beginPath();
+			ctx.arc(curOff,312, 32,5*Math.PI/6 , Math.PI/6);
+			ctx.fill();
+			ctx.drawImage(cows.imgs[p.skin], 0, 1, 16, 15, curOff - 16, 298, 32,30);
+			
+			
+			let spaceCount = p.pName.split("\x20").length - 1;
+			let pixelLength = Math.round(p.pName.length * 6 - 3.5*spaceCount - 1);
+			pixelLength += pixelLength%2;
+			ctx.fillStyle = `rgba(0,${255*(p.pName == playerName)},0,0.5)`;
+			ctx.fillRect(curOff - (0.5*pixelLength) - 2, 331, 2 + pixelLength, 10);
+			ctx.fillStyle = 'white';
+			ctx.fillText(p.pName, curOff - (0.5*pixelLength), 340);
+		}
+		
+		if (game.currentPlayer == playerName){
+			if (game.turnOptions == "bjBet"){
+				if (buttons !== rounds.bet) buttons = rounds.bet;
+				for (let j in buttons){
+					let i = buttons[j];
+					if (i.pressed === 1){
+						ctx.fillStyle = i.colourPressed;
+						ctx.fillRect(i.col.origin.x, i.col.origin.y, i.col.width, i.col.height);
+					} else if (i.pressed === 0){
+						ctx.fillStyle = i.colour;
+						ctx.fillRect(i.col.origin.x, i.col.origin.y, i.col.width, i.col.height);
+					}
+					
+				}	
+			}
+		}
+		
+	}
+	
+	let pressedButton;
+	let mouse = {
+		0 : { 
+			"d": (e) => {
+				let canvR = canv.getBoundingClientRect();
+				let x = (e.clientX - canvR.left - 2) / canv.style.width.split("px")[0] * 640;
+				let y = (e.clientY - canvR.top - 2) / canv.style.height.split("px")[0] * 360;
+				console.log("X "+x+"  Y "+y);
+				for (let j in buttons){
+					let i = buttons[j];
+					let distX = x - i.col.origin.x;
+					let distY = y - i.col.origin.y;
+					if (distX >= 0 && distX <= i.col.width && distY >=0 && distY <= i.col.height){
+						pressedButton = i;
+						console.log(i.text + " pressed");
+				}} pressedButton.pressed = 1;},
+			"u" : (e) => {
+				console.log(pressedButton.text + " released");
+				pressedButton.pressed = 0;
+			}
+		}
+	}
+	
+	function mousedown(e){
+		if (e.button in mouse) mouse[e.button].d(e)
+	}	
+	function mouseup(e){
+		if (e.button in mouse) mouse[e.button].u(e);
 	}
 	
 	let keys = {
 		"e" : () => {
 			console.log("change to lobby");
 			sock.send(`c\x1F${roomNo}\x1Flobby`);
-		}
+		},
 	};
 	
 	function keydown(e){
@@ -565,12 +723,18 @@ function blackjackScene(sock){
 		
 	}
 	
+	window.addEventListener('mouseup', mouseup);
+	window.addEventListener('mousedown', mousedown);
 	window.addEventListener('keydown', keydown);
 	window.addEventListener('keyup', keyup);
 	mlId = setInterval(mainloop, 25);
 	
 	function unloadLocal(){
 		storage.appendChild(canv);
+		window.removeEventListener('mouseup', mouseup);
+		window.removeEventListener('mousedown', mousedown);
+		window.removeEventListener('keydown', keydown);
+		window.removeEventListener('keyup', keyup);
 		clearInterval(mlId);
 	}
 	
