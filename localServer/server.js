@@ -414,6 +414,7 @@ const blackjackFuncs = {
 			console.log(hand);
 			console.log(sumHand);
 			if (sumHand > 8 && sumHand < 12) turn += "double";
+			console.log(hand.length);
 			if (mem.valueLookup[hand[0].value] == mem.valueLookup[hand[1].value] && hand.length == 2) turn += "split";
 		}
 		let result = {"turn":turn};
@@ -444,7 +445,7 @@ const blackjackFuncs = {
 			for (let j = 0; j < 2; j++){
 				for (let i = 0; i < game.players.length; i++){
 					await new Promise(r => setTimeout(r, 500));
-					game.players[i].cards[0].push(new card(1, 11+j, 0));
+					game.players[i].cards[0].push(mem.cards.shift());
 				}
 				await new Promise(r => setTimeout(r, 500));
 				let tcard = mem.cards.shift();
@@ -486,6 +487,8 @@ const blackjackFuncs = {
 					game.currentPlayer = game.players[playerIndex].pName;
 				}
 			} else {
+				game.turnOptions = "none";
+				game.currentPlayer = "\x1F";
 				await new Promise(r => setTimeout(r, 500));
 				game.dealer.cards[1].faceDown = 0;
 				for(;;){
@@ -705,11 +708,14 @@ server.on('connection', (socket) => {
 			console.log(playerIndex);
 			let p = game.players[playerIndex];
 			if (game.turnOptions == "bjbet" && game.currentPlayer == p.pName){
-				p.bet = args[3];
-				p.money -= args[3];
-				if (playerIndex+1 < game.players.length) game.currentPlayer = game.players[playerIndex+1].pName;
-				else {game.currentPlayer = "none"; blackjackFuncs.deal(game, socket);}
-			} if (game.turnOptions.slice(0,6) == "bjturn" && game.currentPlayer == p.pName){
+				if (args[3] != null){
+					p.bet = args[3];
+					p.money -= args[3];
+					if (playerIndex+1 < game.players.length) game.currentPlayer = game.players[playerIndex+1].pName;
+					else {game.currentPlayer = "none"; blackjackFuncs.deal(game, socket);}
+				}
+			} 
+			if (game.turnOptions.slice(0,6) == "bjturn" && game.currentPlayer == p.pName){
 				if (args[3] == "h"){
 					p.cards[p.currentHand].push(blackjackMemory[game.id].cards.shift())
 					let handSum = 0;
@@ -726,7 +732,7 @@ server.on('connection', (socket) => {
 					}
 				}
 				else if (args[3] == "p") {
-					p.money -= b.bet;
+					p.money -= p.bet;
 					p.cards.splice(p.currentHand+1, 0, []);
 					p.cards[p.currentHand+1].push(p.cards[p.currentHand].pop());
 					let addCards = [blackjackMemory[game.id].cards.shift(), blackjackMemory[game.id].cards.shift()];
