@@ -62,6 +62,8 @@ class gameObj{
 	currentScene = "lobby";
 	currentPlayer;
 	turnOptions;
+	remRounds = 0;
+	maxRounds = 0;
 	votes = {};
 	players = [];
 	dealer = {"cards":[]};
@@ -115,7 +117,7 @@ class player {
 	item = "gun";
 	skin = "hereford";
 	health = 100;
-	money = 999999999;
+	money = 1000;
 	bet = 0;
 	cards = [[]];
 	currentHand = 0;
@@ -359,7 +361,7 @@ function projectileHandler(id){
 	
 }
 
-let blackjackMemory = {
+let blackjackMemoryTemplate = {
 	"winRates" : {},
 	"cards":[],
 	"divider":70,
@@ -377,107 +379,225 @@ let blackjackMemory = {
 		10 : 10,
 		11 : 10,
 		12 : [1,11]
-	}
+	},
+	"dealerSum" : 0
 };
+
+let blackjackMemory = {};
+
 const blackjackFuncs = {
-	"start" : (game, socket) => {
-		blackjackMemory.cards = [];
-		game.dealer.cards = [];
+	"reshuffle" : (game, socket) => {
+		let mem = blackjackMemory[game.id];
 		let cards = [];
-		let divider = Math.round(Math.random() * 15);
+		let divider = 60 + Math.round(Math.random() * 15);
 		for (let i = 0; i < 6; i++){ //create a random deck consisting of 6 52 card decks
 			for (let i = 0; i < 52; i++){
 				cards.push(new card(Math.floor(i/13)%4, i%13, 0));
 			}
 		}
 		cards = cards.map((a) => ({ sort: Math.random(), value: a })).sort((a, b) => a.sort - b.sort).map((a) => a.value);
-		blackjackMemory.divider = divider;
-		blackjackMemory.cards = cards;
+		return [cards, divider];
+	},
+	"checkHand" : (p, checkBJ) => {
+		console.log("checking...");
+		let turn = "bjturn";
+		let blackjack = false;
+		let mem = blackjackMemoryTemplate;
+		let hand = p.cards[p.currentHand];
+		if (checkBJ && hand[0].value + mem.valueLookup[hand[1].value] == 22 || hand[1].value + mem.valueLookup[hand[0].value] == 22) blackjack = true;
+		if (p.money >= p.bet){	
+			let sumHand = 0;	
+			for (let i = 0; i < hand.length; i++){
+				if (hand[i].value == 12) sumHand += 1;
+				else sumHand += mem.valueLookup[hand[i].value];
+			}
+			console.log(hand);
+			console.log(sumHand);
+			if (sumHand > 8 && sumHand < 12) turn += "double";
+			if (mem.valueLookup[hand[0].value] == mem.valueLookup[hand[1].value] && hand.length == 2) turn += "split";
+		}
+		let result = {"turn":turn};
+		if (checkBJ) result.bj = blackjack;
+		return result;
+	},
+	"start" : (game, socket) => {
+		game.remRounds = 1;
+		let mem = blackjackMemory[game.id];
+		game.dealer.cards = [];
+		let temp = blackjackFuncs.reshuffle(game,socket);
+		mem.cards = temp[0];
+		mem.divider = temp[1];
 		game.currentPlayer = game.players[0].pName;
 		game.turnOptions = "bjbet";
+		console.log(blackjackMemory);
 	},
 	"deal" : async function(game, socket){
 		try {
+			let mem = blackjackMemory[game.id];	
+			if (mem.cards.length == 0){
+				console.log("empty!!");
+				let temp = blackjackFuncs.reshuffle(game,socket);
+				mem.cards = temp[0];
+				mem.divider = temp[1];
+			}
 			game.turnOptions = "none";
 			for (let j = 0; j < 2; j++){
 				for (let i = 0; i < game.players.length; i++){
 					await new Promise(r => setTimeout(r, 500));
-					game.players[i].cards[0].push(blackjackMemory.cards.shift());
+					game.players[i].cards[0].push(new card(1, 11+j, 0));
 				}
 				await new Promise(r => setTimeout(r, 500));
-				game.dealer.cards.push(blackjackMemory.cards.shift());
-				game.dealer.cards[j].faceDown = j;
+				let tcard = mem.cards.shift();
+				console.log(tcard);
+				tcard.faceDown = j;
+				game.dealer.cards.push(tcard);
 			}
-			let nextTurn = "bjturn";
-			let hand = game.players[0].cards[0];
-			if (hand[0].value + blackjackMemory.valueLookup[hand[1].value] == 22 || hand[1].value + blackjackMemory.valueLookup[hand[0].value] == 22) blackjackFuncs.next(game,socket);
+			let handCheck = blackjackFuncs.checkHand(game.players[0], true);
+			console.log(handCheck);
+			if (handCheck.bj) blackjackFuncs.next(game,socket);
 			else {
-				let sumHand = ((hand[0].value==12)?1:blackjackMemory.valueLookup[hand[0].value]) + ((hand[1].value==12)?1:blackjackMemory.valueLookup[hand[1].value]);
-				console.log(hand);
-				console.log(sumHand);
-				if (sumHand > 8 && sumHand < 12) nextTurn += "double";
-				if (blackjackMemory.valueLookup[hand[0].value] == blackjackMemory.valueLookup[hand[1].value]) nextTurn += "split";
-				game.turnOptions = nextTurn;
-				game.players[0].currentHand = 0;
-				await new Promise(r => setTimeout(r, 500));
+				game.turnOptions = handCheck.turn;
 				game.currentPlayer = game.players[0].pName;
 			}
+			
 		} catch(e) {
 			console.log(e);
 		}
+		console.log(blackjackMemory);
 	},
 	"next": async function(game, socket){
+		console.log("NEXT");
+		let mem = blackjackMemory[game.id];
 		try{
 			let playerIndex = game.players.findIndex((x) => {return x.pName == game.currentPlayer});
-			if (game.players[playerIndex].currentHand+1 >= game.players[playerIndex].cards.length){
-				playerIndex += 1;
-				if (playerIndex < game.players.length) game.players[playerIndex].currentHand = 0;
-			} else if (game.players[playerIndex].currentHand+1 < game.players[playerIndex].cards.length){
-				game.players[playerIndex].currentHand += 1;
-			}
-			game.currentPlayer = "none";
-			if (playerIndex < game.players.length){
-				let hand = game.players[playerIndex].cards[game.players[playerIndex].currentHand];
-				if (hand[0].value + blackjackMemory.valueLookup[hand[1].value] == 22 || hand[1].value + blackjackMemory.valueLookup[hand[0].value] == 22) blackjackFuncs.next(game,socket);
+			if (playerIndex+1 < game.players.length && playerIndex != -1){
+				console.log(playerIndex);
+				if (game.players[playerIndex].currentHand+1 >= game.players[playerIndex].cards.length){
+					playerIndex += 1;
+					if (playerIndex < game.players.length) game.players[playerIndex].currentHand = 0;
+				} else if (game.players[playerIndex].currentHand+1 < game.players[playerIndex].cards.length){
+					game.players[playerIndex].currentHand += 1;
+				}
+				game.currentPlayer = "none";
+				let handCheck = blackjackFuncs.checkHand(game.players[playerIndex], true);
+				if (handCheck.bj) blackjackFuncs.next(game,socket);
 				else {
-					let nextTurn = "bjturn";
-					let sumHand = ((hand[0].value==12)?1:blackjackMemory.valueLookup[hand[0].value]) + ((hand[1].value==12)?1:blackjackMemory.valueLookup[hand[1].value]);
-					console.log(hand);
-					console.log(sumHand);
-					if (sumHand > 8 && sumHand < 12) nextTurn += "double";
-					if (blackjackMemory.valueLookup[hand[0].value] == blackjackMemory.valueLookup[hand[1].value]) nextTurn += "split";
-					game.turnOptions = nextTurn;
+					game.turnOptions = handCheck.turn;
 					game.currentPlayer = game.players[playerIndex].pName;
 				}
 			} else {
-				let dealerSumHand = 0;
-				let dealerAces = 0;
+				await new Promise(r => setTimeout(r, 500));
 				game.dealer.cards[1].faceDown = 0;
 				for(;;){
+					mem.dealerSum = 0;
+					let dealerAces = 0;
 					await new Promise(r => setTimeout(r, 500));
 					for (let i = 0; i < game.dealer.cards.length; i++){
 						if (game.dealer.cards[i].value == 12) dealerAces += 1;
-						else dealerSumHand += blackjackMemory.valueLookup[game.dealer.cards[i].value];
+						else mem.dealerSum += mem.valueLookup[game.dealer.cards[i].value];
 					}
 					for (let i = 0; i < dealerAces; i++){
-						if (dealerSumHand + 11 > 21) dealerSumHand += 1;
-						else dealerSumHand += 11;
+						if (mem.dealerSum + 11 > 21) mem.dealerSum += 1;
+						else mem.dealerSum += 11;
 					}
-					if (dealerSumHand > 17) break;
-					game.dealer.cards.push(blackjackMemory.cards.shift());
+					if (mem.dealerSum > 16) break;
+					game.dealer.cards.push(mem.cards.shift());
 				}
+				blackjackFuncs.cashout(game, socket);
 			}
 		} catch (e) {
 			console.log(e);
 		}
 	},
-	"cashout": () => {
-		//RESHUFFLE CHECK
+	"cashout": async function(game, socket){
+		let mem = blackjackMemory[game.id];
+		console.log("CASHOUT");
+		console.log(blackjackMemory);
+		console.log(game.dealer.cards);
+		try {
+			for(let j = 0; j < game.players.length; j++){
+				mem.winRates[game.players[j].pName] = [];
+				for (let k = 0; k < game.players[j].cards.length; k++){
+					let doubled = 0;
+					mem.winRates[game.players[j].pName].push(0);
+					let aces = 0
+					let sum = 0;
+					for (let i = 0; i < game.players[j].cards[k].length; i++){
+						if (game.players[j].cards[k][i].faceDown == 1) {
+							if (game.players[j].cards[k].length > 2) doubled = 1;
+							game.players[j].cards[k][i].faceDown = 0;
+						}
+						if (game.players[j].cards[k][i].value == 12) aces += 1;
+						else sum += mem.valueLookup[game.players[j].cards[k][i].value];
+					}
+					for (let i = 0; i < aces; i++){
+						if (sum + 11 > 21) sum += 1;
+						else sum += 11;
+					}
+					
+					if (sum == 21 && game.players[j].cards[k].length == 2){
+						if (mem.dealerSum == 21 && game.dealer.cards.length == 2) mem.winRates[game.players[j].pName][k] = 1;
+						else mem.winRates[game.players[j].pName][k] = 2.5;
+					} else if (sum > 21) mem.winRates[game.players[j].pName][k] = 0;
+					else if (mem.dealerSum > 21) mem.winRates[game.players[j].pName][k] = 2;
+					else if (mem.dealerSum > sum) mem.winRates[game.players[j].pName][k] = 0;
+					else if (mem.dealerSum == sum) mem.winRates[game.players[j].pName][k] = 1;
+					else if (mem.dealerSum < sum) mem.winRates[game.players[j].pName][k] = 2;
+					if (doubled == 1) mem.winRates[game.players[j].pName][k] *= 2;
+				}
+			}
+			for (let j = 0; j < game.players.length; j++){
+				for (let k = 0; k < game.players[j].cards.length; k++){
+					game.players[j].money += game.players[j].bet * mem.winRates[game.players[j].pName][k];
+					game.players[j].money = Math.round(game.players[j].money);
+				}
+				game.players[j].bet = 0;
+			}
+			
+			game.currentPlayer = "none";
+			await new Promise(r => setTimeout(r, 2000));
+			game.dealer.cards = [];
+			for (let i = 0; i < game.players.length; i++){
+				game.players[i].cards = [[]];
+			}
+			if (mem.cards.length == mem.divider){
+				let cards = [];
+				let divider = Math.round(Math.random() * 15);
+				for (let i = 0; i < 6; i++){ //create a random deck consisting of 6 52 card decks
+					for (let i = 0; i < 52; i++){
+						cards.push(new card(Math.floor(i/13)%4, i%13, 0));
+					}
+				}
+				cards = cards.map((a) => ({ sort: Math.random(), value: a })).sort((a, b) => a.sort - b.sort).map((a) => a.value);
+				mem.divider = divider;
+				mem.cards = cards;
+			}
+			
+			if (game.remRounds < game.maxRounds){
+				game.remRounds += 1;
+				game.currentPlayer = game.players[0].pName;
+				game.turnOptions = "bjbet";
+				blackjackFuncs.clear(game, false);
+			} else {
+				game.turnOptions = "none";
+				game.currentPlayer = "\x1F";
+				game.currentScene = "lobby";
+				game.colliders = sceneColliders["lobby"];
+				game.interactables = sceneInteractables["lobby"];
+				blackjackFuncs.clear(game, true);	
+			}
+			
+		} catch(e) {
+			console.log(e);
+		}
 	},
-	"exit": (game, socket) => {
+	"clear": (game, comp) => {
+		let mem = blackjackMemory[game.id];
+		game.dealer.cards = [];
 		for (let i = 0; i < game.players.length; i++){
 			game.players[i].cards = [[]];
 		}
+		if (comp) mem = {};
 	}
 }
 
@@ -486,11 +606,11 @@ server.on('connection', (socket) => {
 	let id;
 	let game;
 	let playerIndex;
+	let riId;
 	
 	function refreshIndex(){
 		playerIndex = game.players.findIndex((x) => {return x.pName == id.slice(0,-4)});
 	}
-	let riId = setInterval(refreshIndex,100);
 	
 	socket.on('message', (message) => {
 		message = message.toString();
@@ -502,11 +622,14 @@ server.on('connection', (socket) => {
 				nGame.players.push(new player("", args[3], 100, 999999, args[1]));
 				playerIndex = 0;
 				nGame.votes[args[1]] = 0;
+				nGame.maxRounds = parseInt(args[4]);
+				console.log(nGame);
 				gameManager.games[args[2]] = nGame;
 				game = gameManager.games[args[2]];
 				gameManager.collisionHandlers[args[2]] = collisionHandler;
 				gameManager.playerMem[args[2]] = {};
 				socket.send("r\x1F" + JSON.stringify(nGame));
+				riId = setInterval(refreshIndex,100);
 			} else {socket.send(-1); console.log("room not made");}
 		} else if (message[0] == 'j') {
 			console.log("joining");
@@ -524,6 +647,7 @@ server.on('connection', (socket) => {
 				} else game.players.push(new player("", args[3], 100, 999999, args[1]));
 				game.votes[args[1]] = 0;
 				socket.send("r\x1F" + JSON.stringify(game));
+				riId = setInterval(refreshIndex,100);
 			} else {socket.send(-1);}
 		} else if (message[0] == "m") {
 			let args = message.split("\x1F")
@@ -538,7 +662,7 @@ server.on('connection', (socket) => {
 			}
 		} else if (message[0] == "c") {
 			let args = message.split("\x1F");
-			if (game.currentScene == "blackjack") blackjackFuncs.exit(game, socket);
+			if (game.currentScene == "blackjack") blackjackFuncs.clear(game, socket);
 			game.currentScene = args[2];
 			game.colliders = sceneColliders[args[2]];
 			game.interactables = sceneInteractables[args[2]];
@@ -559,7 +683,13 @@ server.on('connection', (socket) => {
 					game.currentScene = t;
 					game.colliders = sceneColliders[t];
 					game.interactables = sceneInteractables[t];
+					blackjackMemory[game.id] = {};
+					for (let i in blackjackMemoryTemplate){
+						blackjackMemory[game.id][i] = blackjackMemoryTemplate[i];
+					}
+					console.log(blackjackMemory);
 					blackjackFuncs.start(game, socket);
+					console.log(blackjackMemory);
 				}
 			}
 			
@@ -573,30 +703,49 @@ server.on('connection', (socket) => {
 			
 			console.log(`recieved action ${args[3]}`);
 			console.log(playerIndex);
-			if (game.turnOptions == "bjbet" && game.currentPlayer == game.players[playerIndex].pName){
-				if (blackjackMemory[args[1]] == undefined) blackjackMemory[args[1]] = {};
-				
-				blackjackMemory[args[1]].bet = args[3];
-				game.players[playerIndex].bet = blackjackMemory[args[1]].bet;
-				game.players[playerIndex].money -= blackjackMemory[args[1]].bet;
+			let p = game.players[playerIndex];
+			if (game.turnOptions == "bjbet" && game.currentPlayer == p.pName){
+				p.bet = args[3];
+				p.money -= args[3];
 				if (playerIndex+1 < game.players.length) game.currentPlayer = game.players[playerIndex+1].pName;
-				else {game.currentPlayer = "none"; blackjackFuncs.deal(game, socket);}				
-				console.log(blackjackMemory);
-			} if (game.turnOptions.slice(0,6) == "bjturn" && game.currentPlayer == game.players[playerIndex].pName){
+				else {game.currentPlayer = "none"; blackjackFuncs.deal(game, socket);}
+			} if (game.turnOptions.slice(0,6) == "bjturn" && game.currentPlayer == p.pName){
 				if (args[3] == "h"){
-					game.players[playerIndex].cards[game.players[playerIndex].currentHand].push(blackjackMemory.cards.shift())
-					
+					p.cards[p.currentHand].push(blackjackMemory[game.id].cards.shift())
 					let handSum = 0;
-					for (let i = 0; i < game.players[playerIndex].cards[game.players[playerIndex].currentHand].length; i++){
-						let temp = blackjackMemory.valueLookup[game.players[playerIndex].cards[game.players[playerIndex].currentHand][i].value];
+					for (let i = 0; i < p.cards[p.currentHand].length; i++){
+						let temp = blackjackMemory[game.id].valueLookup[p.cards[p.currentHand][i].value];
 						if (typeof(temp) == "object") handSum += 1;
 						else handSum += temp; 
 					}
 					console.log(handSum);
 					if (handSum > 21) {
-						game.players[playerIndex].bet = 0;
 						blackjackFuncs.next(game, socket);
+					} else {
+						game.turnOptions = blackjackFuncs.checkHand(p).turn;
 					}
+				}
+				else if (args[3] == "p") {
+					p.money -= b.bet;
+					p.cards.splice(p.currentHand+1, 0, []);
+					p.cards[p.currentHand+1].push(p.cards[p.currentHand].pop());
+					let addCards = [blackjackMemory[game.id].cards.shift(), blackjackMemory[game.id].cards.shift()];
+					if (p.cards[p.currentHand][0].value == 12){
+						addCards[0].faceDown = 1;
+						addCards[1].faceDown = 1;
+					}
+					p.cards[p.currentHand].push(addCards.shift());
+					p.cards[p.currentHand+1].push(addCards.shift());
+					let handCheck = blackjackFuncs.checkHand(p, true);
+					if (handCheck.bj) blackjackFuncs.next(game,socket);
+					else game.turnOptions = handCheck.turn;
+				}
+				else if (args[3] == "d") {
+					p.money -= p.bet;
+					let temp = blackjackMemory[game.id].cards.shift();
+					temp.faceDown = 1;
+					p.cards[p.currentHand].push(temp);
+					blackjackFuncs.next(game, socket);
 				}
 				else if (args[3] == "s") blackjackFuncs.next(game, socket);
 			}
@@ -604,7 +753,7 @@ server.on('connection', (socket) => {
 			console.log("unmatched message : " + message);
 		}
 	});	
-	
+
 	socket.on('close', (...args) => {
 		if (id != null) {
 			clearInterval(riId);
