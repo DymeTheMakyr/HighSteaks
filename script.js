@@ -8,6 +8,8 @@ sw = sw / factor[0] < sh / factor[1] ? sw : (sh / factor[1]) * factor[0];
 sh = sw / factor[0] > sh / factor[1] ? sh : (sw / factor[0]) * factor[1];
 console.log([sw, sh]);
 
+let textSizeDebug = 7;
+
 const container = document.getElementById('container');
 const storage = document.getElementById('sceneStorage');
 const canv = document.createElement('canvas'); //create canvas
@@ -379,7 +381,8 @@ function lobbyScene(sock) {
 		});
 		
 		
-		for (const i of drawQueue){
+		for (let j = 0; j < drawQueue.length; j++){
+			const i = drawQueue[j];
 			if (i.className == "player"){
 				if (i.flipped == true) ctx.drawImage(cows.fimgs[i.skin], 0, 1, 16, 15, i.col.origin.x-4*charScaleFact, i.col.origin.y, 16*charScaleFact, 15*charScaleFact);
 				else ctx.drawImage(cows.imgs[i.skin], 0, 1, 16, 15, i.col.origin.x-4*charScaleFact, i.col.origin.y, 16*charScaleFact, 15*charScaleFact);
@@ -404,29 +407,30 @@ function lobbyScene(sock) {
 		for (let i = 0; i < game.interactables.length; i++){
 			let c = game.interactables[i];
 			if (votes[c.funcKey] > 0){
+				ctx.font = `28px pixel`;
+				let text = `${votes[c.funcKey]}/${Math.max(2,Object.keys(game.players).length)}`;
+				let pixelLength = Math.round(0.5*ctx.measureText(text).width);
 				ctx.fillStyle = `rgba(0,0,0,0.5)`;
-				ctx.fillRect(c.col.origin.x + (0.5*c.col.width) - (28), c.col.origin.y + c.renderOffset.y - 4, 59, -29);
-				ctx.font = `30px pixel`;
+				ctx.fillRect(c.col.origin.x + (0.5*c.col.width) - pixelLength, c.col.origin.y + c.renderOffset.y - 4, 2*pixelLength, -33);
 				ctx.fillStyle = `rgba(255,255,255,1)`;
-				ctx.fillText(`${votes[c.funcKey]}/${Object.keys(game.players).length}`, c.col.origin.x + (0.5*c.col.width) - (24), c.col.origin.y + c.renderOffset.y-8);
+				ctx.fillText(text, c.col.origin.x + (0.5*c.col.width) - pixelLength, c.col.origin.y + c.renderOffset.y-8);
 			}
 		}
 		
 		//ctx.fillStyle = "rgba(255,255,255,0.3)";
 		if (currentInteractable != null) {
 			let c = currentInteractable;
-			ctx.font = `10px pixel`;
+			ctx.font = `7px pixel`;
 			let pixelLength = ctx.measureText(c.text).width;
-			pixelLength += pixelLength%2;
 			ctx.fillStyle = `rgba(0,0,0,0.8)`;
-			ctx.fillRect(c.col.origin.x + (0.5*c.col.width) - 0.5*pixelLength - 2, c.col.origin.y + c.renderOffset.y - 2, pixelLength + 4, 13);
+			ctx.fillRect(c.col.origin.x + Math.round((0.5*c.col.width) - 0.5*pixelLength) - 2, c.col.origin.y + c.renderOffset.y - 2, pixelLength + 4, 13);
 			ctx.fillStyle = `white`;
-			ctx.fillText(c.text, c.col.origin.x + (0.5*c.col.width) - 0.5*pixelLength, c.col.origin.y + c.renderOffset.y + 9);
+			ctx.fillText(c.text, c.col.origin.x + Math.round((0.5*c.col.width) - 0.5*pixelLength), c.col.origin.y + c.renderOffset.y + 9);
 		}
 		
 		
 		for (let i = 0; i < game.players.length; i++){ //draw player names
-			ctx.font = `10px pixel`;
+			ctx.font = `7px pixel`;
 			let pixelLength = ctx.measureText(game.players[i].pName).width;
 			pixelLength += pixelLength%2;
 			ctx.fillStyle = `rgba(0,${(game.players[i].pName == playerName)*200},0,0.5)`;
@@ -575,7 +579,7 @@ function selectionScene(sock){
 	function joinRoom(){
 		let nam = container.children[0].children[5].value;
 		let rId = container.children[0].children[7].value;
-		let skn = container.children[0].children[9].value;
+		let skn = container.children[0].children[11].value;
 		if (nam.length = 0) {alert("Input Name"); return 0;}
 		if (nam.includes("\x1F")) {alert("Forbidden character '\x1F' in name"); return 0;}
 		if (rId.length != 4) {alert("Room ID needs 4 characters"); return 0;}
@@ -649,7 +653,7 @@ function blackjackScene(sock){
 			}),
 			"d10" : new button("/10", "black", col.rect(vec.n(86,119), 54, 22), `rgba(235,175,175,1)`, `rgba(255,255,255,1)`, () => {betAmount = Math.round(betAmount/10);if (betAmount < 0) betAmount = 0;}),
 			"submit" : new button("BET", "black", col.rect(vec.n(500,32), 108, 109), `rgba(235,235,235,1)`, `rgba(255,255,255,1)`, ()=>{
-				if (betAmount > 0) sock.send(`a\x1F${playerName}\x1F${roomNo}\x1F${betAmount}`);
+				sock.send(`a\x1F${playerName}\x1F${roomNo}\x1F${betAmount}`);
 			})
 		},
 		"turn" : {
@@ -693,15 +697,16 @@ function blackjackScene(sock){
 		ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
 		ctx.drawImage(background.imgs.blackjack, 0, 0);
 		
-		ctx.font = "20px pixel";
+		ctx.font = "21px pixel";
 		let text = `Round ${game.remRounds} of ${game.maxRounds}`;
 		let l = ctx.measureText(text).width;
-		l += l%2;
+		l = Math.round(0.5*l);
 		ctx.fillStyle = "rgba(22,22,29, 0.9)";
 		console.log(l);
-		ctx.fillRect(318 - 0.5*l,4, l + 4, 28);
+		ctx.fillRect(318 - l,4, 2*l + 4, 28);
 		ctx.fillStyle = "white";
-		ctx.fillText(text, 320 - 0.5*l, 28);	
+		console.log(l);
+		ctx.fillText(text, 320 - l, 28);	
 		
 		for (let i = 0; i < game.players.length; i++){
 			let p = game.players[i];
@@ -713,7 +718,7 @@ function blackjackScene(sock){
 			ctx.drawImage(cows.imgs[p.skin], 0, 1, 16, 15, curOff - 16, 298, 32,30);
 			
 			text = p.pName + "--$" + p.money.toString();	
-			ctx.font = `10px pixel`;
+			ctx.font = `7px pixel`;
 			let pixelLength = ctx.measureText(text).width;
 			pixelLength += pixelLength%2;
 			ctx.fillStyle = `rgba(0,${255*(p.pName == playerName)},0,0.5)`;
@@ -727,18 +732,23 @@ function blackjackScene(sock){
 			}
 			
 			let scale = 2;
-			let tempCards = [];
-			if (p.cards.length > 7) {
-				scale = 1;
-			} else {
-				for (let i = 0; i < p.cards.length; i++){
-					if (p.cards[i].length != 0) tempCards.push(p.cards[i]); 
-					if (p.cards[i].length > 6) scale = 1;
+			if (game.players[i].cards.length > 4) scale = 1;
+			else {
+				for (let k = 0; k < game.players[i].cards.length; k++){
+					if (game.players[i].cards[k].length > 6) scale = 1;
 				}
 			}
-			
+			let tempCards = game.players[i].cards;
 			for (let k = 0; k < tempCards.length; k++){	
-				let hOff = Math.round(curOff - (0.5*tempCards.length * 16 * scale) - scale + k*17*scale)+0.5;
+				let hOff = Math.round(curOff - (0.5*tempCards.length * 16 * scale) + k*17*scale)+0.5;
+				if (game.currentPlayer == game.players[i].pName && game.players[i].currentHand == k){
+					ctx.fillStyle = "rgba(0,255,0,1)";
+					ctx.beginPath();
+					ctx.moveTo(hOff + 0.5*16*scale-8, 146.5);
+					ctx.lineTo(hOff + 0.5*16*scale, 154.5);
+					ctx.lineTo(hOff + 0.5*16*scale+8, 146.5);
+					ctx.fill();
+				}
 				for (let j = 0; j < tempCards[k].length; j++){
 					let vOff = Math.round(152 + ((j+1) * 100/(tempCards[k].length+1)))+0.5;
 					if (tempCards[k][j].className != "card") ctx.drawImage(cards.bg, hOff, vOff, 15*scale, 21*scale);
@@ -762,9 +772,9 @@ function blackjackScene(sock){
 			}
 		}
 		
-		if (game.turnOptions == "bjbet"){
+		if (game.turnOptions == "bjbet" && game.currentPlayer == playerName){
 			let betText = "$" + betAmount.toString();
-			ctx.font = `20px pixel`;
+			ctx.font = `14px pixel`;
 			let pixelLength = ctx.measureText(betText).width;
 			pixelLength += pixelLength%2;
 			ctx.fillStyle = 'white';
@@ -792,9 +802,10 @@ function blackjackScene(sock){
 					ctx.fillStyle = i.colour;
 				}
 				ctx.fillRect(i.col.origin.x, i.col.origin.y, i.col.width, i.col.height);
-				ctx.font = "10px pixel";
+				ctx.font = `7px pixel`;
 				ctx.fillStyle = i.textCol;
 				let pixelLength = ctx.measureText(i.text).width;
+				pixelLength += pixelLength%2;
 				ctx.fillText(i.text, i.col.origin.x + Math.round(0.5*i.col.width - 0.5*pixelLength), i.col.origin.y + 0.5*i.col.height + 4);			
 			}
 		}
