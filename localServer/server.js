@@ -506,7 +506,7 @@ const blackjackFuncs = {
 			if (playerIndex < game.players.length && playerIndex != -1){
 				if (game.players[playerIndex].cards[0].length != 0){
 					let handCheck = blackjackFuncs.checkHand(game.players[playerIndex], true);
-					if (handCheck.bj) {
+					if (handCheck.bj || game.players[playerIndex].cards[game.players[playerIndex].currentHand].at(-1).faceDown == 1) {
 						game.currentPlayer = game.players[playerIndex].pName;
 						blackjackFuncs.next(game);
 					}

@@ -749,15 +749,30 @@ function blackjackScene(sock){
 					ctx.lineTo(hOff + 0.5*16*scale+8, 146.5);
 					ctx.fill();
 				}
+				
+				let sum = 0;
+				let aces = 0;
 				for (let j = 0; j < tempCards[k].length; j++){
 					let vOff = Math.round(152 + ((j+1) * 100/(tempCards[k].length+1)))+0.5;
 					if (tempCards[k][j].className != "card") ctx.drawImage(cards.bg, hOff, vOff, 15*scale, 21*scale);
 					else if (tempCards[k][j].faceDown === 1) ctx.drawImage(cards.back, hOff, vOff, 15*scale, 21*scale); 
 					else {
+						if (tempCards[k][j].value == 12) aces += 1;
+						else sum += Math.min(10, tempCards[k][j].value + 2);
 						ctx.drawImage(cards.bg, hOff, vOff, 15*scale, 21*scale);
 						ctx.drawImage(cards.suits[tempCards[k][j].suit], hOff, vOff, 15*scale, 21*scale);
 						ctx.drawImage(tempCards[k][j].suit>1?cards.rNo[tempCards[k][j].value]:cards.bNo[tempCards[k][j].value], hOff, vOff, 15*scale, 21*scale);
 					}
+				}
+				for (let l = 0; l < aces; l++){
+							if (sum + 11 < 22) sum += 11;
+							else sum += 1;
+				}
+				if (sum > 0) {
+					ctx.font = scale==2?"14px pixel":"7px pixel";
+					ctx.fillStyle = "white";
+					let pixelLength = 0.5*ctx.measureText(sum).width;
+					ctx.fillText(sum, Math.round(hOff+0.5*17*scale - pixelLength), 136);
 				}
 			}
 		}
