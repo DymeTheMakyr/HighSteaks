@@ -403,9 +403,9 @@ const blackjackFuncs = {
 		let turn = "bjturn";
 		let blackjack = false;
 		let mem = blackjackMemoryTemplate;
-		let hand = p.cards[p.currentHand];
-		if (checkBJ && hand[0].value + mem.valueLookup[hand[1].value] == 22 || hand[1].value + mem.valueLookup[hand[0].value] == 22) blackjack = true;
-		if (p.money >= p.bet){	
+		if (p.bet > 0 && p.money >= 0 && p.money >= p.bet){	
+			let hand = p.cards[p.currentHand];
+			if (checkBJ && hand[0].value + mem.valueLookup[hand[1].value] == 22 || hand[1].value + mem.valueLookup[hand[0].value] == 22) blackjack = true;
 			let sumHand = 0;	
 			for (let i = 0; i < hand.length; i++){
 				if (hand[i].value == 12) sumHand += 1;
@@ -478,10 +478,13 @@ const blackjackFuncs = {
 			}
 			let handCheck = blackjackFuncs.checkHand(game.players[0], true);
 			console.log(handCheck);
-			if (handCheck.bj) blackjackFuncs.next(game);
+			if (handCheck.bj) {
+				game.currentPlayer = game.players[validPlayerIndexes[0]].pName ?? "none";
+				blackjackFuncs.next(game);
+			}
 			else {
 				game.turnOptions = handCheck.turn;
-				game.currentPlayer = game.players[validPlayerIndexes[0]].pName;
+				game.currentPlayer = game.players[validPlayerIndexes[0]].pName ?? "none";
 			}
 			
 		} catch(e) {
@@ -666,6 +669,9 @@ server.on('connection', (socket) => {
 				playerIndex = 0;
 				nGame.votes[args[1]] = 0;
 				nGame.maxRounds = parseInt(args[4]);
+				nGame.currentScene = "lobby";
+				nGame.interactables = sceneInteractables.lobby;
+				nGame.colliders = sceneColliders.lobby;
 				console.log(nGame);
 				gameManager.games[args[2]] = nGame;
 				game = gameManager.games[args[2]];
@@ -735,18 +741,22 @@ server.on('connection', (socket) => {
 			if (count == Math.max(2, game.players.length)){
 				console.log(`proceed with ${args[3]}`);
 				for (let v in game.votes) {game.votes[v] = 0;}
-				if (args[3] == "bj"){
+				if (args[3] == "bj" || args[3] == "rl"){
 					let t = kts[args[3]]
 					game.currentScene = t;
 					game.colliders = sceneColliders[t];
 					game.interactables = sceneInteractables[t];
-					blackjackMemory[game.id] = {};
-					for (let i in blackjackMemoryTemplate){
-						blackjackMemory[game.id][i] = blackjackMemoryTemplate[i];
+					if (args[3] == "bj"){
+						blackjackMemory[game.id] = {};
+						for (let i in blackjackMemoryTemplate){
+							blackjackMemory[game.id][i] = blackjackMemoryTemplate[i];
+						}
+						console.log(blackjackMemory);
+						blackjackFuncs.start(game);
+						console.log(blackjackMemory);
+					} else if (args[3] == "rl") {
+						console.log("start roulette");
 					}
-					console.log(blackjackMemory);
-					blackjackFuncs.start(game);
-					console.log(blackjackMemory);
 				}
 			}
 			
@@ -767,10 +777,10 @@ server.on('connection', (socket) => {
 						p.bet = args[3];
 						p.money -= args[3];
 						if (playerIndex+1 < game.players.length) game.currentPlayer = game.players[playerIndex+1].pName;
-						else {game.currentPlayer = "none"; blackjackFuncs.deal(game);}
+						else {game.currentPlayer = "\x1F"; blackjackFuncs.deal(game);}
 					} else if (args[3] == 0 && game.players[playerIndex].money == 0){
 						if (playerIndex+1 < game.players.length) game.currentPlayer = game.players[playerIndex+1].pName;
-						else {game.currentPlayer = "none"; blackjackFuncs.deal(game);}
+						else {game.currentPlayer = "\x1F"; blackjackFuncs.deal(game);}
 					}
 				}
 			} 
@@ -821,7 +831,9 @@ server.on('connection', (socket) => {
 			gameManager.playerMem[gId][pId] = game.players[playerIndex];
 			game.players = arrPop(gameManager.games[gId].players, playerIndex);
 			delete game.votes[pId];
+			console.log("player left");
 			if (game.players.length == 0){
+				console.log("closing room");
 				delete gameManager.games[gId];
 				clearInterval(gameManager.collisionHandlers[gId]);
 				delete gameManager.collisionHandlers[gId];
