@@ -7,7 +7,7 @@
 			<form id="selectionScene">
 				<br/><h1>High Steaks</h1><br/>
 				<img bg="white" src="./cows/008.png" id="char" />
-				<br/>
+				<br/><br/>
 				<input id="name" type="text" placeholder="Name" maxlength=15 size=20/><br />
 				<input id="roomId" type="text" placeholder="Room ID" maxlength=4 size=20 /><br />
 				<input id="roundC" type="number" placeholder="Rounds per Activity" min = 1 max = 50 step = 1 /><br />
@@ -21,8 +21,7 @@
 					<option value = 5>Galloway</option>
 					<option value = 6>Longhorn</option>
 					<option value = 7>White Park</option>
-			  	</select><br />
-			  	Use LAN <input type="checkbox" id="ipToggle" /><br/>
+			  	</select><br /><br />
 			  	<input type="text" id="ip" placeholder = "IP_Address:Port">
 			  	<button type="button" id="host">Host</button><button type="button" id="join">Join</button>
 			  	<br/>
@@ -31,8 +30,11 @@
     	</div>
     </head>
     <body>
+    <div id="center">
         <center id="container"></center>
+    </div>
     	<script src="script.js"></script>
+    
     </body>
 </html>
 

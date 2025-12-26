@@ -579,19 +579,15 @@ scene.lobby = lobbyScene;
 
 function selectionScene(sock){	
 	audio.clips.jazz.currentTime = 0;
-	let ipToggle = document.getElementById("ipToggle");
 	let ip = document.getElementById("ip");
 	let sel = document.getElementById("skin");
 	let img = document.getElementById("char");
-	ip.style.display = "none";
-	ipToggle.onchange = () => {ip.style.display = ipToggle.checked?"block":"none";};
 	sel.onchange = () => {img.src = cows.strings[sel.value]}
-	img.src = cows.strings[sel.value];
 	function update(){
-		let rCo = container.children[0].children[9].value;
-		if (rCo[0] == "-") container.children[0].children[9].value = rCo.slice(1);
-		if (rCo[0] == 0) container.children[0].children[9].value = 1;
-		if (rCo > 50) container.children[0].children[9].value = 50;
+		let rCo = container.children[0].children[10].value;
+		if (rCo[0] == "-") container.children[0].children[10].value = rCo.slice(1);
+		if (rCo[0] == 0) container.children[0].children[10].value = 1;
+		if (rCo > 50) container.children[0].children[10].value = 50;
 	}
 	let uId;
 	function unloadLocal(){
@@ -600,16 +596,16 @@ function selectionScene(sock){
 	}
 	function chooseAddr(priv){
 		if (priv === 1){
-			return ipToggle.checked?("wss://"+ip.value):"wss://localhost:8000";
+			return ip.value.length>0?("wss://"+ip.value):"wss://localhost:8000";
 		} else {
-			return ipToggle.checked?("ws://"+ip.value):"ws://localhost:8000";
+			return ip.value.length>0?("ws://"+ip.value):"ws://localhost:8000";
 		}
 	}
 	function hostRoom(){
-		let nam = container.children[0].children[5].value;
-		let rId = container.children[0].children[7].value;
-		let rCo = container.children[0].children[9].value;
-		let skn = container.children[0].children[11].value;
+		let nam = container.children[0].children[6].value;
+		let rId = container.children[0].children[8].value;
+		let rCo = container.children[0].children[10].value;
+		let skn = container.children[0].children[12].value;
 		if (nam.length = 0) {alert("Input Name"); return 0;}
 		if (nam.includes("\x1F")) {alert("Forbidden character '\x1F' in name"); return 0;}
 		if (rId.length != 4) {alert("Room ID needs 4 characters"); return 0;}
@@ -672,6 +668,7 @@ function selectionScene(sock){
 	container.appendChild(document.getElementById("selectionScene"));
 	document.getElementById("host").onclick = hostRoom;
 	document.getElementById("join").onclick = joinRoom;
+	img.src = cows.strings[sel.value];
 	
 	return unloadLocal;
 }

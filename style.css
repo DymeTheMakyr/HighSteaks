@@ -3,6 +3,13 @@
 	to {filter : hue-rotate(360deg);}
 }
 
+#container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100vw;
+	height: 100vh;
+}
 canvas {
     background: black;
     image-rendering: pixelated; 
@@ -17,28 +24,29 @@ body {
 	font:arial;
 }
 input[type="text"]{
-	width:25%;
+	width:25vw;
 	font:arial;
 	text-align:left;
 }
 input[type="number"]{
-	width:25%;
+	width:25vw;
 	font:arial;
 	text-align:left;
 }
 #ip {
 	padding:0px;
 	margin:0px;
+	display:block;
 }
 select {
-	min-width:25%;
+	min-width:25vw;
 	appearance: none;
 	text-align:left;
 }
 button {
 	margin:1px;	
 	appearance:none;
-	width:12.5%;
+	width:12.5vw;
 	height:20px;
 	font:arial;
 }
@@ -51,8 +59,8 @@ button {
 }
 img {
 	background:#F9E4BC;
-	width:25%;
-	height:25%;
+	width:25vw;
+	height:25vw;
 	image-rendering: pixelated; 
 	border: blue 3px solid;
 }
