@@ -1,5 +1,10 @@
+@keyframes drunk {
+	from {filter : hue-rotate(0deg);}
+	to {filter : hue-rotate(360deg);}
+}
+
 canvas {
-    background: #F9E4BC;
+    background: black;
     image-rendering: pixelated; 
 }
 body {

@@ -114,7 +114,7 @@ class player {
 	className = "player";
 	col = col.rect(vec.n(312,175), 16, 30);
 	flipped = false;
-	item = "gun";
+	item = {};
 	skin = "hereford";
 	health = 100;
 	money = 1000;
@@ -122,8 +122,8 @@ class player {
 	cards = [[]];
 	currentHand = 0;
 	pName = "NullName";
-	constructor(it, sk, he, mo, na){
-		this.item = it;
+	constructor(st, sk, he, mo, na){
+		this.stats = st;
 		this.skin = sk;
 		this.health = he;
 		this.money = mo;
@@ -596,16 +596,9 @@ const blackjackFuncs = {
 			await new Promise(r => setTimeout(r, 2000));
 			blackjackFuncs.clear(game, false);
 			if (mem.cards.length == mem.divider){
-				let cards = [];
-				let divider = Math.round(Math.random() * 15);
-				for (let i = 0; i < 6; i++){ //create a random deck consisting of 6 52 card decks
-					for (let i = 0; i < 52; i++){
-						cards.push(new card(Math.floor(i/13)%4, i%13, 0));
-					}
-				}
-				cards = cards.map((a) => ({ sort: Math.random(), value: a })).sort((a, b) => a.sort - b.sort).map((a) => a.value);
-				mem.divider = divider;
-				mem.cards = cards;
+				let t = blackjackFuncs.shuffle(game);
+				mem.divider = t[1];
+				mem.cards = t[0];
 			}
 			
 			if (game.remRounds < game.maxRounds){
@@ -633,7 +626,7 @@ const blackjackFuncs = {
 			game.players[i].cards = [[]];
 			game.players[i].currentHand = 0;
 		} 
-		if (comp) mem = {};
+		if (comp) delete blackjackMemory[game.id];
 	},
 	"disconnect" : async function(game, playerIndex){
 		if (game.turnOptions.slice(0,6) == "bjturn"){
@@ -665,7 +658,7 @@ server.on('connection', (socket) => {
 			if (gameManager.games[args[2]] == null){
 				id = args[1]+args[2];
 				let nGame = new gameObj(args[2]);
-				nGame.players.push(new player("", args[3], 100, 1000, args[1]));
+				nGame.players.push(new player({}, args[3], 100, 1000, args[1]));
 				playerIndex = 0;
 				nGame.votes[args[1]] = 0;
 				nGame.maxRounds = parseInt(args[4]);
@@ -704,7 +697,7 @@ server.on('connection', (socket) => {
 					console.log("7a", game.players[0].cards[0].length);
 					delete gameManager.playerMem[args[2]][args[1]];
 					console.log("8a", game.players[0].cards[0].length);
-				} else game.players.push(new player("", args[3], 100, 1000, args[1]));
+				} else game.players.push(new player({}, args[3], 100, 1000, args[1]));
 				console.log("9", game.players[0].cards[0].length);
 				game.votes[args[1]] = 0;
 				console.log("10", game.players[0].cards[0].length);
