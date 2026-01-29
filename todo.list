@@ -17,17 +17,17 @@ Todo
 -add data validation to server data return --COMPLETE--
 -blackjack sprites
 -blackjack scene
--card system (0/3)
+-card system (3/3) --COMPLETE--
  -storing
  -dealing
  -shuffling
--blackjack game (0/5)
+-blackjack game (5/5)  --COMPLETE--
  -dealing
  -betting
  -split
  -double down
  -blackjack + insurance
--roulette scene
+-roulette scene  --COMPLETE--
 -roulette gambling function
 -roulette game
 -poker scene
@@ -48,4 +48,8 @@ Todo
 -podium scene
 -podium functionality
 -repeat system
+-particle effects
+-animations
+-all sounds
 -character selection frame
+

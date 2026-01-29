@@ -273,7 +273,7 @@ function overlap(a, b){
 				let t = b.points[1].y > 0;
 				let abv = t?vec.add(b.points[1],b.origin):b.origin;
 				let blw = t?b.origin:vec.add(b.points[1]+b.origin);
-				let im = 1/(m==0?m+0.000001:m);
+				m = 1/(m==0?m+0.000001:m);
 				
 				if (y - m*(x) > c) {edgeCheck = true; edge = true;}
 				let endCon = (y + x/m > blw.y + blw.x/m && y + x/m < abv.y + abv.x/m) 

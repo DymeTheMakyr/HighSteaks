@@ -499,7 +499,7 @@ function lobbyScene(sock) {
 			ctx.fillStyle = `rgba(0,${(game.players[i].pName == playerName)*200},0,0.5)`;
 			ctx.fillRect(game.players[i].col.origin.x + (7 - 0.5*pixelLength), game.players[i].col.origin.y - 2, 2 + pixelLength, -10);
 			ctx.fillStyle = `rgba(255,255,255,1)`;
-			ctx.fillText(game.players[i].pName, game.players[i].col.origin.x + (8 - 0.5*pixelLength),game.players[i].col.origin.y - 4);
+			ctx.fillText(game.players[i].pName, game.players[i].col.origin.x + (9 - 0.5*pixelLength),game.players[i].col.origin.y - 4);
 		}
 		
 		
