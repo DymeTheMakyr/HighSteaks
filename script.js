@@ -243,6 +243,7 @@ class background {
 		background.imgs.blackjack = loadImg("./background/blackjack.png");
 		background.imgs.generic = loadImg("./background/generic.png");
 		background.imgs.roulette = loadImg("./background/roulette.png");
+		background.imgs.rtable = loadImg("./background/rtable.png");
 	}
 }
 
@@ -315,9 +316,7 @@ async function drunk(){
 }
 
 async function soberTimer(){
-	console.log(drunkFactor, localDrunkFactor);
 	await new Promise(r => setTimeout(r, 30000));
-	console.log(drunkFactor, "sobering");
 	drunkFactor -= 1;
 }
 
@@ -450,10 +449,18 @@ function lobbyScene(sock) {
 				if (i.flipped == true) ctx.drawImage(cows.fimgs[i.skin], 0, 1, 16, 15, i.col.origin.x-4*charScaleFact, i.col.origin.y, 16*charScaleFact, 15*charScaleFact);
 				else ctx.drawImage(cows.imgs[i.skin], 0, 1, 16, 15, i.col.origin.x-4*charScaleFact, i.col.origin.y, 16*charScaleFact, 15*charScaleFact);
 			} else if (i.className == "interactable"){
-				//ctx.fillStyle="rgba(255,255,255,0.4)";
-				//ctx.fillRect(i.col.origin.x, i.col.origin.y, i.col.width, i.col.height);
 				if (sprites.imgs[i.spritename] != null) ctx.drawImage(sprites.imgs[i.spritename], i.col.origin.x + i.renderOffset.x, i.col.origin.y + i.renderOffset.y);
 			}
+		}
+		
+		for (let i = 0; i < game.players.length; i++){ //draw player names
+			ctx.font = `7px pixel`;
+			pixelLength = ctx.measureText(game.players[i].pName).width;
+			pixelLength += pixelLength%2;
+			ctx.fillStyle = `rgba(0,${(game.players[i].pName == playerName)*200},0,0.5)`;
+			ctx.fillRect(game.players[i].col.origin.x + (7 - 0.5*pixelLength), game.players[i].col.origin.y - 2, 2 + pixelLength, -10);
+			ctx.fillStyle = `rgba(255,255,255,1)`;
+			ctx.fillText(game.players[i].pName, game.players[i].col.origin.x + (9 - 0.5*pixelLength),game.players[i].col.origin.y - 4);
 		}
 		
 		votes = {
@@ -492,15 +499,6 @@ function lobbyScene(sock) {
 		}
 		
 		
-		for (let i = 0; i < game.players.length; i++){ //draw player names
-			ctx.font = `7px pixel`;
-			pixelLength = ctx.measureText(game.players[i].pName).width;
-			pixelLength += pixelLength%2;
-			ctx.fillStyle = `rgba(0,${(game.players[i].pName == playerName)*200},0,0.5)`;
-			ctx.fillRect(game.players[i].col.origin.x + (7 - 0.5*pixelLength), game.players[i].col.origin.y - 2, 2 + pixelLength, -10);
-			ctx.fillStyle = `rgba(255,255,255,1)`;
-			ctx.fillText(game.players[i].pName, game.players[i].col.origin.x + (9 - 0.5*pixelLength),game.players[i].col.origin.y - 4);
-		}
 		
 		
 		if (debug.showInteractables){
@@ -604,7 +602,7 @@ function selectionScene(sock){
 	function hostRoom(){
 		let nam = container.children[0].children[6].value;
 		let rId = container.children[0].children[8].value;
-		let rCo = container.children[0].children[10].value;
+		let rCo = container.children[0].children[10].value || 10;
 		let skn = container.children[0].children[12].value;
 		if (nam.length = 0) {alert("Input Name"); return 0;}
 		if (nam.includes("\x1F")) {alert("Forbidden character '\x1F' in name"); return 0;}
@@ -633,10 +631,10 @@ function selectionScene(sock){
 		}};
 	}
 	function joinRoom(){
-		let nam = container.children[0].children[5].value;
-		let rId = container.children[0].children[7].value;
-		let skn = container.children[0].children[11].value;
-		if (nam.length = 0) {alert("Input Name"); return 0;}
+		let nam = container.children[0].children[6].value;
+		let rId = container.children[0].children[8].value;
+		let skn = container.children[0].children[12].value;
+		if (nam.length == 0) {alert("Input Name"); return 0;}
 		if (nam.includes("\x1F")) {alert("Forbidden character '\x1F' in name"); return 0;}
 		if (rId.length != 4) {alert("Room ID needs 4 characters"); return 0;}
 		if (skn == 8) {alert("Select Skin"); return 0;}
@@ -697,18 +695,18 @@ function blackjackScene(sock){
 				if (betAmount > mon) betAmount = mon;
 			}),
 			"s100" : new button("-100", "black", col.rect(vec.n(86,72), 46, 14), `rgba(235,175,175,1)`, `rgba(255,255,255,1)`, () => {betAmount -= 100; if (betAmount < 0) betAmount = 0;}),
-			"m2" : new button("x2", "black", col.rect(vec.n(36,90), 46, 14), `rgba(175,235,175,1)`, `rgba(255,255,255,1)`, () => {
+			"m2" : new button("\xD72", "black", col.rect(vec.n(36,90), 46, 14), `rgba(175,235,175,1)`, `rgba(255,255,255,1)`, () => {
 				betAmount *= 2; 
 				let mon = game.players.find((x) => (x.pName == playerName)).money;
 				if (betAmount > mon) betAmount = mon;
 			}),
-			"d2" : new button("/2", "black", col.rect(vec.n(86,90), 46, 14), `rgba(245,185,185,1)`, `rgba(255,255,255,1)`, () => {betAmount = Math.round(betAmount/2);if (betAmount < 0) betAmount = 0;}),
-			"m10" : new button("x10", "black", col.rect(vec.n(36,108), 46, 14), `rgba(185,245,185,1)`, `rgba(255,255,255,1)`, () => {
+			"d2" : new button("\xF72", "black", col.rect(vec.n(86,90), 46, 14), `rgba(245,185,185,1)`, `rgba(255,255,255,1)`, () => {betAmount = Math.round(betAmount/2);if (betAmount < 0) betAmount = 0;}),
+			"m10" : new button("\xD710", "black", col.rect(vec.n(36,108), 46, 14), `rgba(185,245,185,1)`, `rgba(255,255,255,1)`, () => {
 				betAmount *= 10; 
 				let mon = game.players.find((x) => (x.pName == playerName)).money;
 				if (betAmount > mon) betAmount = mon;
 			}),
-			"d10" : new button("/10", "black", col.rect(vec.n(86,108), 46, 14), `rgba(235,175,175,1)`, `rgba(255,255,255,1)`, () => {betAmount = Math.round(betAmount/10);if (betAmount < 0) betAmount = 0;}),
+			"d10" : new button("\xF710", "black", col.rect(vec.n(86,108), 46, 14), `rgba(235,175,175,1)`, `rgba(255,255,255,1)`, () => {betAmount = Math.round(betAmount/10);if (betAmount < 0) betAmount = 0;}),
 			"submit" : new button("BET", "black", col.rect(vec.n(508,36), 96, 86), `rgba(235,235,235,1)`, `rgba(255,255,255,1)`, ()=>{
 				sock.send(`a\x1F${playerName}\x1F${roomNo}\x1F${Math.min(betAmount, game.players.find((x) => (x.pName == playerName)).money)}`);
 			})
@@ -798,7 +796,7 @@ function blackjackScene(sock){
 			}
 			let tempCards = game.players[i].cards;
 			for (let k = 0; k < tempCards.length; k++){	
-				let hOff = Math.round(curOff - (0.5*tempCards.length * 16 * scale) + k*17*scale)+0.5;
+				let hOff = Math.round(curOff - (0.5*tempCards.length * 16 * scale) + k*17*scale);
 				if (game.currentPlayer == game.players[i].pName && game.players[i].currentHand == k){
 					ctx.fillStyle = "rgba(0,255,0,1)";
 					ctx.beginPath();
@@ -811,13 +809,13 @@ function blackjackScene(sock){
 				let sum = 0;
 				let aces = 0;
 				for (let j = 0; j < tempCards[k].length; j++){
-					let vOff = Math.round(152 + ((j+1) * 100/(tempCards[k].length+1)))+0.5;
-					if (tempCards[k][j].className != "card") ctx.drawImage(cards.bg, hOff, vOff, 15*scale, 21*scale);
-					else if (tempCards[k][j].faceDown === 1) ctx.drawImage(cards.back, hOff, vOff, 15*scale, 21*scale); 
+					let vOff = Math.round(152 + ((j+1) * 100/(tempCards[k].length+1)));
+					if (tempCards[k][j].className != "card") ctx.drawImage(cards.bg, hOff + 0.5, vOff + 0.5, 15*scale, 21*scale);
+					else if (tempCards[k][j].faceDown === 1) ctx.drawImage(cards.back, hOff + 0.5, vOff + 0.5, 15*scale, 21*scale); 
 					else {
 						if (tempCards[k][j].value == 12) aces += 1;
 						else sum += Math.min(10, tempCards[k][j].value + 2);
-						ctx.drawImage(cards.bg, hOff, vOff, 15*scale, 21*scale);
+						ctx.drawImage(cards.bg, hOff + 0.5, vOff+0.5, 15*scale, 21*scale);
 						ctx.drawImage(cards.suits[tempCards[k][j].suit], hOff, vOff, 15*scale, 21*scale);
 						ctx.drawImage(tempCards[k][j].suit>1?cards.rNo[tempCards[k][j].value]:cards.bNo[tempCards[k][j].value], hOff, vOff, 15*scale, 21*scale);
 					}
@@ -839,14 +837,14 @@ function blackjackScene(sock){
 		let dSum = 0;
 		let dAce = 0;
 		for (let i = 0; i < game.dealer.cards.length; i++){
-			let hOff = 320.5 - 0.5*(18 + 12*game.dealer.cards.length) + (12*i);
-			if (game.dealer.cards[i].faceDown == 1) ctx.drawImage(cards.back, hOff, 64.5, 30, 42);
+			let hOff = 320 - 0.5*(18 + 12*game.dealer.cards.length) + (12*i);
+			if (game.dealer.cards[i].faceDown == 1) ctx.drawImage(cards.back, hOff + 0.5, 64.5, 30, 42);
 			else {
 				if (game.dealer.cards[i].value == 12) dAce += 1;
 				else dSum += Math.min(10, game.dealer.cards[i].value+2);
-				ctx.drawImage(cards.bg, hOff, 64.5, 30, 42);
-				ctx.drawImage(cards.suits[game.dealer.cards[i].suit], hOff, 64.5, 30, 42);
-				ctx.drawImage(game.dealer.cards[i].suit>1?cards.rNo[game.dealer.cards[i].value]:cards.bNo[game.dealer.cards[i].value], hOff, 64.5, 30,42);
+				ctx.drawImage(cards.bg, hOff+0.5, 64.5, 30, 42);
+				ctx.drawImage(cards.suits[game.dealer.cards[i].suit], hOff, 64, 30, 42);
+				ctx.drawImage(game.dealer.cards[i].suit>1?cards.rNo[game.dealer.cards[i].value]:cards.bNo[game.dealer.cards[i].value], hOff, 64, 30,42);
 			}
 						
 		}
@@ -943,7 +941,7 @@ function blackjackScene(sock){
 	}
 	
 	function mousedown(e){
-		if (e.button in mouse) mouse[e.button].d(e)
+		if (e.button in mouse) mouse[e.button].d(e);
 	}	
 	function mouseup(e){
 		if (e.button in mouse) mouse[e.button].u(e);
@@ -989,11 +987,61 @@ function rouletteScene(sock){
 	let mX = -100;
 	let mY = -100;
 
+	let pixelLength = 0;
+	let betAmount = 0;
+	
+	let buttons = {};
+	let rounds = {
+		"betting" : {
+			"clear" : new button("CLEAR ALL BETS", "black", col.rect(vec.n(40, 40), 100,48), `rgba(235,175,175,1)`, "white", () => {sock.send("a\x1Fbr\x1Fa");}),
+			"ready" : new button("READY", "black", col.rect(vec.n(500, 40), 100, 48), `rgba(175, 235, 175, 1)`, "white", () => {sock.send("a\x1Fre");}),
+			"p1" : new button("+1", "black", col.rect(vec.n(160, 35), 32, 10), "lightgrey", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount+1);}),
+			"p10" : new button("+10", "black", col.rect(vec.n(160, 47), 32, 10), "lightgrey", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount+10);}),
+			"p100" : new button("+100", "black", col.rect(vec.n(160, 59), 32, 10), "lightgrey", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount+100);}),
+			"m2" : new button("\xD72", "black", col.rect(vec.n(160, 71), 32, 10), "lightgrey", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount*2);}),
+			"m10" : new button("\xD710", "black", col.rect(vec.n(160, 83), 32, 10), "lightgrey", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount*10);;}),
+			"s1" : new button("-1", "black", col.rect(vec.n(448, 35), 32, 10), "grey", "white", () => {betAmount = Math.max(0, betAmount - 1);}),
+			"s10" : new button("-10", "black", col.rect(vec.n(448, 47), 32, 10), "grey", "white", () => {betAmount = Math.max(0, betAmount - 10);}),
+			"s100" : new button("-100", "black", col.rect(vec.n(448, 59), 32, 10), "grey", "white", () => {betAmount = Math.max(0, betAmount - 100);}),
+			"d2" : new button("\xF72", "black", col.rect(vec.n(448, 71), 32, 10), "grey", "white", () => {betAmount = Math.max(0, Math.round(betAmount / 2));}),
+			"d10" : new button("\xF710", "black", col.rect(vec.n(448, 83), 32, 10), "grey", "white", () => {betAmount = Math.max(0, Math.round(betAmount / 10));}),
+			
+		},
+		"spinning" : {
+		}
+	};
+
 	const values = [
-		[0,3,6,9,12,15,18,21,24,27,30,33,36],
-		[0,2,5,8,11,14,17,20,23,26,29,32,35],
-		[0,1,4,7,10,13,16,19,22,25,28,31,34]
+		[ 0, 3, 6, 9,12,15,18,21,24,27,30,33,36,61],
+		[ 0, 2, 5, 8,11,14,17,20,23,26,29,32,35,62],
+		[ 0, 1, 4, 7,10,13,16,19,22,25,28,31,34,63],
+		[-1,51,51,51,51,52,52,52,52,53,53,53,53,-1],
+		[-1,54,54,55,55,56,56,57,57,58,58,59,59,-1]
 	];
+
+	const lookup = {
+		51 : "d1",
+		52 : "d2",
+		53 : "d3",
+		54 : "e1",
+		59 : "e2",
+		55 : "ev",
+		58 : "od",
+		56 : "re",
+		57 : "bl",
+		61 : "r1",
+		62 : "r2",
+		63 : "r3"
+	}
+
+	const itc = {
+		0 : "rgba(200,0,255,0.75)",
+		2 : "rgba(255,127,0,0.91)",
+		1 : "rgba(0,255,255,0.75)",
+		3 : "rgba(255,255,0,0.75)"
+	}
+
+	let bets = [];
 
 	function mainloop(){
 		if (sock == null || sock.readyState == WebSocket.CLOSED){
@@ -1023,19 +1071,24 @@ function rouletteScene(sock){
 		ctx.fillStyle = "white";
 		ctx.fillText(text, 320 - l, 28);	
 		
-		ctx.fillStyle = "black";
-		let width = 36*14;
-		let heigh = 32*5;
-		ctx.fillRect(320 - 0.5*(width), 96, width, heigh);
-		ctx.fillStyle = "red"
-		for (let i=0; i < 5*7; i++){
-			ctx.fillRect(68 + ((i%7 + 0.5*(Math.floor(i/7)%2)) * 72),96 + Math.floor(i/7)*32, 36, 32);
-		}
 		
-		for (let i = 0; i < game.players.length; i++){
+		ctx.fillStyle = "black";
+		let width = 36*12;
+		let heigh = 32*3;
+		ctx.fillRect(104, 96, width, heigh);
+		ctx.fillStyle = "green";
+		ctx.fillRect(68, 96, 36, 96);
+		ctx.fillStyle = "red"
+		for (let i=0; i < 3*6; i++){
+			ctx.fillRect(104 + 72*(((i)%6)+0.5*(Math.floor(i/6)%2)), 96 + 32*(Math.floor(i/6)), 36, 32);
+		} 
+		
+		ctx.drawImage(background.imgs.rtable, 68, 96);
+		
+		for (let i = 0	; i < game.players.length; i++){
 			let p = game.players[i];
 			let curOff = 32 + (pOffset * 0.5) + (pOffset*i);
-			ctx.fillStyle = `rgba(255,230,120,0.5)`;
+			ctx.fillStyle = itc[i].slice(0,-5) + "0.5)";
 			ctx.beginPath();
 			ctx.arc(curOff,312, 32,5*Math.PI/6 , Math.PI/6);
 			ctx.fill();
@@ -1056,31 +1109,222 @@ function rouletteScene(sock){
 			}
 		}
 		
+		if (buttons != rounds[game.turnOptions]){
+			buttons = rounds[game.turnOptions];
+		}
+		
+		for (let i in buttons){
+			let c = buttons[i].col;
+			ctx.fillStyle = buttons[i].pressed?buttons[i].colourPressed:buttons[i].colour;
+			ctx.fillRect(c.origin.x, c.origin.y, c.width, c.height);
+			ctx.fillStyle = buttons[i].textCol;
+			ctx.font = "7px pixel"
+			let t = ctx.measureText(buttons[i].text);
+			ctx.fillText(buttons[i].text, c.origin.x + 0.5*(c.width-t.width), c.origin.y + 0.5*(c.height + t.actualBoundingBoxAscent));
+		}
+		
+		ctx.fillStyle = "white";
+		ctx.font = "42px pixel"
+		pixelLength = ctx.measureText(`$${betAmount}`).width;		
+		ctx.fillText(`$${betAmount}`, 320 - 0.5*(pixelLength), 82	);
+		
+		let betCo = 0;
+		let betPo = 0;
+		let betI = 0;
+		
+		//SHOW BET VALUES ON KEY PRESS AND HOVER (SHIFT?)
+		
+		for (let i = 0; i < game.bets.length; i++){
+			if (game.bets[i].pos != betPo){
+				betPo = game.bets[i].pos.toString();
+				betCo = 1;
+				betI = i;
+			}
+			
+			if (betCo == 1){
+				for (let j = 1; j < 4 + Math.min(0, game.bets.length - (4 + i)); j++){
+					if (game.bets[i+j].pos == game.bets[i].pos.toString()) betCo++;
+					else break;
+				}
+			}
+			let ind = game.players.findIndex(x => x.pName == game.bets[i].owner);
+			if (ind != -1) {
+				ctx.fillStyle = itc[ind];
+				let d = [86-4 + 36*(game.bets[i].pos[0]), 112 - 4 + 32*game.bets[i].pos[1]]
+				
+				switch (betCo){
+					case 2:
+						d[0] += (8*(i-betI == 1) - 4); 
+						break;
+					case 3:
+						d[0] += (8*(i-betI == 1) - 4) * (i-betI != 2);
+						d[1] += 8*(i-betI == 2) - 4;
+						break;
+					case 4:
+						d[0] += (8*((i-betI)%2) - 4);
+						d[1] += (8*(i-betI>1) -4);
+					default:
+						break;
+				}	
+				ctx.fillRect(d[0], d[1], 8, 8);
+			}
+		}
+		
 		let tX = mX-86;
 		let tY = mY-112;
 		tX = Math.round(tX/18)*0.5;
 		tY = Math.round(tY/16)*0.5;
-		if (-1 < tX && tX < 13 && -1 < tY && tY < 3){	
-			tX = Math.max(0, Math.min(12, tX));
-			tY = Math.max(0, Math.min(2, tY));
-			ctx.fillStyle="white";
-			ctx.fillRect(86-9 +36*(tX), 112-8 +32*(tY), 18, 16);
+		if (tX > 12 || tY > 2.5){
+			tY = Math.round(tY);
 		}
-		//if tX is n + 0.5, do try tX ± 0.5 to get numbers.
-		//if tY is n + 0.5, do try tY ± 0.5 to get number. bet type decided by length and contents against dictionary . combine try x and try y and eliminate duplicates. 
+		if (tY == 3 && (tX - 0.5)%4 != 0) tX = Math.floor((tX - 0.5)/4)*4 + 2.5;
+		else if (tY == 3) tX = -2;
+		if (tY == 4 && (tX - 0.5)%2  > 0.25) tX = Math.floor((tX - 0.5)/2)*2 + 1.5;
+		else if (tY == 4) tY = -2;
+		if (tY > 2.5 && tX < 0.5){tY = -2; tX = -2;}	
+		if (tY > 2.5 && tX > 12.5){tY = -2; tX = -2;}
+		if (tX == 12.5) tX = -2;
+		if (-0.5 < tX && tX < 13.5 && -0.5 < tY && tY < 5){
+			if (tX == 0) tY = 1;
+			ctx.fillStyle=`rgba(255,255,255,0.5)`;
+			ctx.fillRect(86-4 +36*(tX), 112-4 +32*(tY), 8, 8);
+		}
+		
+		if (keys.shift){
+			console.log("shift");
+			let toShow = [];
+			for (let i = 0; i < game.bets.length; i++){
+				if (game.bets[i].pos[0] == tX && game.bets[i].pos[1] == tY){
+					toShow.push(game.bets[i]);
+				} else if (game.bets[i].pos[0] > tX && game.bets[i].pos[1] >= tY) break;
+			}
+			
+			
+			if (toShow.length > 0){
+				let pos = [tX * 36 + 86, tY * 32 + 112];
+				ctx.font = "7px pixel";
+				if (toShow.length == 1){
+					let t = ctx.measureText(`$${toShow[0].bet}`);
+					ctx.fillStyle = "rgba(0,0,0,0.5)";
+					ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]-4, t.width+1, -t.fontBoundingBoxAscent);
+					ctx.fillStyle = "white";
+					ctx.fillText(`$${toShow[0].bet}`, pos[0]-0.5*t.width, pos[1]-5);
+				} else if (toShow.length == 2){
+					let t = ctx.measureText(`$${toShow[0].bet}|$${toShow[1].bet}`);
+					ctx.fillStyle = "rgba(0,0,0,0.5)";
+					ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]-4, t.width+1, -t.fontBoundingBoxAscent);
+					ctx.fillStyle = "white";
+					ctx.fillText(`$${toShow[0].bet}|$${toShow[1].bet}`, pos[0]-0.5*t.width, pos[1]-5);
+				} else if (toShow.length == 3){
+					let t = ctx.measureText(`$${toShow[0].bet}|$${toShow[1].bet}`);
+					ctx.fillStyle = "rgba(0,0,0,0.5)";
+					ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]-8, t.width+1, -t.fontBoundingBoxAscent);
+					ctx.fillStyle = "white";
+					ctx.fillText(`$${toShow[0].bet}|$${toShow[1].bet}`, pos[0]-0.5*t.width, pos[1]-9);
+					
+					t = ctx.measureText(`$${toShow[2].bet}`);
+					ctx.fillStyle = "rgba(0,0,0,0.5)";
+					ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]+8, t.width+1, t.fontBoundingBoxAscent);
+					ctx.fillStyle = "white";
+					ctx.fillText(`$${toShow[2].bet}`, pos[0]-0.5*t.width, pos[1]+ 7 + t.fontBoundingBoxAscent);
+				} else {
+					let t = ctx.measureText(`$${toShow[0].bet}|$${toShow[1].bet}`);
+					ctx.fillStyle = "rgba(0,0,0,0.5)";
+					ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]-8, t.width+1, -t.fontBoundingBoxAscent);
+					ctx.fillStyle = "white";
+					ctx.fillText(`$${toShow[0].bet}|$${toShow[1].bet}`, pos[0]-0.5*t.width, pos[1]-9);
+					
+					t = ctx.measureText(`$${toShow[2].bet}|$${toShow[3].bet}`);
+					ctx.fillStyle = "rgba(0,0,0,0.5)";
+					ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]+8, t.width+1, t.fontBoundingBoxAscent);
+					ctx.fillStyle = "white";
+					ctx.fillText(`$${toShow[2].bet}|$${toShow[3].bet}`, pos[0]-0.5*t.width, pos[1]+ 7 + t.fontBoundingBoxAscent);
+				}
+			}
+		}
 	}
 	
 	let keys = {
 		"e" : () => {
 			sock.send(`c\x1F${roomNo}\x1Flobby`);
 		},
+		"shift" : 0
 	};
+	
+	let pressedButton;
+	let mouse = {
+		0: {
+			"d": (e)=>{
+				let canvR = canv.getBoundingClientRect();
+				let x = (e.clientX - canvR.left) / canv.style.width.slice(0,-2) * 640 - 1;
+				let y = (e.clientY - canvR.top) / canv.style.height.slice(0,-2) * 360 - 1;
+				pressedButton = undefined;
+				for (let j in buttons){
+					let i = buttons[j];
+					let distX = x - i.col.origin.x;
+					let distY = y - i.col.origin.y;
+					if (distX >= 0 && distX <= i.col.width && distY >=0 && distY <= i.col.height){
+						pressedButton = i;
+						break;
+					}
+				} 
+				if (pressedButton != undefined){
+					pressedButton.pressed = 1; pressedButton.func();
+					return;
+				}
+		
+				let tX = mX-86;
+				let tY = mY-112;
+				tX = Math.round(tX/18)*0.5;
+				tY = Math.round(tY/16)*0.5;
+				if (tX > 12 || tY > 2.5){
+					tY = Math.round(tY);
+				}
+				if (tY == 3 && (tX - 0.5)%4 != 0) tX = Math.floor((tX - 0.5)/4)*4 + 2.5;
+				else if (tY == 3) tX = -2;
+				if (tY == 4 && (tX - 0.5)%2  > 0.25) tX = Math.floor((tX - 0.5)/2)*2 + 1.5;
+				else if (tY == 4) tY = -2;
+				if (tY > 2.5 && tX < 0.5){tY = -2; tX = -2;}	
+				if (tY > 2.5 && tX > 12.5){tY = -2; tX = -2;}
+				if (tX == 12.5) tX = -2;
+				if (-0.5 < tX && tX < 13.5 && -0.5 < tY && tY < 5){
+					if (tX == 0) tY = 1;
+					tX = Math.max(0, Math.min(13, tX));
+					tY = Math.max(0, Math.min(4, tY));
+					if (tX == 0) tY = 1;
+					let vX = (tX - Math.floor(tX));
+					let vY = (tY - Math.floor(tY));
+					
+					let check = game.bets.findIndex(x => (x.pos == `${[tX,tY,vX,vY]}` && x.owner == playerName));
+					let msg = "";
+					if (check == -1 && betAmount > 0){
+						let temp = {
+							"owner" : playerName,
+							"pos" : [tX, tY, vX, vY],
+							"val" : values[Math.floor(tY)][Math.floor(tX)],
+							"bet" : betAmount
+						};
+						msg = "a\x1Fba\x1F"+JSON.stringify(temp);
+					} else {
+						msg = `a\x1Fbr\x1F${[tX,tY,vX,vY]}`
+					}
+					sock.send(msg);
+				}
+			},
+			"u": (e) => {
+				if (pressedButton != undefined){
+					pressedButton.pressed = 0;
+				}
+			}
+		}
+	}
 	
 	function keydown(e){
 		if (e.code === "KeyE") keys.e();
+		if (e.code === "ShiftLeft") keys.shift = 1;
 	}
 	function keyup(e){
-		
+		if (e.code === "ShiftLeft") keys.shift = 0;
 	}
 	
 	function mousemove(e){
@@ -1091,9 +1335,18 @@ function rouletteScene(sock){
 		mY = y;	
 	}
 	
+	function mousedown(e){
+		if (e.button in mouse) mouse[e.button].d(e);
+	}
+	function mouseup(e){
+		if (e.button in mouse) mouse[e.button].u(e);
+	}
+	
 	window.addEventListener("keyup", keyup);
 	window.addEventListener("keydown", keydown);
 	window.addEventListener("mousemove", mousemove);
+	window.addEventListener("mousedown", mousedown);
+	window.addEventListener("mouseup", mouseup);
 	let mlId = setInterval(mainloop, 25);
 	
 	function unbindLocal(){
@@ -1102,6 +1355,8 @@ function rouletteScene(sock){
 		window.removeEventListener("keyup", keyup);
 		window.removeEventListener("keydown", keydown);	
 		window.removeEventListener("mousemove", mousemove);
+		window.removeEventListener("mousedown", mousedown);
+		window.removeEventListener("mouseup", mouseup);
 		clearInterval(mlId);
 	}
 	
