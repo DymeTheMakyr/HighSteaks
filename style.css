@@ -10,6 +10,20 @@
 	width: 100vw;
 	height: 100vh;
 }
+#wheelCont {
+	display: flex;
+	align-items:center;
+	justify-content:center;
+	position:absolute;
+	z-index: 5;
+	transform: ;
+}
+.wheelImg {
+	background: none;
+	border: none;
+	position: absolute;
+	z-index: 10;
+}
 canvas {
     background: black;
     image-rendering: pixelated; 
@@ -19,7 +33,7 @@ body {
     padding:0;
     margin:0;
     height:100%;
-    overflow-y:hidden;
+    overflow:hidden;
     color:white;
 	font:arial;
 }

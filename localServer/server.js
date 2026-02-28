@@ -11,6 +11,7 @@ const server = new WebSocket.Server({host: hostInput, port : 8000 });
 
 class gameManager{
 	static games = {};
+	static sockets = {};
 	static playerMem = {};
 	static collisionHandlers = {};
 	static projectileHandlers = [];
@@ -65,6 +66,7 @@ class gameObj{
 	remRounds = 0;
 	maxRounds = 0;
 	votes = {};
+	ready = 0;
 	bets = [];
 	players = [];
 	dealer = {"cards":[]};
@@ -362,6 +364,14 @@ function projectileHandler(id){
 	
 }
 
+function sendall(gameid, msg){
+	if (gameid in gameManager.sockets){	
+		for (let i = 0; i < gameManager.sockets[gameid].length; i++){
+			gameManager.sockets[gameid][i].send(msg);
+		}
+	}
+}
+
 let blackjackMemoryTemplate = {
 	"winRates" : {},
 	"cards":[],
@@ -641,6 +651,25 @@ const blackjackFuncs = {
 	}
 }
 
+
+const rouletteLookup = [0,23,6,34,4,19,10,31,16,27,18,14,33,12,25,2,21,8,29,3,24,5,28,17,20,7,36,11,32,30,15,26,1,22,9,34,13];
+
+const rouletteFuncs = {
+	"spin" : async (game) => {
+		console.log("spinning");
+		game.turnOptions = "spinning";
+		let val = Math.round(Math.random() * 37) - 1;
+		console.log(val, " @ ", rouletteLookup[val]);
+		sendall(game.id, `a\x1Frl\x1F${rouletteLookup[val]}`);
+		await new Promise(resolve => setTimeout(resolve, 12000));
+		game.turnOptions = "betting";
+		game.ready = 0;
+	},	
+	"cashout" : (game) => {
+	
+	}
+};
+
 server.on('connection', (socket) => {
 	console.log("connected");
 	let id;
@@ -673,6 +702,8 @@ server.on('connection', (socket) => {
 				gameManager.playerMem[args[2]] = {};
 				socket.send("r\x1F" + JSON.stringify(nGame));
 				riId = setInterval(refreshIndex,100);
+				gameManager.sockets[args[2]] = [];
+				gameManager.sockets[args[2]].push(socket);
 			} else {socket.send(-1); console.log("room not made");}
 		} else if (message[0] == 'j') {
 			console.log("joining");
@@ -691,7 +722,8 @@ server.on('connection', (socket) => {
 				} else game.players.push(new player({}, args[3], 100, 1000, args[1]));
 				game.votes[args[1]] = 0;
 				socket.send("r\x1F" + JSON.stringify(game));
-				riId = setInterval(refreshIndex,100);
+				riId = setInterval(refreshIndex,100);				
+				gameManager.sockets[args[2]].push(socket);
 			} else {socket.send(-1);}
 		} else if (message[0] == "m") {
 			let args = message.split("\x1F")
@@ -736,6 +768,7 @@ server.on('connection', (socket) => {
 						console.log(blackjackMemory);
 					} else if (args[3] == "rl") {
 						game.remRounds = 0;
+						game.votes = {};
 						game.turnOptions = "betting";
 						console.log("start roulette");
 					}
@@ -774,6 +807,12 @@ server.on('connection', (socket) => {
 									i -= 1;
 								}
 							}
+						}
+					} else if (args[1] == "re"){
+						console.log("ready", id);
+						game.ready += 1;
+						if (game.ready == game.players.length){
+							rouletteFuncs.spin(game);
 						}
 					}	
 				}

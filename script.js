@@ -258,6 +258,8 @@ class sprites {
 		sprites.imgs.poker = loadImg("./sprites/poker.png");
 		sprites.imgs.fight = loadImg("./sprites/fight.png");
 		sprites.imgs.slots = loadImg("./sprites/slots.png");
+		sprites.imgs.wheel = loadImg("./sprites/wheel.png");
+		sprites.imgs.ball = loadImg("./sprites/ball.png");
 	}
 }
 
@@ -599,6 +601,73 @@ function selectionScene(sock){
 			return ip.value.length>0?("ws://"+ip.value):"ws://localhost:8000";
 		}
 	}
+	
+	function servMsg(message){
+		let resp = message.data.split("\x1F");
+		if (resp[0] == "r"){
+			temp = JSON.parse(resp[1]);
+			temp.players.forEach((x) => {x.col.origin.x = parseInt(x.col.origin.x); x.col.origin.y = parseInt(x.col.origin.y)});
+			game = temp;
+			return;
+		} else if (resp[0] == "a"){
+			if (resp[1] == "rl"){
+				if (parseInt(resp[2])+1){
+					(async () => {
+							let wheelCont = document.createElement("div");
+							wheelCont.id = "wheelCont";
+							let wheel = document.createElement("img");
+							wheel.src = "./sprites/wheel.png";
+							let ball = document.createElement("img");
+							ball.src = "./sprites/ball.png";
+							wheel.className = ball.className = "wheelImg";
+							ball.style.height = ball.style.width = wheel.style.width = wheel.style.height = canv.style.height;
+							ball.style.transform = wheel.style.transform = wheelCont.style.transform = "rotate(0deg)";
+							
+							console.log(wheelCont, wheel, ball);
+							console.log(container.children);
+							container.appendChild(wheelCont);
+							wheelCont.appendChild(wheel);
+							wheelCont.appendChild(ball);
+							
+							console.log(container.children);
+						
+						console.log(wheelCont.style);
+							
+						await new Promise(resolve => setTimeout(resolve, 1000));
+							
+						console.log("spin");
+						wheelCont.style.transition = ball.style.transition = "ease 10s"
+
+						console.log(wheelCont.style);
+						
+						wheelCont.style.transform = "rotate(-3600deg)";
+						ball.style.transform = "rotate(3600deg)";
+
+						console.log(wheelCont.style);
+
+						await new Promise(resolve => setTimeout(resolve, 1000));
+						console.log("release ball");
+						ball.style.transition = "ease-in-out 5s";
+						ball.style.transform = `rotate(${7200 + (360 * parseInt(resp[2])/37)}deg)`;
+
+						console.log("test")
+						
+					})();
+					let chId = setInterval(() => {
+						if (game.turnOptions != "spinning" || game.currentScene != "roulette" || sock == null || sock.readyState == WebSocket.CLOSED){
+							wheelCont.remove();
+							console.log("break");
+							clearInterval(chId);
+						}					
+					}, 100);
+					return;
+					return;	
+				}
+			}
+		} 
+		console.log("recieved action (", resp,")");
+	}
+	
 	function hostRoom(){
 		let nam = container.children[0].children[6].value;
 		let rId = container.children[0].children[8].value;
@@ -620,12 +689,7 @@ function selectionScene(sock){
 			playerName = nam;
 			roomNo = rId;
 			sock.onmessage = (message) => {
-				let resp = message.data.split("\x1F");
-				if (resp[0] == "r"){
-					temp = JSON.parse(resp[1]);
-					temp.players.forEach((x) => {x.col.origin.x = parseInt(x.col.origin.x); x.col.origin.y = parseInt(x.col.origin.y)});
-					game = temp;
-				}
+				servMsg(message);
 			}
 			changeScene("lobby", sock);
 		}};
@@ -652,12 +716,7 @@ function selectionScene(sock){
 			playerName = nam;
 			roomNo = rId;
 			sock.onmessage = (message) => {
-				let resp = message.data.split("\x1F");
-				if (resp[0] == "r"){
-					temp = JSON.parse(resp[1]);
-					temp.players.forEach((x) => {x.col.origin.x = parseInt(x.col.origin.x); x.col.origin.y = parseInt(x.col.origin.y)});
-					game = temp;
-				}
+				servMsg(message)
 			}
 			changeScene("lobby", sock);
 		};}
@@ -983,6 +1042,8 @@ function blackjackScene(sock){
 }
 scene.blackjack = blackjackScene;
 
+let ready = false;
+
 function rouletteScene(sock){
 	let mX = -100;
 	let mY = -100;
@@ -990,21 +1051,22 @@ function rouletteScene(sock){
 	let pixelLength = 0;
 	let betAmount = 0;
 	
+	
 	let buttons = {};
 	let rounds = {
 		"betting" : {
 			"clear" : new button("CLEAR ALL BETS", "black", col.rect(vec.n(40, 40), 100,48), `rgba(235,175,175,1)`, "white", () => {sock.send("a\x1Fbr\x1Fa");}),
-			"ready" : new button("READY", "black", col.rect(vec.n(500, 40), 100, 48), `rgba(175, 235, 175, 1)`, "white", () => {sock.send("a\x1Fre");}),
-			"p1" : new button("+1", "black", col.rect(vec.n(160, 35), 32, 10), "lightgrey", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount+1);}),
-			"p10" : new button("+10", "black", col.rect(vec.n(160, 47), 32, 10), "lightgrey", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount+10);}),
-			"p100" : new button("+100", "black", col.rect(vec.n(160, 59), 32, 10), "lightgrey", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount+100);}),
-			"m2" : new button("\xD72", "black", col.rect(vec.n(160, 71), 32, 10), "lightgrey", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount*2);}),
-			"m10" : new button("\xD710", "black", col.rect(vec.n(160, 83), 32, 10), "lightgrey", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount*10);;}),
-			"s1" : new button("-1", "black", col.rect(vec.n(448, 35), 32, 10), "grey", "white", () => {betAmount = Math.max(0, betAmount - 1);}),
-			"s10" : new button("-10", "black", col.rect(vec.n(448, 47), 32, 10), "grey", "white", () => {betAmount = Math.max(0, betAmount - 10);}),
-			"s100" : new button("-100", "black", col.rect(vec.n(448, 59), 32, 10), "grey", "white", () => {betAmount = Math.max(0, betAmount - 100);}),
-			"d2" : new button("\xF72", "black", col.rect(vec.n(448, 71), 32, 10), "grey", "white", () => {betAmount = Math.max(0, Math.round(betAmount / 2));}),
-			"d10" : new button("\xF710", "black", col.rect(vec.n(448, 83), 32, 10), "grey", "white", () => {betAmount = Math.max(0, Math.round(betAmount / 10));}),
+			"ready" : new button("READY", "black", col.rect(vec.n(500, 40), 100, 48), `rgba(175, 235, 175, 1)`, "white", () => {ready = true; sock.send("a\x1Fre");}),
+			"p1" : new button("+1", "black", col.rect(vec.n(160, 35), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount+1);}),
+			"p10" : new button("+10", "black", col.rect(vec.n(160, 47), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount+10);}),
+			"p100" : new button("+100", "black", col.rect(vec.n(160, 59), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount+100);}),
+			"m2" : new button("\xD72", "black", col.rect(vec.n(160, 71), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount*2);}),
+			"m10" : new button("\xD710", "black", col.rect(vec.n(160, 83), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount*10);;}),
+			"s1" : new button("-1", "black", col.rect(vec.n(448, 35), 32, 10), "rgba(235, 175, 175, 1)", "white", () => {betAmount = Math.max(0, betAmount - 1);}),
+			"s10" : new button("-10", "black", col.rect(vec.n(448, 47), 32, 10), "rgba(235, 175, 175, 1)", "white", () => {betAmount = Math.max(0, betAmount - 10);}),
+			"s100" : new button("-100", "black", col.rect(vec.n(448, 59), 32, 10), "rgba(235, 175, 175, 1)", "white", () => {betAmount = Math.max(0, betAmount - 100);}),
+			"d2" : new button("\xF72", "black", col.rect(vec.n(448, 71), 32, 10), "rgba(235, 175, 175, 1)", "white", () => {betAmount = Math.max(0, Math.round(betAmount / 2));}),
+			"d10" : new button("\xF710", "black", col.rect(vec.n(448, 83), 32, 10), "rgba(235, 175, 175, 1)", "white", () => {betAmount = Math.max(0, Math.round(betAmount / 10));}),
 			
 		},
 		"spinning" : {
@@ -1058,6 +1120,8 @@ function rouletteScene(sock){
 			changeScene(game.currentScene, sock);
 		}
 		
+		rounds.betting.ready.text = `Ready (${game.ready}/${game.players.length})`;
+		
 		let pOffset = 576 / game.players.length;
 		ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
 		ctx.drawImage(background.imgs.generic, 0, 0);
@@ -1069,19 +1133,7 @@ function rouletteScene(sock){
 		ctx.fillStyle = "rgba(22,22,29, 0.9)";
 		ctx.fillRect(318 - l,4, 2*l + 4, 28);
 		ctx.fillStyle = "white";
-		ctx.fillText(text, 320 - l, 28);	
-		
-		
-		ctx.fillStyle = "black";
-		let width = 36*12;
-		let heigh = 32*3;
-		ctx.fillRect(104, 96, width, heigh);
-		ctx.fillStyle = "green";
-		ctx.fillRect(68, 96, 36, 96);
-		ctx.fillStyle = "red"
-		for (let i=0; i < 3*6; i++){
-			ctx.fillRect(104 + 72*(((i)%6)+0.5*(Math.floor(i/6)%2)), 96 + 32*(Math.floor(i/6)), 36, 32);
-		} 
+		ctx.fillText(text, 320 - l, 28);	 
 		
 		ctx.drawImage(background.imgs.rtable, 68, 96);
 		
@@ -1109,24 +1161,30 @@ function rouletteScene(sock){
 			}
 		}
 		
-		if (buttons != rounds[game.turnOptions]){
+		
+		if (Object.keys(buttons).toString() != Object.keys(rounds[game.turnOptions])){
+			if (game.turnOptions == "betting") {
+				ready = false;
+			}
 			buttons = rounds[game.turnOptions];
 		}
 		
-		for (let i in buttons){
-			let c = buttons[i].col;
-			ctx.fillStyle = buttons[i].pressed?buttons[i].colourPressed:buttons[i].colour;
-			ctx.fillRect(c.origin.x, c.origin.y, c.width, c.height);
-			ctx.fillStyle = buttons[i].textCol;
-			ctx.font = "7px pixel"
-			let t = ctx.measureText(buttons[i].text);
-			ctx.fillText(buttons[i].text, c.origin.x + 0.5*(c.width-t.width), c.origin.y + 0.5*(c.height + t.actualBoundingBoxAscent));
+		if (game.turnOptions == "betting" && ready == false){
+			for (let i in buttons){
+				let c = buttons[i].col;
+				ctx.fillStyle = buttons[i].pressed?buttons[i].colourPressed:buttons[i].colour;
+				ctx.fillRect(c.origin.x, c.origin.y, c.width, c.height);
+				ctx.fillStyle = buttons[i].textCol;
+				ctx.font = "7px pixel"
+				let t = ctx.measureText(buttons[i].text);
+				ctx.fillText(buttons[i].text, c.origin.x + 0.5*(c.width-t.width), c.origin.y + 0.5*(c.height + t.actualBoundingBoxAscent));
+			}
+			
+			ctx.fillStyle = "white";
+			ctx.font = "42px pixel"
+			pixelLength = ctx.measureText(`$${betAmount}`).width;		
+			ctx.fillText(`$${betAmount}`, 320 - 0.5*(pixelLength), 82	);
 		}
-		
-		ctx.fillStyle = "white";
-		ctx.font = "42px pixel"
-		pixelLength = ctx.measureText(`$${betAmount}`).width;		
-		ctx.fillText(`$${betAmount}`, 320 - 0.5*(pixelLength), 82	);
 		
 		let betCo = 0;
 		let betPo = 0;
@@ -1169,76 +1227,78 @@ function rouletteScene(sock){
 				ctx.fillRect(d[0], d[1], 8, 8);
 			}
 		}
-		
-		let tX = mX-86;
-		let tY = mY-112;
-		tX = Math.round(tX/18)*0.5;
-		tY = Math.round(tY/16)*0.5;
-		if (tX > 12 || tY > 2.5){
-			tY = Math.round(tY);
-		}
-		if (tY == 3 && (tX - 0.5)%4 != 0) tX = Math.floor((tX - 0.5)/4)*4 + 2.5;
-		else if (tY == 3) tX = -2;
-		if (tY == 4 && (tX - 0.5)%2  > 0.25) tX = Math.floor((tX - 0.5)/2)*2 + 1.5;
-		else if (tY == 4) tY = -2;
-		if (tY > 2.5 && tX < 0.5){tY = -2; tX = -2;}	
-		if (tY > 2.5 && tX > 12.5){tY = -2; tX = -2;}
-		if (tX == 12.5) tX = -2;
-		if (-0.5 < tX && tX < 13.5 && -0.5 < tY && tY < 5){
-			if (tX == 0) tY = 1;
-			ctx.fillStyle=`rgba(255,255,255,0.5)`;
-			ctx.fillRect(86-4 +36*(tX), 112-4 +32*(tY), 8, 8);
-		}
-		
-		if (keys.shift){
-			console.log("shift");
-			let toShow = [];
-			for (let i = 0; i < game.bets.length; i++){
-				if (game.bets[i].pos[0] == tX && game.bets[i].pos[1] == tY){
-					toShow.push(game.bets[i]);
-				} else if (game.bets[i].pos[0] > tX && game.bets[i].pos[1] >= tY) break;
+	
+		if (game.turnOptions == "betting" && ready == false){
+			let tX = mX-86;
+			let tY = mY-112;
+			tX = Math.round(tX/18)*0.5;
+			tY = Math.round(tY/16)*0.5;
+			if (tX > 12 || tY > 2.5){
+				tY = Math.round(tY);
+			}
+			if (tY == 3 && (tX - 0.5)%4 != 0) tX = Math.floor((tX - 0.5)/4)*4 + 2.5;
+			else if (tY == 3) tX = -2;
+			if (tY == 4 && (tX - 0.5)%2  > 0.25) tX = Math.floor((tX - 0.5)/2)*2 + 1.5;
+			else if (tY == 4) tY = -2;
+			if (tY > 2.5 && tX < 0.5){tY = -2; tX = -2;}	
+			if (tY > 2.5 && tX > 12.5){tY = -2; tX = -2;}
+			if (tX == 12.5) tX = -2;
+			if (-0.5 < tX && tX < 13.5 && -0.5 < tY && tY < 5){
+				if (tX == 0) tY = 1;
+				ctx.fillStyle=`rgba(255,255,255,0.5)`;
+				ctx.fillRect(86-4 +36*(tX), 112-4 +32*(tY), 8, 8);
 			}
 			
-			
-			if (toShow.length > 0){
-				let pos = [tX * 36 + 86, tY * 32 + 112];
-				ctx.font = "7px pixel";
-				if (toShow.length == 1){
-					let t = ctx.measureText(`$${toShow[0].bet}`);
-					ctx.fillStyle = "rgba(0,0,0,0.5)";
-					ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]-4, t.width+1, -t.fontBoundingBoxAscent);
-					ctx.fillStyle = "white";
-					ctx.fillText(`$${toShow[0].bet}`, pos[0]-0.5*t.width, pos[1]-5);
-				} else if (toShow.length == 2){
-					let t = ctx.measureText(`$${toShow[0].bet}|$${toShow[1].bet}`);
-					ctx.fillStyle = "rgba(0,0,0,0.5)";
-					ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]-4, t.width+1, -t.fontBoundingBoxAscent);
-					ctx.fillStyle = "white";
-					ctx.fillText(`$${toShow[0].bet}|$${toShow[1].bet}`, pos[0]-0.5*t.width, pos[1]-5);
-				} else if (toShow.length == 3){
-					let t = ctx.measureText(`$${toShow[0].bet}|$${toShow[1].bet}`);
-					ctx.fillStyle = "rgba(0,0,0,0.5)";
-					ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]-8, t.width+1, -t.fontBoundingBoxAscent);
-					ctx.fillStyle = "white";
-					ctx.fillText(`$${toShow[0].bet}|$${toShow[1].bet}`, pos[0]-0.5*t.width, pos[1]-9);
-					
-					t = ctx.measureText(`$${toShow[2].bet}`);
-					ctx.fillStyle = "rgba(0,0,0,0.5)";
-					ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]+8, t.width+1, t.fontBoundingBoxAscent);
-					ctx.fillStyle = "white";
-					ctx.fillText(`$${toShow[2].bet}`, pos[0]-0.5*t.width, pos[1]+ 7 + t.fontBoundingBoxAscent);
-				} else {
-					let t = ctx.measureText(`$${toShow[0].bet}|$${toShow[1].bet}`);
-					ctx.fillStyle = "rgba(0,0,0,0.5)";
-					ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]-8, t.width+1, -t.fontBoundingBoxAscent);
-					ctx.fillStyle = "white";
-					ctx.fillText(`$${toShow[0].bet}|$${toShow[1].bet}`, pos[0]-0.5*t.width, pos[1]-9);
-					
-					t = ctx.measureText(`$${toShow[2].bet}|$${toShow[3].bet}`);
-					ctx.fillStyle = "rgba(0,0,0,0.5)";
-					ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]+8, t.width+1, t.fontBoundingBoxAscent);
-					ctx.fillStyle = "white";
-					ctx.fillText(`$${toShow[2].bet}|$${toShow[3].bet}`, pos[0]-0.5*t.width, pos[1]+ 7 + t.fontBoundingBoxAscent);
+			if (keys.shift){
+				console.log("shift");
+				let toShow = [];
+				for (let i = 0; i < game.bets.length; i++){
+					if (game.bets[i].pos[0] == tX && game.bets[i].pos[1] == tY){
+						toShow.push(game.bets[i]);
+					} else if (game.bets[i].pos[0] > tX && game.bets[i].pos[1] >= tY) break;
+				}
+				
+				
+				if (toShow.length > 0){
+					let pos = [tX * 36 + 86, tY * 32 + 112];
+					ctx.font = "7px pixel";
+					if (toShow.length == 1){
+						let t = ctx.measureText(`$${toShow[0].bet}`);
+						ctx.fillStyle = "rgba(0,0,0,0.5)";
+						ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]-4, t.width+1, -t.fontBoundingBoxAscent);
+						ctx.fillStyle = "white";
+						ctx.fillText(`$${toShow[0].bet}`, pos[0]-0.5*t.width, pos[1]-5);
+					} else if (toShow.length == 2){
+						let t = ctx.measureText(`$${toShow[0].bet}|$${toShow[1].bet}`);
+						ctx.fillStyle = "rgba(0,0,0,0.5)";
+						ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]-4, t.width+1, -t.fontBoundingBoxAscent);
+						ctx.fillStyle = "white";
+						ctx.fillText(`$${toShow[0].bet}|$${toShow[1].bet}`, pos[0]-0.5*t.width, pos[1]-5);
+					} else if (toShow.length == 3){
+						let t = ctx.measureText(`$${toShow[0].bet}|$${toShow[1].bet}`);
+						ctx.fillStyle = "rgba(0,0,0,0.5)";
+						ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]-8, t.width+1, -t.fontBoundingBoxAscent);
+						ctx.fillStyle = "white";
+						ctx.fillText(`$${toShow[0].bet}|$${toShow[1].bet}`, pos[0]-0.5*t.width, pos[1]-9);
+						
+						t = ctx.measureText(`$${toShow[2].bet}`);
+						ctx.fillStyle = "rgba(0,0,0,0.5)";
+						ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]+8, t.width+1, t.fontBoundingBoxAscent);
+						ctx.fillStyle = "white";
+						ctx.fillText(`$${toShow[2].bet}`, pos[0]-0.5*t.width, pos[1]+ 7 + t.fontBoundingBoxAscent);
+					} else {
+						let t = ctx.measureText(`$${toShow[0].bet}|$${toShow[1].bet}`);
+						ctx.fillStyle = "rgba(0,0,0,0.5)";
+						ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]-8, t.width+1, -t.fontBoundingBoxAscent);
+						ctx.fillStyle = "white";
+						ctx.fillText(`$${toShow[0].bet}|$${toShow[1].bet}`, pos[0]-0.5*t.width, pos[1]-9);
+						
+						t = ctx.measureText(`$${toShow[2].bet}|$${toShow[3].bet}`);
+						ctx.fillStyle = "rgba(0,0,0,0.5)";
+						ctx.fillRect(pos[0] - 0.5*t.width - 1, pos[1]+8, t.width+1, t.fontBoundingBoxAscent);
+						ctx.fillStyle = "white";
+						ctx.fillText(`$${toShow[2].bet}|$${toShow[3].bet}`, pos[0]-0.5*t.width, pos[1]+ 7 + t.fontBoundingBoxAscent);
+					}
 				}
 			}
 		}
@@ -1272,6 +1332,8 @@ function rouletteScene(sock){
 					pressedButton.pressed = 1; pressedButton.func();
 					return;
 				}
+		
+				if (game.turnOptions != "betting" || ready) return;
 		
 				let tX = mX-86;
 				let tY = mY-112;
@@ -1364,3 +1426,10 @@ function rouletteScene(sock){
 	return unbindLocal;
 }
 scene.roulette = rouletteScene;
+
+
+/*
+spin = async (r1, r2, t1, t2) => {
+    
+} 
+*/
