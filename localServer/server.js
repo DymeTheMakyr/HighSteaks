@@ -652,21 +652,101 @@ const blackjackFuncs = {
 }
 
 
-const rouletteLookup = [0,23,6,34,4,19,10,31,16,27,18,14,33,12,25,2,21,8,29,3,24,5,28,17,20,7,36,11,32,30,15,26,1,22,9,34,13];
+const rlWheelLookup = [0,23,6,34,4,19,10,31,16,27,18,14,33,12,25,2,21,8,29,3,24,5,28,17,20,7,36,11,32,30,15,26,1,22,9,34,13];
+
+const rlValues = {
+	"r" : [
+		[ 3, 6, 9,12,15,18,21,24,27,30,33,36],
+		[ 2, 5, 8,11,14,17,20,23,26,29,32,35],
+		[ 1, 4, 7,10,13,16,19,22,25,28,31,34]
+	],
+	"re" : [1,3,5,7,9,12,14,16,18,19,21,23,25,27,28,30,32,34,36],
+	"bl" : [2,4,6,8,10,11,13,15,17,19,20,22,24,26,29,31,33,35]
+	};
+
+const rlSpecialLookup = {
+	51 : "d1",
+	52 : "d2",
+	53 : "d3",
+	54 : "e1",
+	59 : "e2",
+	55 : "ev",
+	58 : "od",
+	56 : "re",
+	57 : "bl",
+	61 : "r1",
+	62 : "r2",
+	63 : "r3"
+}
 
 const rouletteFuncs = {
 	"spin" : async (game) => {
-		console.log("spinning");
+		let betTotals = {};
+		for (let i = 0; i < game.bets.length; i++){
+			betTotals[game.bets[i].owner] = (betTotals[game.bets[i].owner]||0) + game.bets[i].bet;
+		}
+		for (let i = 0; i < game.players.length; i++){
+			game.players[i].money -= betTotals[game.players[i].pName]||0;
+		}
 		game.turnOptions = "spinning";
 		let val = Math.round(Math.random() * 37) - 1;
-		console.log(val, " @ ", rouletteLookup[val]);
-		sendall(game.id, `a\x1Frl\x1F${rouletteLookup[val]}`);
+		console.log(val, " @ ", rlWheelLookup[val]);
+		sendall(game.id, `a\x1Frl\x1F${rlWheelLookup[val]}`);
 		await new Promise(resolve => setTimeout(resolve, 12000));
-		game.turnOptions = "betting";
-		game.ready = 0;
+		rouletteFuncs.cashout(game, val);
 	},	
-	"cashout" : (game) => {
-	
+	"cashout" : (game, val) => {
+		let payouts = {}
+		for (let i = 0; i < game.bets.length; i++){
+			let b = game.bets[i];
+			
+			if (!(b.owner in payouts)) payouts[b.owner] = 0;
+			if (b.val > 50){	
+				let spec = rlSpecialLookup[b.val];
+				if (spec[0] == "d" && (spec[1]-1)*12 < val && val <= (spec[1])*12) payouts[b.owner] += b.bet * 3;
+				else if (spec[0] == "e" && (spec[1]-1)*18 < val && val <= (spec[1])*18) payouts[b.owner] += b.bet * 2;
+				else if (spec == "ev" && val%2 == 0 && val > 0) payouts[b.owner] += b.bet * 2;
+				else if (spec == "od" && val%2 == 1) payouts[b.owner] += b.bet * 2;
+				else if (spec == "re" && rlValues.re.includes(val)) payouts[b.owner] += b.bet*2;
+				else if (spec == "bl" && rlValues.bl.includes(val)) payouts[b.owner] += b.bet*2;
+				else if (spec[0] == "r" && spec[1] > 0 && rlValues.r[spec[1]-1].includes(val)) payouts[b.owner] += b.bet*3;
+			} else {
+				if (b.pos[2] == 0.5 && b.pos[3] == 0.5){
+					if (b.pos[1] == 2.5){
+						if (b.val == 0 && val <= 3) payouts[b.owner] += b.bet * 9;
+						else if (b.val <= val && val < b.val+6) payouts[b.owner] += b.bet * 6;
+					} else {
+						let posVal = [b.val-1, b.val, b.val+2, b.val+3];
+						if (posVal.includes(val)) payouts[b.owner] += b.bet * 9;
+					}
+				} else if (b.pos[2] == 0.5){
+					if (val == b.val || val == b.val+3) payouts[b.owner] += b.bet*18;
+				} else if (b.pos[3] == 0.5){
+					if (b.pos[1] == 2.5 && b.val <= val && val <= b.val+2) payouts[b.owner] += b.bet*12;
+					else if (b.pos[1] != 2.5 && val == b.val || val == b.val - 1) payouts[b.owner] += b.bet*18;
+				} else {
+					if(val == b.val) payouts[b.owner] += b.bet * 36;
+				}
+			}		
+		}		
+		
+		for (let i = 0; i < game.players.length; i++){
+			game.players[i].money += payouts[game.players[i].pName]||0;
+		}
+			
+		game.bets = [];
+		game.ready = 0;
+		if (game.remRounds < game.maxRounds){
+			game.turnOptions = "betting";
+			game.remRounds += 1;
+		} else {
+			console.log("to lobby");
+			game.turnOptions = "none";
+			game.currentPlayer = "\x1F";
+			game.currentScene = "lobby";
+			game.colliders = sceneColliders["lobby"];
+			game.interactables = sceneInteractables["lobby"];
+		}
 	}
 };
 
@@ -695,7 +775,6 @@ server.on('connection', (socket) => {
 				nGame.currentScene = "lobby";
 				nGame.interactables = sceneInteractables.lobby;
 				nGame.colliders = sceneColliders.lobby;
-				console.log(nGame);
 				gameManager.games[args[2]] = nGame;
 				game = gameManager.games[args[2]];
 				gameManager.collisionHandlers[args[2]] = collisionHandler;
@@ -767,7 +846,8 @@ server.on('connection', (socket) => {
 						blackjackFuncs.start(game);
 						console.log(blackjackMemory);
 					} else if (args[3] == "rl") {
-						game.remRounds = 0;
+						game.ready = 0;
+						game.remRounds = 1;
 						game.votes = {};
 						game.turnOptions = "betting";
 						console.log("start roulette");
@@ -784,20 +864,25 @@ server.on('connection', (socket) => {
 			let args = message.split("\x1F");
 			
 			console.log(`recieved action ${args}`);
-			console.log(playerIndex);
 			let p = game.players[playerIndex];
+			
+			if (game.currentScene == "lobby"){
+				if (args[1] == "sl"){
+					console.log("slots!!");
+					if (game.players[playerIndex].money > 0) {
+						game.players[playerIndex].money = Math.max(0, game.players[playerIndex].money - 5);
+					} else {
+						game.players[playerIndex].money = Math.round(100 * Math.random());
+					}
+				}
+			}
 			
 			if (game.currentScene == "roulette"){
 				if (game.turnOptions == "betting"){
 					if (args[1] == "ba"){
-						console.log("push");
 						game.bets.push(JSON.parse(args[2]));
-						console.log(game.bets);
-						
 						game.bets.sort((a,b) => {return ((a.pos[0]-b.pos[0]) + 100*(a.pos[1] - b.pos[1]));});
-						
 					} else if (args[1] == "br"){
-						console.log("pull");
 						let ind = game.bets.findIndex(x => (x.pos == `${args[2]}` && x.owner == id.slice(0,-4)));
 						if (ind > -1) game.bets.splice(ind, 1);
 						else if (args[2] == "a") {
@@ -840,7 +925,6 @@ server.on('connection', (socket) => {
 							if (typeof(temp) == "object") handSum += 1;
 							else handSum += temp; 
 						}
-						console.log(handSum);
 						if (handSum > 21) {
 							blackjackFuncs.next(game);
 						} else {
@@ -878,6 +962,7 @@ server.on('connection', (socket) => {
 			}
 			gameManager.playerMem[gId][pId] = game.players[playerIndex];
 			game.players = arrPop(gameManager.games[gId].players, playerIndex);
+			game.ready -= 1;
 			delete game.votes[pId];
 			console.log("player left");
 			if (game.players.length == 0){

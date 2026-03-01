@@ -270,6 +270,7 @@ class audio {
 		audio.clips.sel = loadAudio("./audio/select.wav");
 		audio.clips.desel = loadAudio("./audio/deselect.wav");
 		audio.clips.slots = loadAudio("./audio/slots.wav");
+		audio.clips.slotswin = loadAudio("./audio/slotswin.wav");
 		audio.clips.bar = loadAudio("./audio/bar.wav");
 		audio.clips.shop = loadAudio("./audio/shop.mp3");
 		audio.clips.card = loadAudio("./audio/card.wav");
@@ -353,7 +354,12 @@ function lobbyScene(sock) {
 	//collider class
 	
 	let interactFuncs = {
-		"sl" : () => {audio.clips.slots.play();},
+		"sl" : () => {if (game.players.find(x => x.pName == playerName).money == 0){
+				audio.clips.slotswin.play();
+			} else {
+				audio.clips.slots.play();
+			} sock.send("a\x1Fsl");
+		},
 		"ba" : () => {if (localDrunkFactor >= drunkFactor) {drunkFactor += 1; audio.clips.bar.play(); soberTimer();}},
 		"sh" : () => {sock.send(`v\x1F${roomNo}\x1F${playerName}\x1F0`);audio.clips.shop.play();}
 	}
@@ -623,40 +629,25 @@ function selectionScene(sock){
 							ball.style.height = ball.style.width = wheel.style.width = wheel.style.height = canv.style.height;
 							ball.style.transform = wheel.style.transform = wheelCont.style.transform = "rotate(0deg)";
 							
-							console.log(wheelCont, wheel, ball);
-							console.log(container.children);
 							container.appendChild(wheelCont);
 							wheelCont.appendChild(wheel);
 							wheelCont.appendChild(ball);
 							
-							console.log(container.children);
-						
-						console.log(wheelCont.style);
-							
 						await new Promise(resolve => setTimeout(resolve, 1000));
-							
-						console.log("spin");
 						wheelCont.style.transition = ball.style.transition = "ease 10s"
 
-						console.log(wheelCont.style);
 						
-						wheelCont.style.transform = "rotate(-3600deg)";
-						ball.style.transform = "rotate(3600deg)";
-
-						console.log(wheelCont.style);
+						let finalAngle = 3600 + 360*Math.random();
+						wheelCont.style.transform = `rotate(-${finalAngle}deg)`;
+						ball.style.transform = `rotate(${finalAngle}deg)`;
 
 						await new Promise(resolve => setTimeout(resolve, 1000));
-						console.log("release ball");
 						ball.style.transition = "ease-in-out 5s";
 						ball.style.transform = `rotate(${7200 + (360 * parseInt(resp[2])/37)}deg)`;
-
-						console.log("test")
-						
 					})();
 					let chId = setInterval(() => {
 						if (game.turnOptions != "spinning" || game.currentScene != "roulette" || sock == null || sock.readyState == WebSocket.CLOSED){
 							wheelCont.remove();
-							console.log("break");
 							clearInterval(chId);
 						}					
 					}, 100);
@@ -665,7 +656,6 @@ function selectionScene(sock){
 				}
 			}
 		} 
-		console.log("recieved action (", resp,")");
 	}
 	
 	function hostRoom(){
@@ -1042,7 +1032,6 @@ function blackjackScene(sock){
 }
 scene.blackjack = blackjackScene;
 
-let ready = false;
 
 function rouletteScene(sock){
 	let mX = -100;
@@ -1050,18 +1039,23 @@ function rouletteScene(sock){
 
 	let pixelLength = 0;
 	let betAmount = 0;
+	let ready = false;
+	let runningTotal = 0;
 	
+	for (let i = 0; i < game.bets.length; i++){
+		if (game.bets[i].owner == playerName) runningTotal += game.bets[i].bet;
+	}
 	
 	let buttons = {};
 	let rounds = {
 		"betting" : {
-			"clear" : new button("CLEAR ALL BETS", "black", col.rect(vec.n(40, 40), 100,48), `rgba(235,175,175,1)`, "white", () => {sock.send("a\x1Fbr\x1Fa");}),
+			"clear" : new button("CLEAR ALL BETS", "black", col.rect(vec.n(40, 40), 100,48), `rgba(235,175,175,1)`, "white", () => {sock.send("a\x1Fbr\x1Fa"); runningTotal = 0;}),
 			"ready" : new button("READY", "black", col.rect(vec.n(500, 40), 100, 48), `rgba(175, 235, 175, 1)`, "white", () => {ready = true; sock.send("a\x1Fre");}),
-			"p1" : new button("+1", "black", col.rect(vec.n(160, 35), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount+1);}),
-			"p10" : new button("+10", "black", col.rect(vec.n(160, 47), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount+10);}),
-			"p100" : new button("+100", "black", col.rect(vec.n(160, 59), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount+100);}),
-			"m2" : new button("\xD72", "black", col.rect(vec.n(160, 71), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount*2);}),
-			"m10" : new button("\xD710", "black", col.rect(vec.n(160, 83), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money, betAmount*10);;}),
+			"p1" : new button("+1", "black", col.rect(vec.n(160, 35), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money - runningTotal, betAmount+1);}),
+			"p10" : new button("+10", "black", col.rect(vec.n(160, 47), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money - runningTotal, betAmount+10);}),
+			"p100" : new button("+100", "black", col.rect(vec.n(160, 59), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money - runningTotal, betAmount+100);}),
+			"m2" : new button("\xD72", "black", col.rect(vec.n(160, 71), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money - runningTotal, betAmount*2);}),
+			"m10" : new button("\xD710", "black", col.rect(vec.n(160, 83), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money - runningTotal, betAmount*10);;}),
 			"s1" : new button("-1", "black", col.rect(vec.n(448, 35), 32, 10), "rgba(235, 175, 175, 1)", "white", () => {betAmount = Math.max(0, betAmount - 1);}),
 			"s10" : new button("-10", "black", col.rect(vec.n(448, 47), 32, 10), "rgba(235, 175, 175, 1)", "white", () => {betAmount = Math.max(0, betAmount - 10);}),
 			"s100" : new button("-100", "black", col.rect(vec.n(448, 59), 32, 10), "rgba(235, 175, 175, 1)", "white", () => {betAmount = Math.max(0, betAmount - 100);}),
@@ -1162,11 +1156,12 @@ function rouletteScene(sock){
 		}
 		
 		
-		if (Object.keys(buttons).toString() != Object.keys(rounds[game.turnOptions])){
+		if (Object.keys(buttons).toString() != Object.keys(rounds[game.turnOptions]??{})){
 			if (game.turnOptions == "betting") {
 				ready = false;
+				runningTotal = 0;
 			}
-			buttons = rounds[game.turnOptions];
+			buttons = rounds[game.turnOptions]??{};
 		}
 		
 		if (game.turnOptions == "betting" && ready == false){
@@ -1183,7 +1178,12 @@ function rouletteScene(sock){
 			ctx.fillStyle = "white";
 			ctx.font = "42px pixel"
 			pixelLength = ctx.measureText(`$${betAmount}`).width;		
-			ctx.fillText(`$${betAmount}`, 320 - 0.5*(pixelLength), 82	);
+			ctx.fillText(`$${betAmount}`, 320 - 0.5*(pixelLength), 82);
+		} else if (game.turnOptions == "betting" && ready == true) {
+			ctx.fillStyle = "white";
+			ctx.font = "42px pixel";
+			pixelLength = ctx.measureText(`(${game.ready}/${game.players.length}) ready`).width;
+			ctx.fillText(`(${game.ready}/${game.players.length}) ready`, 320 - 0.5*(pixelLength), 82);
 		}
 		
 		let betCo = 0;
@@ -1250,7 +1250,6 @@ function rouletteScene(sock){
 			}
 			
 			if (keys.shift){
-				console.log("shift");
 				let toShow = [];
 				for (let i = 0; i < game.bets.length; i++){
 					if (game.bets[i].pos[0] == tX && game.bets[i].pos[1] == tY){
@@ -1359,7 +1358,7 @@ function rouletteScene(sock){
 					
 					let check = game.bets.findIndex(x => (x.pos == `${[tX,tY,vX,vY]}` && x.owner == playerName));
 					let msg = "";
-					if (check == -1 && betAmount > 0){
+					if (check == -1 && betAmount > 0 && (game.players.find(x => x.pName == playerName)??{}).money >= (betAmount + runningTotal)){
 						let temp = {
 							"owner" : playerName,
 							"pos" : [tX, tY, vX, vY],
@@ -1367,8 +1366,12 @@ function rouletteScene(sock){
 							"bet" : betAmount
 						};
 						msg = "a\x1Fba\x1F"+JSON.stringify(temp);
-					} else {
+						runningTotal += betAmount;
+					} else if (check > -1) {
 						msg = `a\x1Fbr\x1F${[tX,tY,vX,vY]}`
+						runningTotal -= game.bets[check].bet;
+					} else {
+						return;
 					}
 					sock.send(msg);
 				}
