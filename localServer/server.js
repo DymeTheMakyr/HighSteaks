@@ -832,7 +832,7 @@ server.on('connection', (socket) => {
 			if (count == Math.max(2, game.players.length)){
 				console.log(`proceed with ${args[3]}`);
 				for (let v in game.votes) {game.votes[v] = 0;}
-				if (args[3] == "bj" || args[3] == "rl"){
+				if (args[3] != "ff"){
 					let t = kts[args[3]]
 					game.currentScene = t;
 					game.colliders = sceneColliders[t];
@@ -842,15 +842,19 @@ server.on('connection', (socket) => {
 						for (let i in blackjackMemoryTemplate){
 							blackjackMemory[game.id][i] = blackjackMemoryTemplate[i];
 						}
-						console.log(blackjackMemory);
 						blackjackFuncs.start(game);
-						console.log(blackjackMemory);
 					} else if (args[3] == "rl") {
 						game.ready = 0;
 						game.remRounds = 1;
 						game.votes = {};
 						game.turnOptions = "betting";
 						console.log("start roulette");
+					} else if (args[3] == "pk"){
+						game.currentPlayer = game.players[0].pName;
+						game.remRounds = 1;
+						game.votes = {};
+						game.turnOptions = "bet";
+						console.log("start poker");
 					}
 				}
 			}

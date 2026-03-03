@@ -8,6 +8,23 @@ sh = sw / factor[0] > sh / factor[1] ? sh : (sw / factor[0]) * factor[1];
 
 // DISABLE CONTExT MENU
 document.addEventListener("contextmenu", event => event.preventDefault());
+// DISABLE CONSOLE
+/*
+(function () {
+  try {
+    const originalConsole = console;
+    Object.defineProperty(window, 'console', {
+      get: function () {
+        throw new Error('Console is disabled for security reasons.');
+      },
+      set: function (val) {
+        console = val;
+      }
+    });
+  } catch (e) {}
+})();
+*/
+
 
 const container = document.getElementById('container');
 const storage = document.getElementById('sceneStorage');
@@ -430,6 +447,17 @@ function lobbyScene(sock) {
 			ctx.fillRect(game.players[i].col.origin.x - charScaleFact, game.players[i].col.origin.y + 13*charScaleFact, 10*charScaleFact, 3*charScaleFact)
 		}
 		ctx.drawImage(background.imgs.lobby.wall,0,0,640,360); //draw walls
+		ctx.fillStyle = "white";
+		ctx.font = "7px pixel";
+		ctx.fillText("Money", 246-15, 32);
+		ctx.fillText("Room Code", 394-26, 32);
+		ctx.font = "14px pixel";
+		let t = ctx.measureText(roomNo);
+		ctx.fillText(roomNo, 394-0.5*t.width, 42+0.5*t.actualBoundingBoxAscent);
+		let tx = `$${game.players.find(x => x.pName == playerName).money}`;
+		if (tx.length > 5) ctx.font = "7px pixel";
+		t = ctx.measureText(tx);
+		ctx.fillText(tx, 246-0.5*t.width, 42+0.5*t.actualBoundingBoxAscent);
 		
 		//get interactable if any
 		currentInteractable = null;
@@ -610,50 +638,52 @@ function selectionScene(sock){
 	
 	function servMsg(message){
 		let resp = message.data.split("\x1F");
-		if (resp[0] == "r"){
-			temp = JSON.parse(resp[1]);
-			temp.players.forEach((x) => {x.col.origin.x = parseInt(x.col.origin.x); x.col.origin.y = parseInt(x.col.origin.y)});
-			game = temp;
-			return;
-		} else if (resp[0] == "a"){
-			if (resp[1] == "rl"){
-				if (parseInt(resp[2])+1){
-					(async () => {
-							let wheelCont = document.createElement("div");
-							wheelCont.id = "wheelCont";
-							let wheel = document.createElement("img");
-							wheel.src = "./sprites/wheel.png";
-							let ball = document.createElement("img");
-							ball.src = "./sprites/ball.png";
-							wheel.className = ball.className = "wheelImg";
-							ball.style.height = ball.style.width = wheel.style.width = wheel.style.height = canv.style.height;
-							ball.style.transform = wheel.style.transform = wheelCont.style.transform = "rotate(0deg)";
-							
-							container.appendChild(wheelCont);
-							wheelCont.appendChild(wheel);
-							wheelCont.appendChild(ball);
-							
-						await new Promise(resolve => setTimeout(resolve, 1000));
-						wheelCont.style.transition = ball.style.transition = "ease 10s"
+		
+		switch (resp[0]){
+			case 'r':
+				temp = JSON.parse(resp[1]);
+				temp.players.forEach((x) => {x.col.origin.x = parseInt(x.col.origin.x); x.col.origin.y = parseInt(x.col.origin.y)});
+				game = temp;
+				break;
+			case 'a':
+				if (resp[1] == "rl"){
+					if (parseInt(resp[2])+1){
+						(async () => {
+								let wheelCont = document.createElement("div");
+								wheelCont.id = "wheelCont";
+								let wheel = document.createElement("img");
+								wheel.src = "./sprites/wheel.png";
+								let ball = document.createElement("img");
+								ball.src = "./sprites/ball.png";
+								wheel.className = ball.className = "wheelImg";
+								ball.style.height = ball.style.width = wheel.style.width = wheel.style.height = canv.style.height;
+								ball.style.transform = wheel.style.transform = wheelCont.style.transform = "rotate(0deg)";
+								
+								container.appendChild(wheelCont);
+								wheelCont.appendChild(wheel);
+								wheelCont.appendChild(ball);
+								
+							await new Promise(resolve => setTimeout(resolve, 1000));
+							wheelCont.style.transition = ball.style.transition = "ease 10s"
 
-						
-						let finalAngle = 3600 + 360*Math.random();
-						wheelCont.style.transform = `rotate(-${finalAngle}deg)`;
-						ball.style.transform = `rotate(${finalAngle}deg)`;
+							
+							let finalAngle = 3600 + 360*Math.random();
+							wheelCont.style.transform = `rotate(-${finalAngle}deg)`;
+							ball.style.transform = `rotate(${finalAngle}deg)`;
 
-						await new Promise(resolve => setTimeout(resolve, 1000));
-						ball.style.transition = "ease-in-out 5s";
-						ball.style.transform = `rotate(${7200 + (360 * parseInt(resp[2])/37)}deg)`;
-					})();
-					let chId = setInterval(() => {
-						if (game.turnOptions != "spinning" || game.currentScene != "roulette" || sock == null || sock.readyState == WebSocket.CLOSED){
-							wheelCont.remove();
-							clearInterval(chId);
-						}					
-					}, 100);
-					return;
-					return;	
-				}
+							await new Promise(resolve => setTimeout(resolve, 1000));
+							ball.style.transition = "ease-in-out 5s";
+							ball.style.transform = `rotate(${7200 + (360 * parseInt(resp[2])/37)}deg)`;
+						})();
+						let chId = setInterval(() => {
+							if (game.turnOptions != "spinning" || game.currentScene != "roulette" || sock == null || sock.readyState == WebSocket.CLOSED){
+								wheelCont.remove();
+								clearInterval(chId);
+							}					
+						}, 100);
+						break;
+					}
+				break;
 			}
 		} 
 	}
@@ -1430,9 +1460,88 @@ function rouletteScene(sock){
 }
 scene.roulette = rouletteScene;
 
-
-/*
-spin = async (r1, r2, t1, t2) => {
-    
-} 
-*/
+function pokerScene(sock){
+	
+	let pixelLength = 0;
+	function mainloop(){
+		if (sock == null || sock.readyState == WebSocket.CLOSED){
+			try{
+				return;
+			} finally {
+				changeScene("selection", null);
+			}
+		}
+		
+		sock.send(`r\x1F${roomNo}`);
+		
+		if (game.currentScene != "roulette"){
+			changeScene(game.currentScene, sock);
+		}
+		
+		let pOffset = 576 / game.players.length;
+		ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+		ctx.drawImage(background.imgs.generic, 0, 0);
+		
+		ctx.font = "21px pixel";
+		let text = `Round ${game.remRounds} of ${game.maxRounds}`;
+		let l = ctx.measureText(text).width;
+		l = Math.round(0.5*l);
+		ctx.fillStyle = "rgba(22,22,29, 0.9)";
+		ctx.fillRect(318 - l,4, 2*l + 4, 28);
+		ctx.fillStyle = "white";
+		ctx.fillText(text, 320 - l, 28);	
+		
+		for (let i = 0; i < game.players.length; i++){
+			let p = game.players[i];
+			let curOff = 32 + (pOffset * 0.5) + (pOffset*i);
+			ctx.fillStyle = `rgba(255,230,120,0.5)`;
+			ctx.beginPath();
+			ctx.arc(curOff,312, 32,5*Math.PI/6 , Math.PI/6);
+			ctx.fill();
+			ctx.drawImage(cows.imgs[p.skin], 0, 1, 16, 15, curOff - 16, 298, 32,30);
+			
+			text = p.pName + "--$" + p.money.toString();	
+			ctx.font = `7px pixel`;
+			pixelLength = ctx.measureText(text).width;
+			pixelLength += pixelLength%2;
+			ctx.fillStyle = `rgba(0,${255*(p.pName == playerName)},0,0.5)`;
+			ctx.fillRect(curOff - (0.5*pixelLength) - 2, 331, 2 + pixelLength, 10);
+			ctx.fillStyle = 'white';
+			ctx.fillText(text, curOff - (0.5*pixelLength), 340);
+			if (p.bet != 0){
+				pixelLength = ctx.measureText(`$${p.bet}`).width;
+				pixelLength += pixelLength%2;
+				ctx.fillText(`$${p.bet}`, curOff - 0.5*pixelLength, 296);
+			}
+		}
+	}
+	
+	let keys = {
+		"e" : () => {
+			sock.send(`c\x1F${roomNo}\x1Flobby`);
+		}
+	}
+	
+	function keydown(e){
+		if (e.code == "KeyE") keys.e();
+	}
+	function keyup(){
+	
+	}
+	
+	window.addEventListener("keydown", keydown);
+	window.addEventListener("keyup", keyup);
+	let mlId = setInterval(mainloop, 25);
+	
+	function unbindLocal(){
+		audio.clips.jazz.pause(0);
+		storage.appendChild(canv);
+		window.removeEventListener("keydown", keydown);
+		window.removeEventListener("keyup", keyup);
+		clearInterval(mlId);
+	}
+	
+	audio.clips.jazz.play();
+	return unbindLocal;	
+}
+scene.poker = pokerScene;
