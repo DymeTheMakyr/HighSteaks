@@ -98,6 +98,10 @@ BETTING	Players are then dealt two "hole" cards. betting proceeds from the playe
 	The betting options a player has are [fold, check, bet, call, raise]. If no bet has been made, the player can either check (not bet), or bet.
 	If a bet has been made previously, the play can fold, call or raise.
 	
+	On the first round of betting, the minimum raise is equal to the big blind
+	A re-raise must be equal to or greater than the previous raise
+
+		
 Pre	When the all players are dealt their hole cards, they can either fold, call or raise the big blind. Betting continues in a left propogating motion until all players have bet
 Flop	an equal amount into the main pot
 
