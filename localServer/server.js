@@ -1514,7 +1514,7 @@ server.on('connection', (socket) => {
 					if (game.players[playerIndex].money > 0) {
 						game.players[playerIndex].money = Math.max(0, game.players[playerIndex].money - 5);
 					} else {
-						game.players[playerIndex].money = Math.round(100 * Math.random());
+                        game.players[playerIndex].money = Math.round((((game.players.map(x => x.money).sort((a,b) => a-b).filter(x => x != 0)[0]) * 0.75)||250) * Math.random());
 					}
 				}
 			}
