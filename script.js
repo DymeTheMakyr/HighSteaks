@@ -1567,13 +1567,21 @@ function pokerScene(sock){
 
 			}
 
-			if (game.info.sblind == i && game.currentPlayer != "\x1E"){
+			if (game.info.sblind == i && game.currentPlayer != "\x1E" && game.turnOptions != "proceedquit"){
 				ctx.drawImage(sprites.imgs.sb, curOff-16, 180);
-			} else if ((game.info.sblind+1)%(game.players.length) == i && game.currentPlayer != "\x1E"){
+			} else if ((game.info.sblind+1)%(game.players.length) == i && game.currentPlayer != "\x1E" && game.turnOptions != "proceedquit"){
 				ctx.drawImage(sprites.imgs.bb, curOff-16, 180);
+			} else if (game.turnOptions == "proceedquit"){
+				let pIndx = game.info.win.findIndex(x => x[0] == p.pName);
+				if (pIndx > -1){
+					ctx.font = "14px pixel";
+					let t = `+$${game.info.win[pIndx][1]}`;
+					pixelLength = ctx.measureText(t).width;
+					ctx.fillText(t, curOff - 0.5*pixelLength, 220);
+				}
 			}
 
-			let tempCards = game.players[i].cards[0];
+			let tempCards = p.cards[0];
 			for (let k = 0; k < tempCards.length; k++){
 				let hOff = Math.round(curOff - (0.5*tempCards.length * 32) + k*34 - 1);
 				let vOff = 0;
@@ -1672,6 +1680,9 @@ function pokerScene(sock){
 			}
 		}
 	}
+
+
+// reveal all cards on windssssdssdl'
 
 	function keydown(e){
 		if (e.code == "KeyE") keys.e();
