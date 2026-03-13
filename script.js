@@ -815,6 +815,8 @@ function blackjackScene(sock){
 
 	let pixelLength = 0;
 
+	const maxHands = [16, 8, 6, 4];
+
 	function mainloop(){
 		pixelLength = 0;
 		if (sock == null || sock.readyState == WebSocket.CLOSED){
@@ -868,7 +870,7 @@ function blackjackScene(sock){
 			}
 
 			let scale = 2;
-			if (game.players[i].cards.length > 4) scale = 1;
+			if (game.players[i].cards.length > maxHands[game.players.length-1]) scale = 1;
 			else {
 				for (let k = 0; k < game.players[i].cards.length; k++){
 					if (game.players[i].cards[k].length > 6) scale = 1;
@@ -1219,8 +1221,6 @@ function rouletteScene(sock){
 		let betCo = 0;
 		let betPo = 0;
 		let betI = 0;
-
-		//SHOW BET VALUES ON KEY PRESS AND HOVER (SHIFT?)
 
 		for (let i = 0; i < game.info.bets.length; i++){
 			if (game.info.bets[i].pos != betPo){
