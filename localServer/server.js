@@ -116,6 +116,9 @@ class col {
 	static line(o, e, t){
 		let c = new col("l", o, vec.n(0,0), vec.n(e.x-o.x, e.y-o.y));
 		c.thickness = t;
+        c.phi = Math.atan(e.y/e.x);
+        c.sin = Math.sin(c.phi);
+        c.cos = Math.cos(c.phi);
 		return c;
 	}
 }
@@ -269,8 +272,7 @@ function overlap(a, b){
 		let mid = vec.avg(a.origin, ...a.points);
 
 		if (mid.y - m*mid.x < c){
-			let phi = Math.atan(m);
-			c = c - (b.thickness/Math.cos(phi));
+            c = c - (b.thickness/b.cos);
 			let edgeCheck = false;
 			let endCheck = false;
 
@@ -281,17 +283,17 @@ function overlap(a, b){
 
 				let t = b.points[1].y > 0;
 				let abv = t?vec.add(b.points[1],b.origin):b.origin;
-				let blw = t?b.origin:vec.add(b.points[1]+b.origin);
-				m = 1/(m==0?m+0.000001:m);
+                let blw = t?b.origin:vec.add(b.points[1],b.origin);
+                let im = -1/(m==0?m+0.000001:m);
 
 				if (y - m*(x) > c) {edgeCheck = true; edge = true;}
-				let endCon = (y + x/m > blw.y + blw.x/m && y + x/m < abv.y + abv.x/m)
+                let endCon = (y + im*x > blw.y + im*blw.x && y + im*x < abv.y + im*abv.x)
 				if (endCon && edge) { endCheck = true;
 				} else if (endCon && !edge) {
-					let xoff = Math.abs(b.thickness * Math.sin(phi) * 0.9);
-					let yoff = Math.abs(b.thickness * Math.cos(phi) * 0.9);
+                    let xoff = Math.abs(b.thickness * b.sin * 0.9);
+                    let yoff = Math.abs(b.thickness * b.cos * 0.9);
 					let t = blw.x < abv.x;
-					let lft = t?blw.x:abv.x;
+					let lft = t?blw.x:abv.x
 					let rgt = t?abv.x:blw.x;
 					if ((x > lft - xoff && x < rgt +xoff) && (y > blw.y - yoff && y < abv.y + yoff)){
 						endCheck = true;
@@ -300,8 +302,7 @@ function overlap(a, b){
 				if (edgeCheck && endCheck) return 1;
 			} return 0;
 		} else if (mid.y - m*mid.x > c) {
-			let phi = Math.atan(m);
-			c = c + (b.thickness/Math.cos(phi));
+            c = c + (b.thickness/b.cos);
 			let edgeCheck = false;
 			let endCheck  = false;
 			for (let i = 0; i < 4; i++){
@@ -311,15 +312,15 @@ function overlap(a, b){
 
 				let t = b.points[1].y > 0;
 				let abv = t?vec.add(b.points[1],b.origin):b.origin;
-				let blw = t?b.origin:vec.add(b.points[1]+b.origin);
-				let im = 1/(m==0?m+0.000001:m);
+                let blw = t?b.origin:vec.add(b.points[1],b.origin);
+                let im = 1/(m==0?m+0.000001:m);
 
 				if (y - m*(x) < c) {edgeCheck = true; edge = true}
-				let endCon = (y + x/m > blw.y + blw.x/m && y + x/m < abv.y + abv.x/m)
+                let endCon = (y + im*x > blw.y + im*blw.x && y + im*x < abv.y + im*abv.x)
 				if (endCon && edge) { endCheck = true;
 				} else if (endCon && !edge) {
-					let xoff = Math.abs(b.thickness * Math.sin(phi) * 0.9);
-					let yoff = Math.abs(b.thickness * Math.cos(phi) * 0.9);
+                    let xoff = Math.abs(b.thickness * b.sin * 0.9);
+                    let yoff = Math.abs(b.thickness * b.cos * 0.9);
 					let t = blw.x < abv.x;
 					let lft = t?blw.x:abv.x;
 					let rgt = t?abv.x:blw.x;
@@ -417,25 +418,24 @@ const blackjackFuncs = {
 	},
 	"checkHand" : (p, checkBJ) => {
 		console.log("checking...");
-		let turn = "bjturn";
+        let result = {"turn" : "bjturn"};
 		let blackjack = false;
 		let mem = blackjackMemoryTemplate;
-		if (p.bet > 0 && p.money >= 0 && p.money >= p.bet){
-			let hand = p.cards[p.currentHand];
-			if (checkBJ && hand[0].value + mem.valueLookup[hand[1].value] == 22 || hand[1].value + mem.valueLookup[hand[0].value] == 22) blackjack = true;
-			let sumHand = 0;
+        if (p.bet > 0 && p.money >= 0){ //check if player has bet
+            let hand = p.cards[p.currentHand]; // below : check for blackjack
+            if (checkBJ && hand[0].value + mem.valueLookup[hand[1].value] == 22 || hand[1].value + mem.valueLookup[hand[0].value] == 22) result.bj = true;
+            if (p.money < p.bet) return result; //prematurely end function if player cannot afford split or double
+            let sumHand = 0;
 			for (let i = 0; i < hand.length; i++){
 				if (hand[i].value == 12) sumHand += 1;
 				else sumHand += mem.valueLookup[hand[i].value];
 			}
 			console.log(hand);
 			console.log(sumHand);
-			if (sumHand > 8 && sumHand < 12) turn += "double";
+            if (sumHand > 8 && sumHand < 12) result.turn += "double"; //check if hand sum falls in range for double
 			console.log(hand.length);
-			if (mem.valueLookup[hand[0].value] == mem.valueLookup[hand[1].value] && hand.length == 2) turn += "split";
+            if (mem.valueLookup[hand[0].value] == mem.valueLookup[hand[1].value] && hand.length == 2) result.turn += "split"; //check if start cards are same
 		}
-		let result = {"turn":turn};
-		if (checkBJ) result.bj = blackjack;
 		return result;
 	},
 	"split" : async function(game, p){
@@ -792,9 +792,9 @@ const pokerFuncs = {
     "checkHand" : (game, pIndx) => {
         let seven = [...game.players[pIndx].cards[0]];
         seven.push(...game.dealer.cards);
-        let suits = {0:0,1:0,2:0,3:0};
+        let suits = [0,0,0,0];
         let allValue = [];
-        let ranks = {0:0,1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0,9:0,10:0,11:0,12:0};
+        let ranks = [0,0,0,0,0,0,0,0,0,0,0,0,0];
         let flush = 0;
         let groups = [];
         let straight = [0,-10,-10];
@@ -987,7 +987,9 @@ const pokerFuncs = {
             game.turnOptions = "raisecall";
             mem.current = (mem.current+2)%game.players.length
             game.currentPlayer = game.players[mem.current].pName;
-            game.info.call = mem.pots.main.match - (mem.pots.main.bets[game.currentPlayer]||0);
+            game.info.bets = mem.pots.main.bets;
+            game.info.match = 20;
+            mem.call = 20 - (mem.pots.main.bets[game.currentPlayer]||0);
         }
 
         // put in for loop
@@ -1050,8 +1052,10 @@ const pokerFuncs = {
                 pokerFuncs.next(game);
             } else if (game.players[mem.current].money > 0 && !mem.folds.includes(game.currentPlayer)){
                 if (mem.pots.main.max == -1){
-                    game.info.call = mem.pots.main.match - (mem.pots.main.bets[game.currentPlayer]||0);
-                    console.log(game.currentPlayer, " calls ", game.info.call);
+                    game.info.bets = mem.pots.main.bets;
+                    mem.call = mem.pots.main.match - (mem.pots.main.bets[game.currentPlayer]||0);
+                    game.info.match = mem.pots.main.match;
+                    console.log(game.currentPlayer, " calls ", game.info.bets);
                     console.log(mem.pots.main.bets);
                     console.log(mem);
                 } else {
@@ -1063,10 +1067,12 @@ const pokerFuncs = {
                         }
                     }
                     if (potIndx != -1) {
-                        game.info.call = mem.pots.other[potIndx].match - (mem.pots.other[potIndx].bets[game.currentPlayer]||0);
+                        game.info.bets = mem.pots.other[potIndx].bets;
+                        mem.call = mem.pots.mem.match - (mem.pots.other[potIndx].bets[currentPlayer]||0);
+                        game.info.match = mem.pots.main.match;
                     }
                 }
-                if (mem.prevRaise > 0 && game.players[mem.current].money > game.info.call) game.turnOptions = "raisecall";
+                if (mem.prevRaise > 0 && game.players[mem.current].money > mem.call) game.turnOptions = "raisecall";
                 else if (mem.prevRaise > 0) game.turnOptions = "fallin";
             }
         }
@@ -1269,8 +1275,8 @@ const pokerFuncs = {
             if (mem.pots.main.max == -1){
                 mem.pots.main.match += amount;
                 mem.pots.main.bets[game.currentPlayer] = mem.pots.main.match;
-                mem.pots.main.sum += game.info.call + amount;
-                game.players[mem.current].money -= amount + game.info.call;
+                mem.pots.main.sum += mem.call + amount;
+                game.players[mem.current].money -= amount + mem.call;
 
                 if (game.players[mem.current].money == 0){
                     mem.faiTT.push(game.currentPlayer);
@@ -1287,8 +1293,8 @@ const pokerFuncs = {
                     if (!mem.pots.other[i].exclude.includes(game.currentPlayer)){
                         mem.pots.other[i].match += amount;
                         mem.pots.other[i].bets[game.currentPlayer] = mem.pots.other[i].match ;
-                        mem.pots.other[i].main.sum += game.info.call + amount;
-                        game.players[mem.current].money -= amount + game.info.call;
+                        mem.pots.other[i].main.sum += mem.call + amount;
+                        game.players[mem.current].money -= amount + mem.call;
                     }
                 }
             }
@@ -1297,9 +1303,10 @@ const pokerFuncs = {
         "ca" : (game) => {
             let mem = pokerMem[game.id];
             if (mem.pots.main.max == -1){
+                console.log(mem.call);
                 mem.pots.main.bets[game.currentPlayer] = mem.pots.main.match;
-                mem.pots.main.sum += game.info.call;
-                game.players[mem.current].money -= game.info.call;
+                mem.pots.main.sum += mem.call;
+                game.players[mem.current].money -= mem.call;
             } else {
                 let potIndx = -1;
                 for (let i = 0; i < mem.pots.other.length; i++){
@@ -1310,8 +1317,8 @@ const pokerFuncs = {
                 }
                 if (potIndx != -1){
                     mem.pots.other[i].bets[game.currentPlayer] = mem.pots.other[i].match;
-                    mem.pots.other[i].sum += game.info.call;
-                    game.player[mem.current].money -= game.info.call;
+                    mem.pots.other[i].sum += mem.pots.other.match - mem.pots.other[i].bets[game.currentPlayer];
+                    game.player[mem.current].money -= mem.pot.other.match - mem.pos.other[i].bets[game.currentPlayer];
                 }
             }
             pokerFuncs.next(game);

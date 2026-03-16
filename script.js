@@ -1639,10 +1639,26 @@ function pokerScene(sock){
 		for (let i = 0; i < game.info.pots.length; i++){
 			let pot = game.info.pots[i];
 			let vOff = 128 + i * 10;
-			let t = ("               " + pot[0]).slice(-15) + " || Value : " + ("$" + pot[1] + "       ").slice(0,7) + " || Bet per player : $" + (pot[2] + "        ").slice(0,5);
+			let t = ("               " + pot[0]).slice(-15) + " || Value : " + ("$" + pot[1] + "       ").slice(0,7) + " || To Call : $" + (game.info.match - (game.info.bets[playerName]||0) + "        ").slice(0,5);
 			ctx.fillText(t, 137, vOff);
 		}
 	}
+
+	let cardsPrev = [0,0];
+	function soundloop(){
+		let temp = [0,0];
+        for (let i = 0; i < game.players.length; i++){
+            for (let j = 0; j < game.players[i].cards.length; j++){
+				temp[0] += game.players[i].cards[j].length;
+            }
+		} temp[0] += game.dealer.cards.length;
+		for (let i = 0; i < game.dealer.cards.length; i++){
+			temp[1] += game.dealer.cards[i].faceDown;
+		}
+
+		if (temp[0] > cardsPrev[0] || temp[1] != cardsPrev[1]) audio.clips.card.play();
+		cardsPrev = [...temp];
+    }
 
 	let keys = {
 		"e" : () => {
@@ -1703,6 +1719,7 @@ function pokerScene(sock){
 	window.addEventListener("mousedown", mousedown);
 	window.addEventListener("mouseup", mouseup);
 	let mlId = setInterval(mainloop, 25);
+	let slId = setInterval(soundloop, 25);
 
 	function unbindLocal(){
 		audio.clips.jazz.pause(0);
@@ -1712,6 +1729,7 @@ function pokerScene(sock){
 		window.removeEventListener("mousedown", mousedown);
 		window.removeEventListener("mouseup", mouseup);
 		clearInterval(mlId);
+		clearInterval(slId);
 	}
 
 	audio.clips.jazz.play();
