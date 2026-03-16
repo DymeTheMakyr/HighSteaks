@@ -975,6 +975,7 @@ const pokerFuncs = {
             mem.pots.main.sum = 30;
             game.players[mem.current].money -= 10;
             game.players[(mem.current+1)%game.players.length].money -= 20;
+            mem.pots.main.bets = {};
             mem.pots.main.bets[game.players[mem.current].pName] = 10;
             mem.pots.main.bets[game.players[(mem.current+1)%game.players.length].pName] = 20;
             mem.pots.main.match = 20
@@ -1055,6 +1056,7 @@ const pokerFuncs = {
                     game.info.bets = mem.pots.main.bets;
                     mem.call = mem.pots.main.match - (mem.pots.main.bets[game.currentPlayer]||0);
                     game.info.match = mem.pots.main.match;
+                    console.log(mem.call);
                     console.log(game.currentPlayer, " calls ", game.info.bets);
                     console.log(mem.pots.main.bets);
                     console.log(mem);
@@ -1154,6 +1156,7 @@ const pokerFuncs = {
         }
 
         for (let i = 0; i < game.players.length; i++){
+            if (game.players[i].cards[0].length == 0) continue;
             let hand = pokerFuncs.checkHand(game, i);
             game.players[i].cards[0][0].faceDown = 0;
             game.players[i].cards[0][1].faceDown = 0;
@@ -1368,7 +1371,7 @@ const pokerFuncs = {
     "disconnect" : (game, lostInd) => {
         mem = pokerMem[game.id];
         if (lostInd == mem.current && game.players.length > 0) game.currentPlayer = ((game.players[mem.current]??{}).pName)??"";
-        else if (lostInd > mem.current) mem.current -= 1;
+        else if (lostInd < mem.current && game.players.length > 0) mem.current -= 1;
         if (game.players.length == 0) delete pokerMem[game.id];
     }
 };
