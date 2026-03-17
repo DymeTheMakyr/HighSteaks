@@ -261,6 +261,7 @@ class background {
 		background.imgs.generic = loadImg("./background/generic.png");
 		background.imgs.roulette = loadImg("./background/roulette.png");
 		background.imgs.rtable = loadImg("./background/rtable.png");
+		background.imgs.shop = loadImg("./background/shop.png");
 	}
 }
 
@@ -295,6 +296,22 @@ class audio {
 		audio.clips.card = loadAudio("./audio/card.wav");
 		audio.clips.jazz = loadAudio("./audio/jazz.mp3");
 		audio.clips.jazz.loop = true;
+	}
+}
+
+class upgrades {
+	static lu = ["dm", "fr", "ma", "rs", "ra",
+				"sv", "mi", "sh"];
+
+	static faces = [];
+	static back;
+
+	static {
+		upgrades.back = loadImg("./upgrades/back.png");
+
+		for (let = 0; i < lu.length; i++){
+			upgrades.faces.push(loadImg(`./upgrades/${lu[i]}.png`));
+		}
 	}
 }
 
@@ -364,6 +381,7 @@ function lobbyScene(sock) {
 	let drawQueue = [];
 	let currentInteractable = undefined;
 	let votes;
+	let shop = false;
 	let vel = {
 		"x" : 0,
 		"y" : 0
@@ -378,7 +396,7 @@ function lobbyScene(sock) {
 			} sock.send("a\x1Fsl");
 		},
 		"ba" : () => {if (localDrunkFactor >= drunkFactor) {drunkFactor += 1; audio.clips.bar.play(); soberTimer();}},
-		"sh" : () => {sock.send(`v\x1F${roomNo}\x1F${playerName}\x1F0`);audio.clips.shop.play();}
+		"sh" : () => {sock.send(`v\x1F${roomNo}\x1F${playerName}\x1F0`);audio.clips.shop.play(); shop = !shop;}
 	}
 
 	function interactFunc(key){
@@ -404,6 +422,39 @@ function lobbyScene(sock) {
 		}
 	}
 
+	const upgrades = {
+		"W" : {
+			"N" : {
+				"dm" : ["dm","Mootilation", "It all over the fields", "+10% damage"],
+				"fr" : ["fr","Ruminate","More bullet per bullet? Im in.", "+10% fire rate"],
+				"ma" : ["ma", "Bucket Full", "Never run dry", "+5 magazine size"],
+				"rs" : ["rs", "Opposable Hooves", "How does that even work?", "+10% reload speed"],
+				"ra" : ["ra", "Open Pastures", "Is that Bessie over there?", "+20% range"]
+			},
+			"S" : {
+				"sv" : ["sv", "Sous Vide", "Like a 100°C bath", "+3s burn time"],
+				"mi" : ["mi", "Minced", "It really gets everywhere...", "+2 projectiles"],
+				"sh" : ["sh", "Milkshake", "Ice cream from a different angle", "+1 bounces"],
+				"oc" : ["oc", "Overcooked", "Well done? More like well gone.", "Bullets explode for 30% damage"],
+				"dc" : ["dc", "Debt Collector", "I'll be taking that!", "+10% lifesteal"]
+			}
+		},
+		"P" : {
+			"N" : {
+				"de" : ["de", "Thick Hide", "You'll need more than a steak knife", "-5 incoming damage (Min. 1)"],
+				"he" : ["he", "Well Done", "Like chewing rubber", "+25 health"],
+				"mo" : ["mo", "Rendered Fat", "Slippery.", "+10% movement speed"],
+				"do" : ["do", "Matador", "Who's dancing now?", "+2 dashes"]
+			},
+			"S" : {
+				"ls" : ["ls", "Last Stand", "Not Today.", "A hit that would kill you is negated +1 times"],
+				"br" : ["br", "Bull Rush", "It's just one after another", "Damaging a player increases movement speed by 2%"],
+				"ct" : ["ct", "Cow Tipping", "Timber!!!", "Dying will deal +100% damage to nearby players. If this causes a draw, you win"],
+				"ld" : ["ld", "Loaded Dice", "The house always wins", "+3% chance to negate damage"]
+			}
+		}
+	};
+
 	//Movement variables
 	const baseSpeed = 4
 	const sprintFact = 0.5
@@ -412,9 +463,7 @@ function lobbyScene(sock) {
 
 	let pixelLength = 0;
 
-	function mainloop() {
-		drawQueue = [];
-
+	function mainloop(){
 		if (sock == null || sock.readyState == WebSocket.CLOSED){
 			try{
 				return;
@@ -427,6 +476,12 @@ function lobbyScene(sock) {
 			changeScene(game.currentScene, sock);
 		}
 
+		if (shop == false) lobbyFunc();
+		else if (shop == true) shopFunc();
+	}
+
+	function lobbyFunc() {
+		drawQueue = [];
 		//Update Velocity
 		vel.x = baseSpeed * (keys.a ^ keys.d) * (keys.a ? -1 : 1) * (keys.shift * sprintFact + 1);
 		vel.y = baseSpeed * (keys.w ^ keys.s) * (keys.w ? -1 : 1) * (keys.shift * sprintFact + 1);
@@ -569,6 +624,11 @@ function lobbyScene(sock) {
 				}
 			}
 		}
+	}
+
+	function shopFunc(){
+		ctx.clearRect(0,0,640,360);
+		ctx.drawImage(background.imgs.shop, 0, 0);
 	}
 
 	function keydown(e) {
@@ -1071,7 +1131,6 @@ function rouletteScene(sock){
 
 	let pixelLength = 0;
 	let betAmount = 0;
-	let ready = false;
 	let runningTotal = 0;
 
 	for (let i = 0; i < game.info.bets.length; i++){
@@ -1082,7 +1141,7 @@ function rouletteScene(sock){
 	let rounds = {
 		"betting" : {
 			"clear" : new button("CLEAR ALL BETS", "black", col.rect(vec.n(40, 40), 100,48), `rgba(235,175,175,1)`, "white", () => {sock.send("a\x1Fbr\x1Fa"); runningTotal = 0;}),
-			"ready" : new button("READY", "black", col.rect(vec.n(500, 40), 100, 48), `rgba(175, 235, 175, 1)`, "white", () => {ready = true; sock.send("a\x1Fre");}),
+			"ready" : new button("READY", "black", col.rect(vec.n(500, 40), 100, 48), `rgba(175, 235, 175, 1)`, "white", () => {sock.send("a\x1Fre");}),
 			"p1" : new button("+1", "black", col.rect(vec.n(160, 35), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money - runningTotal, betAmount+1);}),
 			"p10" : new button("+10", "black", col.rect(vec.n(160, 47), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money - runningTotal, betAmount+10);}),
 			"p100" : new button("+100", "black", col.rect(vec.n(160, 59), 32, 10), "rgba(175,235,175,1)", "white", () => {let playerInd = game.players.findIndex(x => x.pName == playerName); betAmount = Math.min(game.players[playerInd].money - runningTotal, betAmount+100);}),
@@ -1146,7 +1205,7 @@ function rouletteScene(sock){
 			changeScene(game.currentScene, sock);
 		}
 
-		rounds.betting.ready.text = `Ready (${game.ready}/${game.players.length})`;
+		rounds.betting.ready.text = `Ready (${game.info.ready.length}/${game.players.length})`;
 
 		let pOffset = 576 / game.players.length;
 		ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
@@ -1190,13 +1249,12 @@ function rouletteScene(sock){
 
 		if (Object.keys(buttons).toString() != Object.keys(rounds[game.turnOptions]??{})){
 			if (game.turnOptions == "betting") {
-				ready = false;
 				runningTotal = 0;
 			}
 			buttons = rounds[game.turnOptions]??{};
 		}
 
-		if (game.turnOptions == "betting" && ready == false){
+		if (game.turnOptions == "betting" && !game.info.ready.includes(playerName)){
 			for (let i in buttons){
 				let c = buttons[i].col;
 				ctx.fillStyle = buttons[i].pressed?buttons[i].colourPressed:buttons[i].colour;
@@ -1211,11 +1269,11 @@ function rouletteScene(sock){
 			ctx.font = "42px pixel"
 			pixelLength = ctx.measureText(`$${betAmount}`).width;
 			ctx.fillText(`$${betAmount}`, 320 - 0.5*(pixelLength), 82);
-		} else if (game.turnOptions == "betting" && ready == true) {
+		} else if (game.turnOptions == "betting" && game.info.ready.includes(playerName)) {
 			ctx.fillStyle = "white";
 			ctx.font = "42px pixel";
-			pixelLength = ctx.measureText(`(${game.ready}/${game.players.length}) ready`).width;
-			ctx.fillText(`(${game.ready}/${game.players.length}) ready`, 320 - 0.5*(pixelLength), 82);
+			pixelLength = ctx.measureText(`(${game.info.ready.length}/${game.players.length}) ready`).width;
+			ctx.fillText(`(${game.info.ready.length}/${game.players.length}) ready`, 320 - 0.5*(pixelLength), 82);
 		}
 
 		let betCo = 0;
@@ -1258,7 +1316,7 @@ function rouletteScene(sock){
 			}
 		}
 
-		if (game.turnOptions == "betting" && ready == false){
+		if (game.turnOptions == "betting" && !game.info.ready.includes(playerName)){
 			let tX = mX-86;
 			let tY = mY-112;
 			tX = Math.round(tX/18)*0.5;
@@ -1362,7 +1420,7 @@ function rouletteScene(sock){
 					return;
 				}
 
-				if (game.turnOptions != "betting" || ready) return;
+				if (game.turnOptions != "betting" || game.info.ready.includes(playerName)) return;
 
 				let tX = mX-86;
 				let tY = mY-112;

@@ -66,13 +66,13 @@ class gameObj{
 	remRounds = 0;
 	maxRounds = 0;
 	votes = {};
-	ready = 0;
 	info = {
 		"bets" : [],
 		"pots" : [],
 		"minRaise" : 0,
         "call" : 0,
-        "folded" : []
+        "folded" : [],
+        "ready" : []
 	};
 	players = [];
 	dealer = {"cards":[]};
@@ -700,6 +700,7 @@ const rouletteFuncs = {
 		sendall(game.id, `a\x1Frl\x1F${rlWheelLookup[val]}`);
 		await new Promise(resolve => setTimeout(resolve, 12000));
 		rouletteFuncs.cashout(game, val);
+        game.info.ready = [];
 	},
 	"cashout" : (game, val) => {
 		let payouts = {}
@@ -741,7 +742,6 @@ const rouletteFuncs = {
 		}
 
 		game.info.bets = [];
-		game.ready = 0;
 		if (game.remRounds < game.maxRounds){
 			game.turnOptions = "betting";
 			game.remRounds += 1;
@@ -1467,7 +1467,7 @@ server.on('connection', (socket) => {
                         blackjackMemory[game.id] = {...blackjackMemoryTemplate};
 						blackjackFuncs.start(game);
 					} else if (args[3] == "rl") {
-						game.ready = 0;
+                        game.info.ready = [];
 						game.remRounds = 1;
 						game.votes = {};
 						game.turnOptions = "betting";
@@ -1523,9 +1523,9 @@ server.on('connection', (socket) => {
 							}
 						}
 					} else if (args[1] == "re"){
-						console.log("ready", id);
-						game.ready += 1;
-						if (game.ready == game.players.length){
+                        console.log("ready", id);
+                        game.info.ready.push(id.slice(0,-4));
+                        if (game.info.ready.length == game.players.length){
 							rouletteFuncs.spin(game);
 						}
 					}
@@ -1600,7 +1600,8 @@ server.on('connection', (socket) => {
 			}
 			gameManager.playerMem[gId][pId] = game.players[playerIndex];
 			game.players = arrPop(gameManager.games[gId].players, playerIndex);
-			game.ready -= 1;
+            let rlRId = game.info.ready.findIndex(x => x == pId);
+            if (rlRId != -1) game.info.splice(rlRId,1);
             delete game.votes[pId];
             if (game.currentScene == "poker") {
                 pokerFuncs.disconnect(game, playerIndex);
