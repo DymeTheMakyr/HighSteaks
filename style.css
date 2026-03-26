@@ -18,6 +18,24 @@
 	z-index: 5;
 	transform: ;
 }
+#onScreenText {
+	text-wrap : nowrap;
+	overflow : auto;
+	background-color : rgba(0,0,0,0.5);
+	text-color : white;
+	position : absolute;
+	right:0%;
+	width : 40%;
+	height : 100%;
+	text-align: left;
+	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none;
+	font-size: 100%;
+	padding: 2%;
+}
+#onScreenText::-webkit-scrollbar{
+	display:none;
+}
 .wheelImg {
 	background: none;
 	border: none;
@@ -26,7 +44,7 @@
 }
 canvas {
     background: black;
-    image-rendering: pixelated; 
+    image-rendering: pixelated;
 }
 body {
     background: black;
@@ -58,7 +76,7 @@ select {
 	text-align:left;
 }
 button {
-	margin:1px;	
+	margin:1px;
 	appearance:none;
 	width:12.5vw;
 	height:20px;
@@ -75,6 +93,6 @@ img {
 	background:#F9E4BC;
 	width:25vw;
 	height:25vw;
-	image-rendering: pixelated; 
+	image-rendering: pixelated;
 	border: blue 3px solid;
 }

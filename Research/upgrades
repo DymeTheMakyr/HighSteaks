@@ -27,3 +27,24 @@ Last Stand      | Last Stand          | "Not today."
 Adrenaline      | Bull Rush           | "Its just one after the other."
 Dead Man's Hand | Cow Tipping         | "Timber!!!"
 Lucky           | Loaded Dice         | "The house always wins."
+
+Name                | Quip                                    | Effect
+--------------------|-----------------------------------------|--------------------------------------------------
+Mootilation         | "It all over the fields"                | +10% damage
+Ruminate            | "More bullet per bullet? Im in."        | +10% fire rate
+Bucket Full         | "Never run dry"                         | +5 magazine size
+Opposable Hooves    | "How does that even work?"              | +10% reload speed
+Open Pastures       | "Is that Bessie over there?"            | +20% range
+Sous Vide           | "Like a 100°C bath"                     | +3s burn time
+Minced              | "It really gets everywhere..."          | +2 projectiles
+Milkshake           | "Ice cream from a different angle"      | +1 bounces
+Overcooked          | "Well done? More like well gone."       | Bullets explode for 30% damage
+Debt Collector      | "I'll be taking that!"                  | +10% lifesteal
+Thick Hide          | "You'll need more than a steak knife"   | -5 incoming damage (Min. 1)
+Well Done           | "Like chewing rubber"                   | +25 health
+Rendered Fat        | "Slippery."                             | +10% movement speed
+Matador             | "Who's dancing now?"                    | +2 dashes
+Last Stand          | "Not Today."                            | A hit that would kill you is negated +1 times
+Bull Rush           | "It's just one after another"           | Damaging a player increases movement speed by 2%
+Cow Tipping         | "Timber!!!"                             | Dying will deal +100% damage to nearby players. If this causes a draw, you win
+Loaded Dice         | "The house always wins"                 | +3% chance to negate damage
