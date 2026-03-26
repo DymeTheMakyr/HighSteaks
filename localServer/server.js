@@ -778,7 +778,8 @@ const rouletteFuncs = { //all functions use by the roulette game
 			game.players[i].money -= betTotals[game.players[i].pName]||0;
 		}
         game.turnOptions = "spinning"; //start spinning wheel
-        let val = Math.min(Math.round(Math.floor() * 37 - 0.00001),0); //randomly choose a number
+        let val = Math.max(Math.round(Math.random() * 37 - 0.001),0); //randomly choose a number
+        console.log("spin ", val, " @ ", rlWheelLookup[val]);
         sendall(game.id, `a\x1Frl\x1F${rlWheelLookup[val]}`); //send wheel index to all clients
         await new Promise(resolve => setTimeout(resolve, 12000)); //wait for wheel to stop spinning
         rouletteFuncs.cashout(game, val); //pay bets to all players
@@ -1464,10 +1465,11 @@ let fightFuncs = { //functions used by the fight scene
         let winVal = p.money??0 + 2000; //set how much money the player has won
         for (let i = 0; i < game.players.length; i++){ //for all players...
             if (game.players[i].pName == p.pName) { //if the player is the winner, pay them the winnings
-                game.info.win = [p.pName, 1*game.players[i].money + 2000];
+                game.info.win = [p.pName, winVal];
                 game.players.money *= 2;
                 game.players[i].money += 2000;
-            } else if (game.players[i].money < 0.3*winVal) { //if a player has less than 30% of the winnings in money, pay them 50%
+            }
+            if (game.players[i].money <= 0.3*winVal) { //if a player has less than 30% of the winnings in money, pay them 50%
                 game.players[i].money += Math.round(winVal*0.5); //of the winnings to prevent stagnation of the game
             }
         }
@@ -1531,8 +1533,8 @@ server.on('connection', (socket) => { //determines what happens when a player co
                 gameManager.sockets[args[2]].push(socket); //push this socket to the sockets list
             } else {socket.send(-1); console.log("room not made");} //if room is not availabe, return error code
         } else if (message[0] == 'j') {  //if message is "j"-prefixed, try to join a room
-            console.log(args[1] + " joining " + args[2]);
             let args = message.split("\x1F"); //split message into arguments with delimiting character
+            console.log(args[1] + " joining " + args[2]);
             game = gameManager.games[args[2]]; //try and fetch game from game manager
             if (game != null){ //if game exists
                 if (game.players.find(x => x.pName == args[1]) != null){socket.send(-2); return 0;} //send error code to client if player name is taken
@@ -1775,7 +1777,7 @@ server.on('connection', (socket) => { //determines what happens when a player co
                 }
             }
 			console.log("player left");
-            if (game.players.length == 0){ //if there are no players left, close room. 
+            if (game.players.length == 0){ //if there are no players left, close room.
 				console.log("closing room");
 				delete gameManager.games[gId];
 				clearInterval(gameManager.collisionHandlers[gId]);

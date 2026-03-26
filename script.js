@@ -8,7 +8,7 @@ sh = sw / factor[0] > sh / factor[1] ? sh : (sw / factor[0]) * factor[1];
 
 // DISABLE CONTExT MENU
 document.addEventListener("contextmenu", event => event.preventDefault());
-// DISABLE CONSOLE
+/*// DISABLE CONSOLE
 (function () {
   try {
     const originalConsole = console;
@@ -22,7 +22,7 @@ document.addEventListener("contextmenu", event => event.preventDefault());
     });
   } catch (e) {}
 })();
-
+*/
 
 
 //create essential HTML elements
@@ -974,10 +974,12 @@ function selectionScene(sock){ //function that contains selection scene
 				break;
 			case 'a': //if action, and its roulette, spin the roulette wheel
 				if (resp[1] == "rl"){
+					console.log(resp);
 					if (parseInt(resp[2])+1){ //check if the 3rd argument is a positive number
 						(async () => {
 							//create div and img elements to hold roulette wheel
 							//structure is div => {img, img}
+							console.log("start spin");
 							let wheelCont = document.createElement("div");
 							wheelCont.id = "wheelCont";
 							let wheel = document.createElement("img");
