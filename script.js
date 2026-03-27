@@ -313,7 +313,7 @@ class upgrades {
 		[
 				["e", "Last Stand", "Not Today.", "+1 lethal attacks negated"],
 	/*spec player*/ ["f", "Bull Rush", "It's just one after another", "+2% speed on damage dealt"],
-				["g", "Cow Tipping", "Timber!!!", "+100% damage to on death."],
+				["g", "Cow Tipping", "Timber!!!", "+500% damage to on death."],
 				["h", "Loaded Dice", "The house always wins", "+5% hyperbolic chance to negate damage"]
 		]
 
@@ -652,7 +652,7 @@ function lobbyScene(sock) {
 		} else {
 			mflag = 1;
 		}
-
+		if (mflag == 0) audio.clips.shop.play();
 		if (mflag == 1){ //if mflag is raised, alert player
 			alert("Insufficient Money");
 			pressedButton.pressed = 0;
@@ -2074,8 +2074,8 @@ function fightScene(sock){ //function that contains poker scene
 		}
 
 		//Update Velocity
-		vel.x = ((1 + 0.02*br)**(game.players[pIndx].hits)) * baseSpeed * (keys.a ^ keys.d) * (keys.a ? -1 : 1) * (keys.shift * sprintFact + 1);
-		vel.y = ((1 + 0.02*br)**(game.players[pIndx].hits)) * baseSpeed * (keys.w ^ keys.s) * (keys.w ? -1 : 1) * (keys.shift * sprintFact + 1);
+		vel.x = (1 + (0.02*br*game.players[pIndx].hits)) * baseSpeed * (keys.a ^ keys.d) * (keys.a ? -1 : 1) * (keys.shift * sprintFact + 1);
+		vel.y = (1 + (0.02*br*game.players[pIndx].hits)) * baseSpeed * (keys.w ^ keys.s) * (keys.w ? -1 : 1) * (keys.shift * sprintFact + 1);
 		if (vel.x != 0) flip = 1 * (vel.x < 0); //assign flip if horizontal velocity is negative
 		//Calculate unit vector of  mouse from player center
 		let dir = vec.n(mx - game.players[pIndx].col.origin.x - 8, my - game.players[pIndx].col.origin.y - 15).normal();
@@ -2231,7 +2231,7 @@ function fightScene(sock){ //function that contains poker scene
 					while (game.players[pIndx].ammo[0] > 0 && mouse[0].v == 1 && shootable == 1 && reloading == 0){ //loop whilst mouse button is held and not reloading
 						shootable = 0; //set shootable to zero so players can't circumvent shoot speed
 						sock.send("a\x1Fs"); //send shoot request to server
-						await new Promise(r => setTimeout(r, 3000/(5*(gunStats.ra)))); //set cooldown speed based off of player fire rate
+						await new Promise(r => setTimeout(r, 500/gunStats.ra)); //set cooldown speed based off of player fire rate
 						shootable = 1; //set shootable to one before looping
 					}
 				})();

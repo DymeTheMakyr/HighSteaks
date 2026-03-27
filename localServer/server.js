@@ -317,6 +317,7 @@ function damage(p, d){
     if (p.upgrades.includes("h") && Math.random() < Math.min((1-1/(1+0.05*(p.upgrades.split("h").length-1))), 0.85)){
         return 0;
     }
+    d = Math.max(1, d - 5*(p.upgrades.split("a").length - 1));
     if (p.health[0] <= d && p.upgrades.includes("e")){
         let t = p.upgrades.split(".");
         let lsId = t.indexOf("e");
@@ -324,7 +325,7 @@ function damage(p, d){
         p.upgrades = t.join(".") + ".";
         return 0;
     }
-    p.health[0] = p.health[0] - Math.max(1, d - 5*(p.upgrades.split("a").length - 1));
+    p.health[0] = p.health[0] - d;
     p.health[0] = Math.round(Math.max(p.health[0], -0));
     if (p.health[0] == 0) return 2;
     return 1;
@@ -334,18 +335,17 @@ function damage(p, d){
 //factors in cow tipping upgrade
 function kill(p, g){
     let ind = g.info.ready.findIndex(x => x == p.pName);
-
+    console.log(p.pName, "has been killed");
     if (ind > -1){
         if (p.upgrades.includes("g")){
             g.projectiles.push(new projectile( //c, s, d, l, o, b, is
                 col.circle(vec.n(p.col.origin.x+8, p.col.origin.y+15), 40 + 10 * (p.upgrades.split("g").length - 1)),
-                vec.n(0,0), 10*(1.1**(p.upgrades.split("0").length-1))*(p.upgrades.split("g").length-1),
+                vec.n(0,0), 50*(1.1**(p.upgrades.split("0").length-1))*(p.upgrades.split("g").length-1),
                 1, p.pName, 0, false
             ));
-
             g.projectiles.at(-1).ls = true;
         }
-        g.info.ready.splice(ind, ind+1);
+            g.info.ready.splice(ind, 1);
     }
 }
 
@@ -403,6 +403,7 @@ function projectileHandler(game){
                                                 await new Promise(r => setTimeout(r, 500));
                                                 if (damage(t, 2 * 0.5**(p.owner == t.pName)) == 2 && game.info.ready.includes(t.pName)) {
                                                     kill(t, game);
+                                                    return;
                                                 }
                                             }
                                         } catch (e){
@@ -587,8 +588,17 @@ const blackjackFuncs = {
 				blackjackFuncs.next(game);
 			}
             else { //set turn options and currentplayer
-				game.turnOptions = handCheck.turn;
-				game.currentPlayer = game.players[validPlayerIndexes[0]].pName ?? "none";
+                try {
+                    game.turnOptions = handCheck.turn;
+                    game.currentPlayer = game.players[validPlayerIndexes[0]].pName ?? "none";
+                } catch {
+                    game.turnOptions = "none";
+    				game.currentPlayer = "\x1F";
+    				game.currentScene = "lobby";
+    				game.colliders = sceneColliders["lobby"];
+    				game.interactables = sceneInteractables["lobby"];
+    				blackjackFuncs.clear(game, true);
+                }
 			}
 
 		} catch(e) {
@@ -741,16 +751,15 @@ const blackjackFuncs = {
 }
 
 //converts value to indexed rotation from 0-36
-const rlWheelLookup = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
-
+const rlWheelLookup = [0, 23, 6, 35, 4, 19, 10, 31, 16, 27, 18, 14, 33, 12, 25, 2, 21, 8, 29, 3, 24, 5, 28, 17, 20, 7, 36, 11, 32, 30, 15, 26, 1, 22, 9, 34, 13]
 const rlValues = { //translates asystematic roulette values into readable values
 	"r" : [
         [ 3, 6, 9,12,15,18,21,24,27,30,33,36], //1st row
         [ 2, 5, 8,11,14,17,20,23,26,29,32,35], //2nd row
         [ 1, 4, 7,10,13,16,19,22,25,28,31,34]  //3rd row
 	],
-    "re" : [1,3,5,7,9,12,14,16,18,19,21,23,25,27,28,30,32,34,36], //red number
-    "bl" : [2,4,6,8,10,11,13,15,17,19,20,22,24,26,29,31,33,35]    //black numbers
+    "re" : [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36], //red number
+    "bl" : [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35]    //black numbers
 	};
 
 const rlSpecialLookup = {
@@ -778,7 +787,7 @@ const rouletteFuncs = { //all functions use by the roulette game
 			game.players[i].money -= betTotals[game.players[i].pName]||0;
 		}
         game.turnOptions = "spinning"; //start spinning wheel
-        let val = Math.max(Math.round(Math.random() * 37 - 0.001),0); //randomly choose a number
+        let val = Math.max(Math.round(Math.random() * 36 - 1),0); //randomly choose a number
         console.log("spin ", val, " @ ", rlWheelLookup[val]);
         sendall(game.id, `a\x1Frl\x1F${rlWheelLookup[val]}`); //send wheel index to all clients
         await new Promise(resolve => setTimeout(resolve, 12000)); //wait for wheel to stop spinning
@@ -825,7 +834,7 @@ const rouletteFuncs = { //all functions use by the roulette game
 		}
 
         game.info.bets = []; //clear bets placed
-        if (game.remRounds < game.maxRounds){ //if not last round, increment round count and play again
+        if (game.remRounds < game.maxRounds && (game.players.map(x => x.money).filter(x => x > 0).length > 0)){ //if not last round, increment round count and play again
 			game.turnOptions = "betting";
 			game.remRounds += 1;
         } else { //if last round, send to lobby
@@ -1301,6 +1310,10 @@ const pokerFuncs = { //all functions used by the poker function
                 game.info.win.push([winners.other[j][i][0], Math.round(mem.pots.other[j].sum/winners.other[j].length)||0]);
             }
         }
+
+        for (let i = 0; i < game.players.length; i++){
+            game.players[i].money = Math.max(0, game.players[i].money);
+        }
     },
     "turns" : {  //functions representing different actions players can make on theit turn
         "be" : (game, amount) => { //bet, place a new bet, and add to all in if the player has bet all their money
@@ -1462,15 +1475,15 @@ let fightFuncs = { //functions used by the fight scene
         clearInterval(fightMem[game.id].clId); //clear check win interval
 
         let p = game.players.find(x => x.pName == game.info.win)??{}; //get player object of winner
-        let winVal = p.money??0 + 2000; //set how much money the player has won
+        let winVal = (p.money??0) + 2000; //set how much money the player has won
         for (let i = 0; i < game.players.length; i++){ //for all players...
             if (game.players[i].pName == p.pName) { //if the player is the winner, pay them the winnings
                 game.info.win = [p.pName, winVal];
                 game.players.money *= 2;
                 game.players[i].money += 2000;
             }
-            if (game.players[i].money <= 0.3*winVal) { //if a player has less than 30% of the winnings in money, pay them 50%
-                game.players[i].money += Math.round(winVal*0.5); //of the winnings to prevent stagnation of the game
+            if (game.players[i].money <= 0.3*(winVal+2000)) { //if a player has less than 30% of the winnings in money, pay them 50%
+                game.players[i].money += Math.round(winVal*0.5 + 1000); //of the winnings to prevent stagnation of the game
             }
         }
 
@@ -1592,6 +1605,7 @@ server.on('connection', (socket) => { //determines what happens when a player co
     					blackjackFuncs.start(game);
                     } else if (args[1] == "rl") { //start roulette
                         game.info.ready = [];
+                        game.info.bets = [];
     					game.remRounds = 1;
     					game.votes = {};
     					game.turnOptions = "betting";
@@ -1667,8 +1681,10 @@ server.on('connection', (socket) => { //determines what happens when a player co
                         p.money = Math.round((((game.players.map(x => x.money).sort((a,b) => a-b).filter(x => x != 0)[0]) * 0.75)||250) * Math.random());
 					}
                 } else if (args[1] == "buy"){ //if player is trying to buy an item
-                    p.money = p.money - parseInt(args[2])||0; //subtract money from player
-                    p.upgrades += args[3]||"";                //add upgrade to player
+                    if (p.money > (parseInt(args[2])||0)){
+                        p.money = p.money - parseInt(args[2])||0; //subtract money from player
+                        p.upgrades += args[3]||""; //add upgrade to player
+                    }
                 }
 			}
 
@@ -1688,7 +1704,7 @@ server.on('connection', (socket) => { //determines what happens when a player co
 								}
 							}
 						}
-                    } else if (args[1] == "re"){ //if player is submitting ready message, lock bets
+                    } else if (args[1] == "re" && !game.info.ready.includes(p.pName)){ //if player is submitting ready message, lock bets
                         console.log("ready", id);
                         game.info.ready.push(id.slice(0,-4)); //add them to gamestate ready
                         if (game.info.ready.length == game.players.length){
@@ -1763,7 +1779,7 @@ server.on('connection', (socket) => { //determines what happens when a player co
                 }
 			}
             gameManager.playerMem[gId][pId] = game.players[playerIndex]; //send player to memory
-            game.players = gameManager.games[gId].players.splice(playerIndex, playerIndex+1); //remove player from game state
+            gameManager.games[gId].players.splice(playerIndex, playerIndex+1); //remove player from game state
             let rlRId = game.info.ready.findIndex(x => x == pId);
             if (rlRId != -1) game.info.ready.splice(rlRId,1); //remove player from gamestate ready
             delete game.votes[pId]; //clear votes
@@ -1776,7 +1792,6 @@ server.on('connection', (socket) => { //determines what happens when a player co
                     game.info.ready.splice(ind,ind+1);
                 }
             }
-			console.log("player left");
             if (game.players.length == 0){ //if there are no players left, close room.
 				console.log("closing room");
 				delete gameManager.games[gId];
@@ -1789,7 +1804,7 @@ server.on('connection', (socket) => { //determines what happens when a player co
                 delete blackjackMemory[gId];
                 delete pokerMem[gId];
                 delete fightMem[gId];
-			}
+            }
 		}
 	});
 });
