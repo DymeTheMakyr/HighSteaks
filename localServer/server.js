@@ -1454,7 +1454,10 @@ const pokerFuncs = { //all functions used by the poker function
     },
     "disconnect" : (game, lostInd) => { //what the game should do if a player discomnects during poker
         mem = pokerMem[game.id];
-        if (lostInd == mem.current && game.players.length > 0) game.currentPlayer = ((game.players[mem.current]??{}).pName)??"";
+        if (lostInd == mem.current && game.players.length > 0) {
+            game.currentPlayer = ((game.players[mem.current]??game.players[0]).pName)??"";
+            if (mem.current == game.players.length) mem.current = 0;
+        }
         else if (lostInd < mem.current && game.players.length > 0) mem.current -= 1;
         if (game.players.length == 0) delete pokerMem[game.id];
     }
@@ -1779,7 +1782,7 @@ server.on('connection', (socket) => { //determines what happens when a player co
                 }
 			}
             gameManager.playerMem[gId][pId] = game.players[playerIndex]; //send player to memory
-            gameManager.games[gId].players.splice(playerIndex, playerIndex+1); //remove player from game state
+            gameManager.games[gId].players.splice(playerIndex, 1); //remove player from game state
             let rlRId = game.info.ready.findIndex(x => x == pId);
             if (rlRId != -1) game.info.ready.splice(rlRId,1); //remove player from gamestate ready
             delete game.votes[pId]; //clear votes
@@ -1789,7 +1792,7 @@ server.on('connection', (socket) => { //determines what happens when a player co
             if (game.currentScene == "fight") { //handle disconnect if in fight
                 let ind = game.info.ready.indexOf(pId);
                 if (ind > -1){
-                    game.info.ready.splice(ind,ind+1);
+                    game.info.ready.splice(ind,1);
                 }
             }
             if (game.players.length == 0){ //if there are no players left, close room.
