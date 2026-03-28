@@ -1578,7 +1578,7 @@ server.on('connection', (socket) => { //determines what happens when a player co
                     tempPlayer.bet = 0; //clear player bet
                     game.players.push(tempPlayer); //add player to game
                     delete gameManager.playerMem[args[2]][args[1]]; //remove player from memory
-                } else game.players.push(new player({}, args[3], 100, 200, args[1])); //if not in memory, create new player
+                } else game.players.push(new player({}, args[3], 100, 1000, args[1])); //if not in memory, create new player
                 game.votes[args[1]] = 0;
                 socket.send("r\x1F" + JSON.stringify(game)); //return game state
                 riId = setInterval(refreshIndex,100);       //assign refresh index interval
