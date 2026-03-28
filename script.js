@@ -1,4 +1,4 @@
-//(() => {//init display variables
+(() => {//init display variables
 let sw = window.innerWidth - 1;
 let sh = window.innerHeight - 1;
 let factor = [16, 9];
@@ -629,7 +629,6 @@ function lobbyScene(sock) {
 	}
 
 	function purchase(item){ //function to purchas an upgrade from the shop
-		console.log(item);
 		let m = game.players.find(x => x.pName == playerName).money; //get money from player
 		let mflag = 0; //flag to see if the item is too expepensive
 		if (currItem.slice(-2) == "re"){ //check if the item is a restock
@@ -640,7 +639,6 @@ function lobbyScene(sock) {
 				restockCount += 1;
 				restockPrice = Math.round(basePrice * Math.pow(1.2, restockCount));
 				basePrice = Math.round(basePrice*1.1);
-				console.log(restockPrice);
 			} else {
 				mflag = 1;
 			}
@@ -670,7 +668,6 @@ function lobbyScene(sock) {
 			ugDisplay.style.height = canv.style.height;
 			ugDisplay.style.fontFamily = "pixel";
 
-			console.log(ugt);
 			for (let i = 0; i < ugt.length-1; i++){ //for all upgrades, add upgrade name and upgrade effect to ft
 				let id = ugt[i];
 				if (id.charCodeAt(0) > 57) id = id.charCodeAt(0) - 87;
@@ -684,9 +681,6 @@ function lobbyScene(sock) {
 				} else if (id < 18){
 					ug = upgrades.all[3][id-14];
 				}
-				console.log(id, ug);
-
-				console.log(ug[1]);
 				ft += ug[1] + "\n" + ug[3] + "\n\n";
 			}
 
@@ -974,12 +968,10 @@ function selectionScene(sock){ //function that contains selection scene
 				break;
 			case 'a': //if action, and its roulette, spin the roulette wheel
 				if (resp[1] == "rl"){
-					console.log(resp);
 					if (parseInt(resp[2])+1){ //check if the 3rd argument is a positive number
 						(async () => {
 							//create div and img elements to hold roulette wheel
 							//structure is div => {img, img}
-							console.log("start spin");
 							let wheelCont = document.createElement("div");
 							wheelCont.id = "wheelCont";
 							let wheel = document.createElement("img");
@@ -1846,7 +1838,6 @@ function pokerScene(sock){ //function that contains the poker scene
 		if (betAmount > game.players[pIndx].money) betAmount = game.players[pIndx].money;
 
 		if (Object.keys(buttons)[0] != Object.keys(rounds[game.turnOptions])[0]){ //check if the buttons are correct, if not, correct them
-			console.log("chage");
 			buttons = {...rounds[game.turnOptions], ...mButtons};
 		}
 
@@ -2309,4 +2300,4 @@ function fightScene(sock){ //function that contains poker scene
 	return unloadLocal; //return unload function so changeScene can access it
 }
 scene.fight = fightScene; //add fight scene to scene object
-//})(); //encapsulated to prevent client editing
+})(); //encapsulated to prevent client editing

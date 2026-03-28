@@ -336,7 +336,6 @@ function damage(p, d){
 //factors in cow tipping upgrade
 function kill(p, g){
     let ind = g.info.ready.findIndex(x => x == p.pName);
-    console.log(p.pName, "has been killed");
     if (ind > -1){
         if (p.upgrades.includes("g")){
             g.projectiles.push(new projectile( //c, s, d, l, o, b, is
@@ -509,7 +508,6 @@ const blackjackFuncs = {
 		return [cards, divider];
 	},
     "checkHand" : (p, checkBJ) => { //checks what a player's turn options are. returns if a blackjack is present
-		console.log("checking...");
         let result = {"turn" : "bjturn"};
 		let blackjack = false;
 		let mem = blackjackMemoryTemplate;
@@ -522,10 +520,7 @@ const blackjackFuncs = {
 				if (hand[i].value == 12) sumHand += 1;
 				else sumHand += mem.valueLookup[hand[i].value];
 			}
-			console.log(hand);
-			console.log(sumHand);
-            if (sumHand > 8 && sumHand < 12) result.turn += "double"; //check if hand sum falls in range for double
-			console.log(hand.length);
+			if (sumHand > 8 && sumHand < 12) result.turn += "double"; //check if hand sum falls in range for double
             if (mem.valueLookup[hand[0].value] == mem.valueLookup[hand[1].value] && hand.length == 2) result.turn += "split"; //check if start cards are same
 		}
 		return result;
@@ -589,7 +584,6 @@ const blackjackFuncs = {
 				game.dealer.cards.push(tcard);
 			}
             let handCheck = blackjackFuncs.checkHand(game.players[0], true); //get turn options and blackjack
-			console.log(handCheck);
             if (handCheck.bj) { //if blackjack, skip to next player/dealer
 				game.currentPlayer = game.players[validPlayerIndexes[0]].pName ?? "none";
 				blackjackFuncs.next(game);
@@ -613,7 +607,6 @@ const blackjackFuncs = {
 		}
 	},
     "next": async function(game){ //gets next player
-		console.log("NEXT");
 		let mem = blackjackMemory[game.id];
 		try{
             let playerIndex = game.players.findIndex((x) => {return x.pName == game.currentPlayer}); //get player index
@@ -801,7 +794,6 @@ const rouletteFuncs = { //all functions use by the roulette game
 		}
         game.turnOptions = "spinning"; //start spinning wheel
         let val = Math.max(Math.round(Math.random() * 36 - 1),0); //randomly choose a number
-        console.log("spin ", val, " @ ", rlWheelLookup[val]);
         sendall(game.id, `a\x1Frl\x1F${rlWheelLookup[val]}`); //send wheel index to all clients
         await new Promise(resolve => setTimeout(resolve, 12000)); //wait for wheel to stop spinning
         rouletteFuncs.cashout(game, val); //pay bets to all players
@@ -851,7 +843,6 @@ const rouletteFuncs = { //all functions use by the roulette game
 			game.turnOptions = "betting";
 			game.remRounds += 1;
         } else { //if last round, send to lobby
-			console.log("to lobby");
 			game.turnOptions = "none";
             game.currentPlayer = "\x1E";
 			game.currentScene = "lobby";
@@ -974,7 +965,6 @@ const pokerFuncs = { //all functions used by the poker function
         }
     },
     "compLikeHands" : (h1, h2) => { //check two hand of the same rank against eachother
-        console.log(h1, h2);
         switch (h1[1]){
             case "hc": //find the highest card between the two hands. If the highest card is the same, look at the next highest
                 for (let i = 0; i < 5; i++){
@@ -1107,7 +1097,6 @@ const pokerFuncs = { //all functions used by the poker function
         return;
     },
     "next" : (game, nocheck) =>  { // move on to next player and process events of previous turn
-        console.log("next");
         let mem = pokerMem[game.id];
         mem.current = (mem.current + 1)%game.players.length;
         game.currentPlayer = game.players[mem.current].pName;
@@ -1121,7 +1110,6 @@ const pokerFuncs = { //all functions used by the poker function
                 pokerFuncs.nextPhase(game);
                 return;
             } else if (game.players[mem.current].money == 0 || mem.folds.includes(game.currentPlayer) || game.players[mem.current].cards[0].length == 0) {
-                console.log(mem.lastRaise, mem.current, mem.betStart, mem.phase);
                 mem.betStart = 0; //start of betting is set to 0
                 pokerFuncs.next(game); //check if the current player is broke, folded, or doesn't have cards
             } else if (game.players[mem.current].money > 0 && !mem.folds.includes(game.currentPlayer)){ //proceed if player has money and isnt fodled
@@ -1174,18 +1162,15 @@ const pokerFuncs = { //all functions used by the poker function
                 ins.push([[mem.faiTT[i]],pot.bets[mem.faiTT[i]]]);
             }
 
-            console.log(ins);
+
             ins.sort((a,b) => a[1] - b[1]); //sort all ins by the size of in
             for (let i = 0; i < ins.length; i++) {
                 if (ins[i][1] == (ins[i+1]||[])[1]){
-                    console.log("before", ins[i]);
                     ins[i][0].push(...ins[i+1][0]);
                     ins.splice(i+1,1);
-                    console.log("after", ins[i]);
                     i--;
                 }
             }
-            console.log(ins);
             let refPot = pot; //pot to copy from
             let tempPot = {}; //temporary pot for creating a new one
             for (let i = 0; i < ins.length; i++){ //add a new pot for each all in, in ascending bet value
@@ -1194,7 +1179,6 @@ const pokerFuncs = { //all functions used by the poker function
                 tempPot.prevMatch = 0;
                 tempPot.sum = 0;
                 tempPot.max = -1;
-                console.log(ins[i][0]);
                 tempPot.exclude = [...refPot.exclude, ...ins[i][0]];
                 for (let j in refPot.bets.length){
                     if (j != ins[i][0]) {
@@ -1233,7 +1217,6 @@ const pokerFuncs = { //all functions used by the poker function
                 game.info.pots[0] = ["MAIN POT", mem.pots.main.sum, mem.pots.main.match - mem.pots.main.prevMatch];
                 for (let i = 0; i < mem.pots.other.length; i++){
                     let pot = mem.pots.other[i];
-                    console.log(pot, pot.exclude);
                     if (i+1 in game.info.pots) game.info.pots[i+1] = [pot.exclude[pot.exclude.length-1] + "'S POT", pot.sum, pot.match-pot.prevMatch];
                     else game.info.pots.push([pot.exclude[pot.exclude.length-1] + "'S POT", pot.sum, pot.match]);
                 }
@@ -1293,7 +1276,6 @@ const pokerFuncs = { //all functions used by the poker function
         }
         for (let j = 0; j < winners.other.length; j++) { //do same as main pot for each side pot, excluding excluded players
             let thands = hands.filter(x => !mem.pots.other[j].exclude.includes(x[0]));
-            console.log("\n|0|\n",hands, "\n|1|\n",thands, "\n|2|\n", mem.pots.other[j].exclude, "\n|3|\n");
             for (let i = 0; i < thands.length; i++) {
                 if (i == 0) winners.other[j].push(thands[0]);
                 else {
@@ -1316,7 +1298,6 @@ const pokerFuncs = { //all functions used by the poker function
                 }
             }
             winners.main = best;
-            console.log("main best", best);
         }
         for (let j = 0; j < winners.other.length; j++){ //do same as main for side pots
             if (winners.other[j].length > 1){
@@ -1340,7 +1321,6 @@ const pokerFuncs = { //all functions used by the poker function
             game.info.win.push([winners.main[i][0], Math.round(mem.pots.main.sum/winners.main.length)||0]);
         }
         for (let j = 0; j < winners.other.length; j++){ //do same for side pots
-            console.log(winners.other[j]);
             for (let i = 0; i < winners.other[j].length; i++){
                 game.players.find(x => x.pName == winners.other[j][i][0]).money += (Math.round(mem.pots.other[j].sum/winners.other[j].length)||0);
                 game.info.win.push([winners.other[j][i][0], Math.round(mem.pots.other[j].sum/winners.other[j].length)||0]);
@@ -1394,9 +1374,7 @@ const pokerFuncs = { //all functions used by the poker function
         },
         "ra" : (game, amount) => { //raise, increase bet, adjust related variables, and move to next player
             let mem = pokerMem[game.id];
-            console.log(mem.call, amount);
             amount = Math.min(game.players[mem.current].money - mem.call, amount);
-            console.log(mem.call, amount);
             mem.lastRaise = mem.current; //set last raise and prev raise to match this raise action
             mem.prevRaise = Math.max(mem.prevRaise, amount);
             game.info.minRaise = mem.prevRaise;
@@ -1549,7 +1527,6 @@ let fightFuncs = { //functions used by the fight scene
 }
 
 server.on('connection', (socket) => { //determines what happens when a player connects to the server
-	console.log("connected");
     let id;    //id of the socket (playerName + roomCode)
     let game;  //game state that the socket is a part of
     let playerIndex; //index of the player that is linked via this socket
@@ -1587,10 +1564,9 @@ server.on('connection', (socket) => { //determines what happens when a player co
                 riId = setInterval(refreshIndex,100); //assign refreshIndex interval
                 gameManager.sockets[args[2]] = [];  //initialise sockets list for this game
                 gameManager.sockets[args[2]].push(socket); //push this socket to the sockets list
-            } else {socket.send(-1); console.log("room not made");} //if room is not availabe, return error code
+            } else {socket.send(-1);} //if room is not availabe, return error code
         } else if (message[0] == 'j') {  //if message is "j"-prefixed, try to join a room
             let args = message.split("\x1F"); //split message into arguments with delimiting character
-            console.log(args[1] + " joining " + args[2]);
             game = gameManager.games[args[2]]; //try and fetch game from game manager
             if (game != null){ //if game exists
                 if (game.players.find(x => x.pName == args[1]) != null){socket.send(-2); return 0;} //send error code to client if player name is taken
@@ -1717,7 +1693,6 @@ server.on('connection', (socket) => { //determines what happens when a player co
                 }
             } else if (game.currentScene == "lobby"){ //if current scene is lobby
                 if (args[1] == "sl"){ //if player is trying to spin slots
-					console.log("slots!!");
                     if (p.money > 0) { //if player has money, remove up to five money
 						p.money = Math.max(0, p.money - 5);
                     } else { //else add a random amount between 0 and 75% of the poorest players money. If nobody has money, then use 250 as bounds
@@ -1748,7 +1723,6 @@ server.on('connection', (socket) => { //determines what happens when a player co
 							}
 						}
                     } else if (args[1] == "re" && !game.info.ready.includes(p.pName)){ //if player is submitting ready message, lock bets
-                        console.log("ready", id);
                         game.info.ready.push(id.slice(0,-4)); //add them to gamestate ready
                         if (game.info.ready.length == game.players.length){
                             rouletteFuncs.spin(game); //if all players are ready, spin roulette wheel
@@ -1806,9 +1780,7 @@ server.on('connection', (socket) => { //determines what happens when a player co
                     pokerFuncs.turns[args[1]](game, parseInt(args[2]||0)||0);
                 }
             }
-		} else {
-            console.log("unmatched message : " + message); //log if a message hasn't been processed by the server
-        }
+		}
 	});
 
     socket.on('close', (...args) => { //defines what happens when the a connection closes
@@ -1836,7 +1808,6 @@ server.on('connection', (socket) => { //determines what happens when a player co
                 }
             }
             if (game.players.length == 0){ //if there are no players left, close room.
-				console.log("closing room");
 				delete gameManager.games[gId];
 				clearInterval(gameManager.collisionHandlers[gId]);
                 clearInterval(gameManager.projectileHandlers[gId]);
