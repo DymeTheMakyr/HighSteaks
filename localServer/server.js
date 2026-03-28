@@ -71,7 +71,8 @@ class gameObj{ //game object class, is the game state of a game, organises all i
 		"minRaise" : 0,
         "call" : 0,
         "folded" : [],
-        "ready" : []
+        "ready" : [],
+        "win" : []
 	};
     players = []; //all the player objects, each one representing a client
     dealer = {"cards":[]}; //the dealer's information
@@ -530,21 +531,25 @@ const blackjackFuncs = {
 		return result;
 	},
     "split" : async function(game, p){ //splits players hand into two and deals new card
-		p.cards.splice(p.currentHand+1, 0, []);
-		p.cards[p.currentHand+1].push(p.cards[p.currentHand].pop());
-		let addCards = [blackjackMemory[game.id].cards.shift(), blackjackMemory[game.id].cards.shift()];
-		if (p.cards[p.currentHand][0].value == 12){
-			addCards[0].faceDown = 1;
-			addCards[1].faceDown = 1;
-		}
-		await new Promise(r => (setTimeout(r, 500)));
-		p.cards[p.currentHand].push(addCards.shift());
-		await new Promise(r => (setTimeout(r, 500)));
-		p.cards[p.currentHand+1].push(addCards.shift());
-		let handCheck = blackjackFuncs.checkHand(p, true);
-		if (p.cards[p.currentHand][0].value == 12) blackjackFuncs.next(game);
-		else if (handCheck.bj) blackjackFuncs.next(game);
-		else game.turnOptions = handCheck.turn;
+        try {
+            p.cards.splice(p.currentHand+1, 0, []);
+    		p.cards[p.currentHand+1].push(p.cards[p.currentHand].pop());
+    		let addCards = [blackjackMemory[game.id].cards.shift(), blackjackMemory[game.id].cards.shift()];
+    		if (p.cards[p.currentHand][0].value == 12){
+    			addCards[0].faceDown = 1;
+    			addCards[1].faceDown = 1;
+    		}
+    		await new Promise(r => (setTimeout(r, 500)));
+    		p.cards[p.currentHand].push(addCards.shift());
+    		await new Promise(r => (setTimeout(r, 500)));
+    		p.cards[p.currentHand+1].push(addCards.shift());
+    		let handCheck = blackjackFuncs.checkHand(p, true);
+    		if (p.cards[p.currentHand][0].value == 12) blackjackFuncs.next(game);
+    		else if (handCheck.bj) blackjackFuncs.next(game);
+    		else game.turnOptions = handCheck.turn;
+        } catch {
+            blackjackFuncs.next(game);
+        }
 	},
     "start" : (game) => { //starts a round of blackjack
 		if (game.currentScene == "blackjack") blackjackFuncs.clear(game);
@@ -574,7 +579,9 @@ const blackjackFuncs = {
             for (let j = 0; j < 2; j++){ // deal two cards to all valid players
 				for (let i = 0; i < validPlayerIndexes.length; i++){
 					await new Promise(r => setTimeout(r, 500));
-					game.players[validPlayerIndexes[i]].cards[0].push(mem.cards.shift());
+                    try {
+                        game.players[validPlayerIndexes[i]].cards[0].push(mem.cards.shift());
+                    } catch {}
 				}
 				await new Promise(r => setTimeout(r, 500));
 				let tcard = mem.cards.shift();
@@ -686,6 +693,7 @@ const blackjackFuncs = {
                         if (mem.dealerSum == 21 && game.dealer.cards.length == 2) mem.winRates[game.players[j].pName][k] = 1; //and get amount won
 						else mem.winRates[game.players[j].pName][k] = 2.5;
 					} else if (sum > 21) mem.winRates[game.players[j].pName][k] = 0;
+                    else if (mem.dealerSum == 21 && game.dealer.cards.length == 2) mem.winRates[game.players[j].pName][k] = 0;
 					else if (mem.dealerSum > 21) mem.winRates[game.players[j].pName][k] = 2;
 					else if (mem.dealerSum > sum) mem.winRates[game.players[j].pName][k] = 0;
 					else if (mem.dealerSum == sum) mem.winRates[game.players[j].pName][k] = 1;
@@ -693,10 +701,14 @@ const blackjackFuncs = {
 					if (doubled == 1) mem.winRates[game.players[j].pName][k] *= 2;
 				}
 			}
+            game.info.win = [];
             for (let j = 0; j < game.players.length; j++){ //for allplayers, for all hands, pay the amount owed proportional to the bet
+                game.info.win.push([game.players[j].pName, 0]);
 				for (let k = 0; k < game.players[j].cards.length; k++){
+                    game.info.win[j][1] += game.players[j].bet * (mem.winRates[game.players[j].pName][k] ?? 0);
 					game.players[j].money += game.players[j].bet * (mem.winRates[game.players[j].pName][k] ?? 0);
 					game.players[j].money = Math.round(game.players[j].money);
+                    game.info.win[j][1] = Math.round(game.info.win[j][1]);
 				}
 				game.players[j].bet = 0;
 			}
@@ -704,6 +716,7 @@ const blackjackFuncs = {
             //re-deal deck of cards and proceed with rounds
             game.currentPlayer = "none";
 			await new Promise(r => setTimeout(r, 2000));
+            game.info.win = [];
 			blackjackFuncs.clear(game, false);
 			if (mem.cards.length == mem.divider){
 				let t = blackjackFuncs.shuffle(game);
@@ -851,7 +864,7 @@ const rouletteFuncs = { //all functions use by the roulette game
 const pokerMemTemplate = { //template object used to make a new poker memory object
     "phase" : 0,
     "prevRaise" : 0,
-    "faiTT" : 0,
+    "faiTT" : [],
     "lastRaise" : 1,
     "pots" : {
         "main" : {
@@ -1051,7 +1064,7 @@ const pokerFuncs = { //all functions used by the poker function
         await new Promise(resolve => setTimeout(resolve, 500)); //deal cards to all players
         for (let i = 0; i < 2; i++){
             for (let j = 0; j < game.players.length; j++){
-                game.players[j].cards[0].push(cards.shift());
+                try {game.players[j].cards[0].push(cards.shift());} catch {}
                 await new Promise(resolve => setTimeout(resolve, 200));
             }
         }
@@ -1066,6 +1079,10 @@ const pokerFuncs = { //all functions used by the poker function
             mem.lastRaise = (mem.sblind + 1)%game.players.length; //set last raise
             mem.betStart = 1;
             mem.pots.main.sum = 30; //pay small and big blinds
+            if (game.players[mem.sblind].money < 11 || game.players[(mem.sblind+1)%game.players.length].money < 21){
+                pokerFuncs.proceed(game, 0);
+                return;
+            }
             game.players[mem.current].money -= 10;
             game.players[(mem.current+1)%game.players.length].money -= 20;
             mem.pots.main.bets = {};
@@ -1092,7 +1109,6 @@ const pokerFuncs = { //all functions used by the poker function
     "next" : (game, nocheck) =>  { // move on to next player and process events of previous turn
         console.log("next");
         let mem = pokerMem[game.id];
-        console.log(mem);
         mem.current = (mem.current + 1)%game.players.length;
         game.currentPlayer = game.players[mem.current].pName;
 
@@ -1101,10 +1117,12 @@ const pokerFuncs = { //all functions used by the poker function
                 pokerFuncs.nextPhase(game, 1);
                 return;
             }
-            if (mem.current == mem.lastRaise && (mem.betStart == 0 || mem.phase == 0)){ //check if all bets have been matched
+            if (mem.current == mem.lastRaise && (mem.betStart == 0 || mem.phase != 0)){ //check if all bets have been matched
                 pokerFuncs.nextPhase(game);
                 return;
             } else if (game.players[mem.current].money == 0 || mem.folds.includes(game.currentPlayer) || game.players[mem.current].cards[0].length == 0) {
+                console.log(mem.lastRaise, mem.current, mem.betStart, mem.phase);
+                mem.betStart = 0; //start of betting is set to 0
                 pokerFuncs.next(game); //check if the current player is broke, folded, or doesn't have cards
             } else if (game.players[mem.current].money > 0 && !mem.folds.includes(game.currentPlayer)){ //proceed if player has money and isnt fodled
                 if (mem.pots.main.max == -1){ //if main pot is current active pot, process turn options and bet requeirements
@@ -1121,8 +1139,8 @@ const pokerFuncs = { //all functions used by the poker function
                     }
                     if (potIndx != -1) {
                         game.info.bets = mem.pots.other[potIndx].bets;
-                        mem.call = mem.pots.mem.match - (mem.pots.other[potIndx].bets[currentPlayer]||0);
-                        game.info.match = mem.pots.main.match;
+                        mem.call = mem.pots.other[potIndx].match - (mem.pots.other[potIndx].bets[game.currentPlayer]||0);
+                        game.info.match = mem.pots.other[potIndx].match;
                     }
                 } //check if player must go in or raise; assign turn options approptiately
                 if (mem.prevRaise > 0 && game.players[mem.current].money > mem.call) game.turnOptions = "raisecall";
@@ -1153,16 +1171,31 @@ const pokerFuncs = { //all functions used by the poker function
             }
             let ins = []; //list of players going all in
             for (let i = 0; i < mem.faiTT.length; i++){
-                ins.push([mem.faiTT[i],pot.bets[mem.faiTT[i]]]);
+                ins.push([[mem.faiTT[i]],pot.bets[mem.faiTT[i]]]);
             }
+
+            console.log(ins);
             ins.sort((a,b) => a[1] - b[1]); //sort all ins by the size of in
+            for (let i = 0; i < ins.length; i++) {
+                if (ins[i][1] == (ins[i+1]||[])[1]){
+                    console.log("before", ins[i]);
+                    ins[i][0].push(...ins[i+1][0]);
+                    ins.splice(i+1,1);
+                    console.log("after", ins[i]);
+                    i--;
+                }
+            }
+            console.log(ins);
             let refPot = pot; //pot to copy from
             let tempPot = {}; //temporary pot for creating a new one
             for (let i = 0; i < ins.length; i++){ //add a new pot for each all in, in ascending bet value
                 tempPot.bets = {};
+                tempPot.match = 0;
+                tempPot.prevMatch = 0;
                 tempPot.sum = 0;
-                tempPot.exclude = [...refPot.exclude];
-                tempPot.exclude.push(ins[i]);
+                tempPot.max = -1;
+                console.log(ins[i][0]);
+                tempPot.exclude = [...refPot.exclude, ...ins[i][0]];
                 for (let j in refPot.bets.length){
                     if (j != ins[i][0]) {
                         tempPot.bets[j] = refPot.bets[j] - ins[i][1];
@@ -1171,7 +1204,9 @@ const pokerFuncs = { //all functions used by the poker function
                         refPot.bets[j] -= tempPot.bets[j];
                     }
                 }
+                refPot.max = 1;
                 refPot = {...tempPot};
+                refPot.prevMatch = 0;
                 mem.pots.other.push(refPot);
                 tempPot = {};
             }
@@ -1256,10 +1291,11 @@ const pokerFuncs = { //all functions used by the poker function
                 winners.main.push(hands[i]);
             }
         }
-        for (let j = 0; j < winners.other; i++) { //do same as main pot for each side pot, excluding excluded players
-            let thands = hands.filter(x => !mem.pots.other[j].includes(x[0]));
-            for (let i = 0; i < hands.length; i++) {
-                if (i = 0) winners.other[j].push(thands[0]);
+        for (let j = 0; j < winners.other.length; j++) { //do same as main pot for each side pot, excluding excluded players
+            let thands = hands.filter(x => !mem.pots.other[j].exclude.includes(x[0]));
+            console.log("\n|0|\n",hands, "\n|1|\n",thands, "\n|2|\n", mem.pots.other[j].exclude, "\n|3|\n");
+            for (let i = 0; i < thands.length; i++) {
+                if (i == 0) winners.other[j].push(thands[0]);
                 else {
                     if (handRanks[thands[i][1]] < handRanks[winners.other[j][0][1]]){
                         winners.other[j] = [thands[i]];
@@ -1294,7 +1330,6 @@ const pokerFuncs = { //all functions used by the poker function
                     }
                 }
                 winners.other[j] = best;
-                console.log(best);
             }
         }
 
@@ -1305,6 +1340,7 @@ const pokerFuncs = { //all functions used by the poker function
             game.info.win.push([winners.main[i][0], Math.round(mem.pots.main.sum/winners.main.length)||0]);
         }
         for (let j = 0; j < winners.other.length; j++){ //do same for side pots
+            console.log(winners.other[j]);
             for (let i = 0; i < winners.other[j].length; i++){
                 game.players.find(x => x.pName == winners.other[j][i][0]).money += (Math.round(mem.pots.other[j].sum/winners.other[j].length)||0);
                 game.info.win.push([winners.other[j][i][0], Math.round(mem.pots.other[j].sum/winners.other[j].length)||0]);
@@ -1337,12 +1373,12 @@ const pokerFuncs = { //all functions used by the poker function
                     }
                 }
                 if (potIndx != -1){
-                    if (!mem.pots.other[i].exclude.includes(game.currentPlayer)){
+                    if (!mem.pots.other[potIndx].exclude.includes(game.currentPlayer)){
                         mem.pots.other[potIndx].match = amount;
                         mem.pots.other[potIndx].sum = amount;
                         game.players[mem.current].money -= amount;
-                        mem.pots.other.bets = {};
-                        mem.pots.otjer.bets[game.currentPlayer] = amount;
+                        mem.pots.other[potIndx].bets = {};
+                        mem.pots.other[potIndx].bets[game.currentPlayer] = amount;
                         mem.lastRaise = mem.current;
                         if (game.players[mem.current].money == 0){
                             mem.faiTT.push(game.currentPlayer);
@@ -1358,8 +1394,12 @@ const pokerFuncs = { //all functions used by the poker function
         },
         "ra" : (game, amount) => { //raise, increase bet, adjust related variables, and move to next player
             let mem = pokerMem[game.id];
+            console.log(mem.call, amount);
+            amount = Math.min(game.players[mem.current].money - mem.call, amount);
+            console.log(mem.call, amount);
             mem.lastRaise = mem.current; //set last raise and prev raise to match this raise action
-            mem.prevRaise = amount;
+            mem.prevRaise = Math.max(mem.prevRaise, amount);
+            game.info.minRaise = mem.prevRaise;
             if (mem.pots.main.max == -1){ //if main pot is active, apply changes to main pot
                 mem.pots.main.match += amount;
                 mem.pots.main.bets[game.currentPlayer] = mem.pots.main.match;
@@ -1373,15 +1413,15 @@ const pokerFuncs = { //all functions used by the poker function
                 let potIndx = -1;
                 for (let i = 0; i < mem.pots.other.length; i++){
                     if (mem.pots.other[i].max == -1){
-                        potIndx = 1;
+                        potIndx = i;
                         break;
                     }
                 }
                 if (potIndx != -1 ){
-                    if (!mem.pots.other[i].exclude.includes(game.currentPlayer)){
-                        mem.pots.other[i].match += amount;
-                        mem.pots.other[i].bets[game.currentPlayer] = mem.pots.other[i].match ;
-                        mem.pots.other[i].main.sum += mem.call + amount;
+                    if (!mem.pots.other[potIndx].exclude.includes(game.currentPlayer)){
+                        mem.pots.other[potIndx].match += amount;
+                        mem.pots.other[potIndx].bets[game.currentPlayer] = mem.pots.other[potIndx].match ;
+                        mem.pots.other[potIndx].sum += mem.call + amount;
                         game.players[mem.current].money -= amount + mem.call;
                     }
                 }
@@ -1397,15 +1437,15 @@ const pokerFuncs = { //all functions used by the poker function
             } else { //if main pot is not active, get active pot and do the same
                 let potIndx = -1;
                 for (let i = 0; i < mem.pots.other.length; i++){
-                    if (game.pots.other[i].max == -1){
+                    if (mem.pots.other[i].max == -1){
                         potIndx = i;
                         break;
                     }
                 }
                 if (potIndx != -1){
-                    mem.pots.other[i].bets[game.currentPlayer] = mem.pots.other[i].match;
-                    mem.pots.other[i].sum += mem.pots.other.match - mem.pots.other[i].bets[game.currentPlayer];
-                    game.player[mem.current].money -= mem.pot.other.match - mem.pos.other[i].bets[game.currentPlayer];
+                    mem.pots.other[potIndx].bets[game.currentPlayer] = mem.pots.other[potIndx].match;
+                    mem.pots.other[potIndx].sum += mem.pots.other.match - mem.pots.other[potIndx].bets[game.currentPlayer];
+                    game.player[mem.current].money -= mem.pot.other.match - mem.pos.other[potIndx].bets[game.currentPlayer];
                 }
             }
             pokerFuncs.next(game); //move to next player
@@ -1425,9 +1465,9 @@ const pokerFuncs = { //all functions used by the poker function
                         break;
                     }
                 }
-                let pot = mem.pots.other[i];
-                pot.main.sum += game.players[mem.current].money;
-                pot.bets[game.currenPlayer] += game.players[mem.current].money;
+                let pot = mem.pots.other[potIndx];
+                pot.sum += game.players[mem.current].money;
+                pot.bets[game.currentPlayer] += game.players[mem.current].money;
                 game.players[mem.current].money = 0;
             }
             pokerFuncs.next(game); //move to next player
@@ -1562,7 +1602,7 @@ server.on('connection', (socket) => { //determines what happens when a player co
                     tempPlayer.bet = 0; //clear player bet
                     game.players.push(tempPlayer); //add player to game
                     delete gameManager.playerMem[args[2]][args[1]]; //remove player from memory
-                } else game.players.push(new player({}, args[3], 100, 1000, args[1])); //if not in memory, create new player
+                } else game.players.push(new player({}, args[3], 100, 200, args[1])); //if not in memory, create new player
                 game.votes[args[1]] = 0;
                 socket.send("r\x1F" + JSON.stringify(game)); //return game state
                 riId = setInterval(refreshIndex,100);       //assign refresh index interval
@@ -1732,7 +1772,7 @@ server.on('connection', (socket) => { //determines what happens when a player co
 				}
                 if (game.turnOptions.slice(0,6) == "bjturn" && game.currentPlayer == p.pName){ //if turn option include bjturn...
                     if (args[1] == "h"){ //if player tries to hit, deal new card, move to next player if bust
-						p.cards[p.currentHand].push(blackjackMemory[game.id].cards.shift())
+                        p.cards[p.currentHand].push(blackjackMemory[game.id].cards.shift());
 						let handSum = 0;
 						for (let i = 0; i < p.cards[p.currentHand].length; i++){
 							let temp = blackjackMemory[game.id].valueLookup[p.cards[p.currentHand][i].value];

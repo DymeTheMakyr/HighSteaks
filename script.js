@@ -1,4 +1,4 @@
-(() => {//init display variables
+//(() => {//init display variables
 let sw = window.innerWidth - 1;
 let sh = window.innerHeight - 1;
 let factor = [16, 9];
@@ -1179,6 +1179,11 @@ function blackjackScene(sock){ //function that contains blackjack scene
 		ctx.fillStyle = "white";
 		ctx.fillText(text, 320 - l, 28);
 
+		let winners = {};
+		for (let i = 0; i < game.info.win.length; i++){
+			winners[game.info.win[i][0]] = winners[game.info.win[i][0]]??0 + game.info.win[i][1];
+		}
+
 		//draw all players and relevant information in turn
 		for (let i = 0; i < game.players.length; i++){
 			let p = game.players[i]; //shortand for player
@@ -1206,16 +1211,16 @@ function blackjackScene(sock){ //function that contains blackjack scene
 			}
 
 			let scale = 2; //set scale to be 2 by default, if player hands exceed limit, or player hand exceeds card length, half scale
-			if (game.players[i].cards.length > maxHands[game.players.length-1]) scale = 1;
+			if (p.cards.length > maxHands[game.players.length-1]) scale = 1;
 			else {
-				for (let k = 0; k < game.players[i].cards.length; k++){
-					if (game.players[i].cards[k].length > 6) scale = 1;
+				for (let k = 0; k < p.cards.length; k++){
+					if (p.cards[k].length > 6) scale = 1;
 				}
 			}
-			let tempCards = game.players[i].cards; //shorhand for the player's cards
+			let tempCards = p.cards; //shorhand for the player's cards
 			for (let k = 0; k < tempCards.length; k++){
 				let hOff = Math.round(curOff - (0.5*tempCards.length * 16 * scale) + k*17*scale); //calculate draw offset of hand of player
-				if (game.currentPlayer == game.players[i].pName && game.players[i].currentHand == k){
+				if (game.currentPlayer == p.pName && p.currentHand == k){
 					ctx.fillStyle = "rgba(0,255,0,1)"; //if this hand is the current hand of the current player, draw a green indicating arrow
 					ctx.beginPath();
 					ctx.moveTo(hOff + 0.5*16*scale-8, 146.5);
@@ -1249,6 +1254,19 @@ function blackjackScene(sock){ //function that contains blackjack scene
 					pixelLength = 0.5*ctx.measureText(sum).width;
 					ctx.fillText(sum, Math.round(hOff+0.5*17*scale - pixelLength), 136);
 				}
+			}
+
+			if (game.info.win.length > 0){
+				let text = "+$0";
+				if (p.pName in winners){
+					text = "+$" + winners[p.pName];
+				}
+				ctx.font = "14px pixel";
+				pixelLength = 0.5*ctx.measureText(text).width;
+				ctx.fillStyle = "rgba(0,0,0,0.5)";
+				ctx.fillRect(curOff - pixelLength - 2, 200, 2*pixelLength + 4, 24);
+				ctx.fillStyle = "white";
+				ctx.fillText(text, curOff - pixelLength, 218);
 			}
 		}
 
@@ -2291,4 +2309,4 @@ function fightScene(sock){ //function that contains poker scene
 	return unloadLocal; //return unload function so changeScene can access it
 }
 scene.fight = fightScene; //add fight scene to scene object
-})(); //encapsulated to prevent client editing
+//})(); //encapsulated to prevent client editing
