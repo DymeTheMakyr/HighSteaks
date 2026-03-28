@@ -1017,7 +1017,7 @@ function selectionScene(sock){ //function that contains selection scene
 		let rCo = container.children[0].children[10].value || 10; //get round counter field
 		let skn = container.children[0].children[12].value; //get skin select dropdown
 		//client side validation
-		if (nam.length = 0) {alert("Input Name"); return 0;}
+		if (nam.length == 0) {alert("Input Name"); return 0;}
 		if (nam.includes("\x1F")) {alert("Forbidden character '\x1F' in name"); return 0;}
 		if (rId.length != 4) {alert("Room ID needs 4 characters"); return 0;}
 		if (skn == 8) {alert("Select Skin"); return 0;}
