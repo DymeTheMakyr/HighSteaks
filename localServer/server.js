@@ -745,7 +745,8 @@ const blackjackFuncs = {
 		if (comp) delete blackjackMemory[game.id];
 	},
     "disconnect" : async function(game, playerIndex, lostName){ //function that handles a player disconnecting from the game
-		if (game.turnOptions.slice(0,6) == "bjturn"){
+        game.players[playerIndex].cards = [[]];
+        if (game.turnOptions.slice(0,6) == "bjturn"){
 			playerIndex -= 1;
 			blackjackFuncs.next(game);
 		}
@@ -753,7 +754,7 @@ const blackjackFuncs = {
 			if (playerIndex+1 < game.players.length) game.currentPlayer = game.players[playerIndex+1].pName;
 			else {game.currentPlayer = "none"; blackjackFuncs.deal(game);}
 		}
-        game.players[playerIndex].cards = [[]];
+
 	}
 }
 
