@@ -719,7 +719,7 @@ const blackjackFuncs = {
             //if not last round, proceed with new round
 			if (game.remRounds < game.maxRounds){
 				game.remRounds += 1;
-				game.currentPlayer = game.players[0].pName;
+                game.currentPlayer = game.players[0].pName??"";
 				game.turnOptions = "bjbet";
 				blackjackFuncs.clear(game, false);
             } else { //if last round has been played, send players back to lobby
