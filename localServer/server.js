@@ -1479,7 +1479,7 @@ const pokerFuncs = { //all functions used by the poker function
         }
         else if (lostInd < mem.current && game.players.length > 0) mem.current -= 1;
         if (game.players.length == 0) delete pokerMem[game.id];
-        gameManager.playerMem[lostName].cards = [[]];
+        gameManager.playerMem[game.id][lostName].cards = [[]];
     }
 };
 
