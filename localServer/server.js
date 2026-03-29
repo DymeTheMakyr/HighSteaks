@@ -744,7 +744,7 @@ const blackjackFuncs = {
 		}
 		if (comp) delete blackjackMemory[game.id];
 	},
-    "disconnect" : async function(game, playerIndex){ //function that handles a player disconnecting from the game
+    "disconnect" : async function(game, playerIndex, lostName){ //function that handles a player disconnecting from the game
 		if (game.turnOptions.slice(0,6) == "bjturn"){
 			playerIndex -= 1;
 			blackjackFuncs.next(game);
@@ -753,6 +753,7 @@ const blackjackFuncs = {
 			if (playerIndex+1 < game.players.length) game.currentPlayer = game.players[playerIndex+1].pName;
 			else {game.currentPlayer = "none"; blackjackFuncs.deal(game);}
 		}
+        gameManager.playerMem[lostName].cards = [[]];
 	}
 }
 
@@ -1260,7 +1261,7 @@ const pokerFuncs = { //all functions used by the poker function
         }
 
         for (let i = 0; i < game.players.length; i++){ //for all players, reveal hands, and add their hand to hands if not folded
-            if (game.players[i].cards[0].length == 0) continue;
+            if (game.players[i].cards[0].length != 2) continue;
             let hand = pokerFuncs.checkHand(game, i);
             game.players[i].cards[0][0].faceDown = 0;
             game.players[i].cards[0][1].faceDown = 0;
@@ -1470,7 +1471,7 @@ const pokerFuncs = { //all functions used by the poker function
             game.interactables = sceneInteractables["lobby"];
         }
     },
-    "disconnect" : (game, lostInd) => { //what the game should do if a player discomnects during poker
+    "disconnect" : (game, lostInd, lostName) => { //what the game should do if a player discomnects during poker
         mem = pokerMem[game.id];
         if (lostInd == mem.current && game.players.length > 0) {
             game.currentPlayer = ((game.players[mem.current]??game.players[0]).pName)??"";
@@ -1478,6 +1479,7 @@ const pokerFuncs = { //all functions used by the poker function
         }
         else if (lostInd < mem.current && game.players.length > 0) mem.current -= 1;
         if (game.players.length == 0) delete pokerMem[game.id];
+        gameManager.playerMem[lostName].cards = [[]];
     }
 };
 
@@ -1799,7 +1801,7 @@ server.on('connection', (socket) => { //determines what happens when a player co
             if (rlRId != -1) game.info.ready.splice(rlRId,1); //remove player from gamestate ready
             delete game.votes[pId]; //clear votes
             if (game.currentScene == "poker") { //handle disconnect if in poker
-                pokerFuncs.disconnect(game, playerIndex);
+                pokerFuncs.disconnect(game, playerIndex, pId);
             }
             if (game.currentScene == "fight") { //handle disconnect if in fight
                 let ind = game.info.ready.indexOf(pId);
