@@ -753,7 +753,7 @@ const blackjackFuncs = {
 			if (playerIndex+1 < game.players.length) game.currentPlayer = game.players[playerIndex+1].pName;
 			else {game.currentPlayer = "none"; blackjackFuncs.deal(game);}
 		}
-        gameManager.playerMem[lostName].cards = [[]];
+        game.players[playerIndex].cards = [[]];
 	}
 }
 
@@ -1792,7 +1792,7 @@ server.on('connection', (socket) => { //determines what happens when a player co
 			let gId = id.slice(-4);
             if (game.currentPlayer == pId){ //handle disconnect for blackjack
 				if (game.currentScene == "blackjack") {
-					blackjackFuncs.disconnect(game, playerIndex);
+                    blackjackFuncs.disconnect(game, playerIndex);
                 }
 			}
             gameManager.playerMem[gId][pId] = game.players[playerIndex]; //send player to memory
