@@ -744,17 +744,20 @@ const blackjackFuncs = {
 		}
 		if (comp) delete blackjackMemory[game.id];
 	},
-    "disconnect" : async function(game, playerIndex, lostName){ //function that handles a player disconnecting from the game
+    "disconnect" : async function(game, playerIndex){ //function that handles a player disconnecting from the game
+        console.log(game.players[playerIndex].cards);
         game.players[playerIndex].cards = [[]];
-        if (game.turnOptions.slice(0,6) == "bjturn"){
-			playerIndex -= 1;
-			blackjackFuncs.next(game);
-		}
-		else if (game.turnOptions == "bjbet"){
-			if (playerIndex+1 < game.players.length) game.currentPlayer = game.players[playerIndex+1].pName;
-			else {game.currentPlayer = "none"; blackjackFuncs.deal(game);}
-		}
-
+        console.log(game.players[playerIndex].cards);
+        if (game.currentPlayer == game.players[playerIndex].pName){
+            if (game.turnOptions.slice(0,6) == "bjturn"){
+    			playerIndex -= 1;
+    			blackjackFuncs.next(game);
+    		}
+    		else if (game.turnOptions == "bjbet"){
+    			if (playerIndex+1 < game.players.length) game.currentPlayer = game.players[playerIndex+1].pName;
+    			else {game.currentPlayer = "none"; blackjackFuncs.deal(game);}
+    		}
+        }
 	}
 }
 
@@ -1791,11 +1794,10 @@ server.on('connection', (socket) => { //determines what happens when a player co
             clearInterval(riId); //clear refresh interval
             let pId = id.slice(0, -4); //split id into game and player names
 			let gId = id.slice(-4);
-            if (game.currentPlayer == pId){ //handle disconnect for blackjack
-				if (game.currentScene == "blackjack") {
-                    blackjackFuncs.disconnect(game, playerIndex);
-                }
-			}
+            //handle disconnect for blackjack
+			if (game.currentScene == "blackjack") {
+                blackjackFuncs.disconnect(game, playerIndex);
+            }
             gameManager.playerMem[gId][pId] = game.players[playerIndex]; //send player to memory
             gameManager.games[gId].players.splice(playerIndex, 1); //remove player from game state
             let rlRId = game.info.ready.findIndex(x => x == pId);
