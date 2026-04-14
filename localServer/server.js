@@ -1520,6 +1520,7 @@ let fightFuncs = { //functions used by the fight scene
             game.players[i].health = [100,100]; //reset health
             game.players[i].ammo = [10,10]; //reset ammo
             game.players[i].upgrades = ""; //clear upgrades
+            game.players[i].hits = 0; //clear hits
         }
 
         game.turnOptions = "none"; //send players to lobby
